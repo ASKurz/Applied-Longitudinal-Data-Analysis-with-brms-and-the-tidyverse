@@ -1,0 +1,169 @@
+"id","name","time","censor","dem"
+1,"Abzug, Bella",3,0,1
+2,"Andrews, Elizabeth",1,0,1
+3,"Ashbrook, Jean",1,0,0
+4,"Baker, Irene",1,0,0
+5,"Bentley, Helen",5,0,0
+6,"Blitch, Iris",4,0,1
+7,"Boggs, Corinne",8,1,1
+8,"Boland, Veronica Grace",1,0,1
+9,"Bolton, Frances",8,1,0
+10,"Bosone, Reva",2,0,1
+11,"Boxer, Barbara",5,0,1
+12,"Buchanan, Vera",3,0,1
+13,"Burke, Yvonne",3,0,1
+14,"Burton, Sala",3,0,1
+15,"Byrne, Leslie",1,0,1
+16,"Byron, Beverly",7,0,1
+17,"Byron, Katharine",1,0,1
+18,"Cantwell, Maria",1,0,1
+19,"Chisholm, Shirley",7,0,1
+20,"Church, Marguerite",6,0,0
+21,"Clarke, Marian",1,0,0
+22,"Douglas, Emily",1,0,1
+23,"Douglas, Helen",3,0,1
+24,"Dwyer, Florence",8,0,0
+25,"English, Karan",1,0,1
+26,"Eslick, Willa",1,0,1
+27,"Farrington, Mary",2,0,0
+28,"Fenwick, Millicent",4,0,0
+29,"Ferraro, Geraldine",3,0,1
+30,"Fieldler, Bobbi",3,0,0
+31,"Fulmer, Willa",1,0,1
+32,"Gasque, Elizabeth",1,0,1
+33,"Gibbs, Florence",1,0,1
+34,"Granahan, Kathryn",4,0,1
+35,"Grasso, Ella",2,0,1
+36,"Green, Edith",8,1,1
+37,"Greenway, Isabella",2,0,1
+38,"Griffiths, Martha",8,1,1
+39,"Hall, Katie",2,0,1
+40,"Hansen, Julia",8,0,1
+41,"Harden, Cecil",5,0,0
+42,"Heckler, Margaret",8,0,0
+43,"Hicks, Louise Day",1,0,1
+44,"Holt, Marjorie",7,0,0
+45,"Holtzman, Elizabeth",4,0,1
+46,"Honeyman, Nan Wood",1,0,1
+47,"Horn, Joan Kelly",1,0,1
+48,"Huck, Winnifred Spraque",1,0,0
+49,"Jenckes, Virginia Ellis",3,0,1
+50,"Jordan, Barbara",3,0,1
+51,"Kahn, Florence",6,0,0
+52,"Kee, Maude",7,0,1
+53,"Kelly, Edna Flannery",8,1,1
+54,"Keys, Martha",2,0,1
+55,"Knutson, Coya",2,0,1
+56,"Langley, Katherine",2,0,0
+57,"Lloyd, Marilyn",8,1,1
+58,"Long, Catherine",1,0,1
+59,"Long, Jill",3,0,1
+60,"Luce, Clare Booth",2,0,0
+61,"Lusk, Georgia Lee",1,0,1
+62,"Mankin, Helen",1,0,1
+63,"Margolies-M, Marjorie",1,0,1
+64,"Martin, Lynn",5,0,0
+65,"May, Catherine",6,0,0
+66,"McCarthy, Kathryn",1,0,1
+67,"McCormick, Ruth Hanna",1,0,0
+68,"McMillan, Clara",1,0,1
+69,"Meyner, Helen",2,0,1
+70,"Mikulski, Barbara",5,0,1
+71,"Nolan, Mae Ella",2,0,0
+72,"Norrell, Catherine",1,0,1
+73,"Norton, Mary Teresa",8,1,1
+74,"Oakar, Mary Rose",8,0,1
+75,"O'Day, Caroline Love",4,0,1
+76,"Oldfield, Pearl",2,0,1
+77,"Owen, Ruth Bryan",2,0,1
+78,"Patterson, Elizabeth",3,0,1
+79,"Pettis, Shirley",2,0,0
+80,"Pfost, Gracie Bowers",5,0,1
+81,"Pratt, Eliza Jane",1,0,1
+82,"Pratt, Ruth",2,0,0
+83,"Rankin, Jeannette",1,0,0
+84,"Reece, Louise",1,0,0
+85,"Reid, Charlotte Thompson",5,0,0
+86,"Riley, Corinne",1,0,1
+87,"Robertson, Alice Mary",1,0,0
+88,"Rogers, Edith Nourse",8,1,0
+89,"Saiki, Patricia Fukuda",2,0,0
+90,"Schenk, Lynn",1,0,1
+91,"Schneider, Claudine",5,0,0
+92,"Shepherd, Karen",1,0,1
+93,"Simpson, Edna",1,0,0
+94,"Smith, Margaret Chase",5,0,0
+95,"Smith, Virginia Dodd",8,0,0
+96,"Snowe, Olympia J.",8,0,0
+97,"Spellman, Gladys Noon",3,0,1
+98,"St. George, Katherine",8,1,0
+99,"Stanley, Winifred",1,0,0
+100,"Sullivan, Leonor",8,1,1
+101,"Sumner, Jessie",4,0,0
+102,"Thomas, Lera",1,0,1
+103,"Thompson, Ruth",3,0,0
+104,"Unsoeld, Jolene",3,0,1
+105,"Weis, Jessica",2,0,0
+106,"Wingo, Effiegene",2,0,1
+107,"Woodhouse, Chase",1,0,1
+108,"Lincoln, Blanche Lambert",2,0,1
+109,"Eshoo, Anna G.",3,1,1
+110,"Harman, Jane",3,1,1
+111,"Lofgren, Zoe",2,1,1
+112,"Pelosi, Nancy",6,1,1
+113,"Roybal-Allard, Lucille",3,1,1
+114,"Seastrand, Andrea H.",1,0,0
+115,"Waters, Maxine",4,1,1
+116,"Woolsey, Lynn",3,1,1
+117,"Schroeder, Patricia",8,1,1
+118,"DeLauro, Rosa",4,1,1
+119,"Johnson, Nancy L.",8,1,0
+120,"Kennelly, Barbara",8,1,1
+121,"Norton, Eleanor Holmes",4,1,1
+122,"Brown, Corrine",3,1,1
+123,"Fowler, Tillie K.",3,1,0
+124,"Meek, Carrie",3,1,1
+125,"Ros-Lehtinen, Ileana",5,1,0
+126,"Thurman, Karen",3,1,1
+127,"McKinney, Cynthia",3,1,1
+128,"Mink, Patsy",6,0,1
+129,"Chenoweth, Helen",2,1,0
+130,"Collins, Cardiss",8,1,1
+131,"Meyers, Jan",6,0,0
+132,"Morella, Constance",6,1,0
+133,"Collins, Barbara-Rose",3,0,1
+134,"Rivers, Lynn",2,1,1
+135,"Danner, Pat",3,1,1
+136,"McCarthy, Karen",2,1,1
+137,"Vucanovich, Barbara F.",7,0,0
+138,"Roukema, Marge",8,1,0
+139,"Kelly, Sue",2,1,0
+140,"Lowey, Nita",5,1,1
+141,"Maloney, Carolyn",3,1,1
+142,"Molinari, Susan",5,1,0
+143,"Slaughter, Louise",6,1,1
+144,"Velazquez, Nydia",3,1,1
+145,"Clayton, Eva",4,1,1
+146,"Myrick, Sue",2,1,0
+147,"Kaptur, Marcy",8,1,1
+148,"Pryce, Deborah",3,1,0
+149,"Furse, Elizabeth",3,1,1
+150,"Johnson, Eddie Bernice",3,1,1
+151,"Lee, Sheila Jackson",1,0,1
+152,"Waldholtz, Enid",1,0,0
+153,"Dunn, Jennifer",3,1,0
+154,"Smith, Linda",2,1,0
+155,"Cubin, Barbara",2,1,0
+156,"McCarthy, Carolyn",1,1,1
+157,"Hooley, Darlene",1,1,1
+158,"Granger, Kay",1,1,0
+159,"McKenna, Dolly",1,1,0
+160,"Tauscher, Ellen",1,1,1
+161,"Millender-McD, Juanita",1,1,1
+162,"Sanchez, Loretta",1,1,1
+163,"De Gette, Diana",1,1,1
+164,"Carson, Julia",1,1,1
+165,"Northrop, Anne",1,1,0
+166,"Stabeno, Deborah",1,1,1
+167,"Kirkpatrick, Carolyn",1,1,1
+168,"Emerson, Jo Ann",1,1,0
