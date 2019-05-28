@@ -13,8 +13,10 @@ output:
 ## Creating a longitudinal data set
 
 > In longitudinal work, data-set organization is less straightforward because you can use two very different arrangements:
->* *A person-level data set*, in which each person has one record and multiple variables contain the data from each measurement occasion
->* *A person-period data set*, in which each person has multiple records—one for each measurement occasion (p. 17, *emphasis* in the original)
+>
+>>* *A person-level data set*, in which each person has one record and multiple variables contain the data from each measurement occasion
+>
+>>* *A person-period data set*, in which each person has multiple records—one for each measurement occasion (p. 17, *emphasis* in the original)
 
 These are also sometimes referred to as the wide and long data formats, respectively.
 
@@ -77,7 +79,7 @@ cor(tolerance[ , 2:6]) %>%
   theme(axis.ticks = element_blank())
 ```
 
-And if all you wanted was the lower diagonal, you could use the `lowerCor()` function from the [psych package](https://personality-project.org/r/).
+And if all you wanted was the lower diagonal, you could use the `lowerCor()` function from the [**psych** package](https://personality-project.org/r/).
 
 ```{r}
 psych::lowerCor(tolerance[ , 2:6])
@@ -85,9 +87,9 @@ psych::lowerCor(tolerance[ , 2:6])
 
 ### The person-period data set.
 
-Here are the person-period data (i.e., those shown in the bottom of Figure 2.1.).
+Here are the person-period data (i.e., those shown in the bottom of Figure 2.1).
 
-```{r}
+```{r, warning = F, message = F}
 tolerance_pp <- read_csv("https://stats.idre.ucla.edu/wp-content/uploads/2016/02/tolerance1_pp.txt", col_names = T)
 
 tolerance_pp %>%
@@ -163,6 +165,7 @@ tolerance_pp %>%
 ```
 
 However, Singer and Willett recommend two other approaches: 
+
 * nonparametric smoothing
 * parametric functions
 
@@ -205,14 +208,14 @@ As indexed by `id`, each participant has their own data set, denoted by the `dat
 by_id$data[[1]]
 ```
 
-So our `by_id` data object has many data sets stored in a higher-level data set. The code we used is verbose, but that's what made it human-readable. Now we have our nested tibble, we can make a function that will fit the simple linear model `tolerance ~ 1 + time` to each id-level data set. *Why use `time` as the predictor?* you ask. On page 29 in the text, Singer and Willett clarified they fit their individual models with $(\text{AGE} - 11)$ in order to have the model intercepts centered at 11 years old rather than 0. If we wanted to, we could make an $(\text{AGE} - 11)$ variable like so:
+So our `by_id` data object has many data sets stored in a higher-level data set. The code we used is verbose, but that's what made it human-readable. Now we have our nested tibble, we can make a function that will fit the simple linear model `tolerance ~ 1 + time` to each id-level data set. *Why use `time` as the predictor?* you ask. On page 29 in the text, Singer and Willett clarified they fit their individual models with $(\text{age} - 11)$ in order to have the model intercepts centered at 11 years old rather than 0. If we wanted to, we could make an $(\text{age} - 11)$ variable like so:
 
 ```{r}
 by_id$data[[1]] %>% 
   mutate(age_minus_11 = age - 11)
 ```
 
-Did you notice how our `age_minus_11` variable is the same as the `time` variable already in the data set? Yep, that's why we'll be using `time` in the model. In our data, $(\text{AGE} - 11)$ is encoded as `time`.
+Did you notice how our `age_minus_11` variable is the same as the `time` variable already in the data set? Yep, that's why we'll be using `time` in the model. In our data, $(\text{age} - 11)$ is encoded as `time`.
 
 Singer and Willett used OLS to fit their exploratory models. We could do that to with the `lm()` function. Let's get frisky and fit the models as Bayesians, instead. Our primary statistical package for fitting Bayesian models will be [Paul Bürkner](https://twitter.com/paulbuerkner?lang=en)'s [**brms** package](https://github.com/paul-buerkner/brms). Let's open it up.
 
@@ -247,7 +250,7 @@ fit1$prior
 
 Okay, so that was the model for just one participant. We want to do that for all 16. Instead of repeating that code 15 times, let's work in bulk. With **brms**, you can reuse a model with the `update()` function. Here's how to do that for our second participant.
 
-```{r fit2, cache = T, warning = F, message = F}
+```{r fit2, cache = T, warning = F, message = F, results = "hide"}
 fit2 <-
   update(fit1, 
          newdata = by_id$data[[2]])
@@ -298,13 +301,13 @@ bayes_R2(fit2, summary = F) %>%
             mode   = tidybayes::Mode(R2))
 ```
 
-By default, `bayes_R2()` returns the mean. You can get the median with the `robust = T` argument. To pull the mode, you'll need to use `summary = F` and feed the results into a mode function, like tidybayes::Mode()`.
+By default, `bayes_R2()` returns the mean. You can get the median with the `robust = T` argument. To pull the mode, you'll need to use `summary = F` and feed the results into a mode function, like `tidybayes::Mode()`.
 
 I should also point out the **brms** package did not get these $R^2$ values by traditional method used in, say, OLS estimation. To learn more about how the Bayesian $R^2$ sausage is made, check out the paper by [Gelman, Goodrich, Gabry, and Vehtari](https://www.tandfonline.com/doi/abs/10.1080/00031305.2018.1549100?journalCode=utas20).
 
 With a little tricky programing, we can use the `purrr::map()` function to serially fit this model to each of our participant-level data sets. We'll save the results as `models`.
 
-```{r models, cache = T, warning = F, message = F}
+```{r models, cache = T, warning = F, message = F, results = "hide"}
 models <- 
   by_id %>%
   mutate(model = map(data, ~update(fit1, newdata = .)))
@@ -452,7 +455,7 @@ tolerance_pp %>%
 
 But we wanted to be Bayesians. We already have the `id`-specific trajectories. All we need now is one based on all the data.
 
-```{r fit3, cache = T, warning = F, message = F}
+```{r fit3, cache = T, warning = F, message = F, results = "hide"}
 fit3 <-
   update(fit1, 
          newdata = tolerance_pp)
@@ -480,8 +483,10 @@ fixef(fit3)[2, 1]
 For this plot, we'll work more directly with the model formulas to plot the trajectories. We can use `init_stat_est` and `rate_chante_est` from the `mean_structure` object as stand-ins for $\beta_0_\text{id}$ and $\beta_1_\text{id}$ from our model equation
 
 $$
-\text{tolerance}_\text{id} = \beta_0_\text{id} + \beta_1_\text{id} * \text{time}_\text{id} + \epsilon_\text{id}
+\text{tolerance}_\text{id} = \beta_0_\text{id} + \beta_1_\text{id} \cdot \text{time}_\text{id} + \epsilon_\text{id}
 $$
+
+
 
 All we need to do is plug in the appropriate values for `time` and we'll have the fitted `tolerance` values for each level of `id`. After a little wrangling, the data will be in good shape for plotting.
 
@@ -547,7 +552,7 @@ mean_structure %>%
 
 If we'd like Bayesian estimates differing by `male`, we'll need to fit an interaction model.
 
-```{r fit4, cache = T, warning = F, message = F}
+```{r fit4, cache = T, warning = F, message = F, results = "hide"}
 fit4 <-
   update(fit1, 
          newdata = tolerance_pp,
@@ -605,7 +610,7 @@ tolerance_pp <-
 
 Now fit the second interaction model.
 
-```{r fit5, cache = F, warning = F, message = F}
+```{r fit5, cache = F, warning = F, message = F, results = "hide"}
 fit5 <-
   update(fit4, 
          newdata = tolerance_pp,
@@ -711,7 +716,7 @@ Later we read:
 
 > Unlike precision which describes how well an individual slope estimate measures that person’s true rate of change, reliability describes how much the rate of change varies across people. Precision has meaning for the individual; reliability has meaning for the group. (p. 42)
 
-I have to protest. True, if we were working within a Classical Test Theory paradigm, this would be correct. But This places reliability with the context of group-based cross-sectional design. Though this is a popular design, it is not the whole story (i.e., see this book!). For introductions to more expansive and person-specific notions of reliability, check out Cronbach's Generalizability Theory ([Cronbach, Gleser, Nanda, & Rajaratnam, 1972](https://www.amazon.com/Dependability-Behavioral-Measurements-Generalizability-Profiles/dp/0471188506); [Brennan, 2001](https://www.springer.com/us/book/9780387952826); also [Cranford, Shrout, Iida, Rafaeli, Yip, & Bolger, 2006](https://journals.sagepub.com/doi/pdf/10.1177/0146167206287721?casa_token=okVoJxGFt0UAAAAA:4TWd7Imln0hZc3f2VDPlMvaI5omrI_F_9lUDtkd8i6nn0h_VE-g-f_ZrwB608HWaUqT0v1eJgcD_JA); [LoPilato, Carter, & Wang , 2015](https://journals.sagepub.com/doi/pdf/10.1177/0149206314554215?casa_token=AYMEPAKydVQAAAAA:oqFgrMlto2rhdlZrgdLaOUvvJO9s9BJ5jek4UA6eVL7Zz5tmKqYgoX_jGvKd9ZX9_bdgV39ZcJXlmQ); [Shrout & Lane, 2012](https://psycnet.apa.org/record/2012-05165-017)).
+I have to protest. True, if we were working within a Classical Test Theory paradigm, this would be correct. But this places reliability with the context of group-based cross-sectional design. Though this is a popular design, it is not the whole story (i.e., see this book!). For introductions to more expansive and person-specific notions of reliability, check out Cronbach's Generalizability Theory ([Cronbach, Gleser, Nanda, & Rajaratnam, 1972](https://www.amazon.com/Dependability-Behavioral-Measurements-Generalizability-Profiles/dp/0471188506); [Brennan, 2001](https://www.springer.com/us/book/9780387952826); also [Cranford, Shrout, Iida, Rafaeli, Yip, & Bolger, 2006](https://journals.sagepub.com/doi/pdf/10.1177/0146167206287721?casa_token=okVoJxGFt0UAAAAA:4TWd7Imln0hZc3f2VDPlMvaI5omrI_F_9lUDtkd8i6nn0h_VE-g-f_ZrwB608HWaUqT0v1eJgcD_JA); [LoPilato, Carter, & Wang , 2015](https://journals.sagepub.com/doi/pdf/10.1177/0149206314554215?casa_token=AYMEPAKydVQAAAAA:oqFgrMlto2rhdlZrgdLaOUvvJO9s9BJ5jek4UA6eVL7Zz5tmKqYgoX_jGvKd9ZX9_bdgV39ZcJXlmQ); [Shrout & Lane, 2012](https://psycnet.apa.org/record/2012-05165-017)).
 
 ## Reference {-}
 
