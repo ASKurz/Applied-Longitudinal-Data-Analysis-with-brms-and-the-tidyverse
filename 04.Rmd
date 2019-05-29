@@ -1,0 +1,815 @@
+---
+title: 'Chapter 4. Doing Data Analysis with the Multilevel Model for Change'
+author: "A Solomon Kurz"
+date: "`r format(Sys.Date())`"
+output:
+  github_document
+---
+
+# Doing Data Analysis with the Multilevel Model for Change
+
+"We now delve deeper into the specification, estimation, and interpretation of the multilevel model for change" (p. 75).
+
+## 4.1 Example: Changes in adolescent alcohol use
+
+```{r, warning = F, message = F}
+library(tidyverse)
+alcohol1_pp <- read_csv("data/alcohol1_pp.csv")
+
+head(alcohol1_pp)
+```
+
+Do note we already have an $\text{age} - 14$ variable in the data, `age_14`.
+
+Here we load the early-intervention data from [this UCLA web site](https://stats.idre.ucla.edu/r/examples/alda/r-applied-longitudinal-data-analysis-ch-4/).
+
+```{r, warning = F, message = F}
+library(tidyverse)
+# alcohol1 <- read.table("https://stats.idre.ucla.edu/stat/r/examples/alda/data/alcohol1_pp.txt", header = T, sep = ",")
+# 
+# alcohol1 %>% 
+#   head()
+```
+
+Here's our version of Figure 4.1, using `stat_smooth()` to get the exploratory OLS trajectories.
+
+```{r, fig.width = 7, fig.height = 4}
+alcohol1_pp %>%
+  filter(id %in% c(4, 14, 23, 32, 41, 56, 65, 82)) %>%
+  
+  ggplot(aes(x = age, y = alcuse)) +
+  stat_smooth(method = "lm", se = F) +
+  geom_point() +
+  coord_cartesian(xlim = 13:17,
+                  ylim = -1:4) +
+  theme(panel.grid = element_blank()) +
+  facet_wrap(~id, ncol = 4)
+```
+
+By this figure, Singer and Willett suggested the simple linear level-1 submodel following the form
+
+$$
+\begin{align*}
+\text{alcuse}_{ij} & = \pi_{0i} + \pi_{1i} (\text{age}_{ij} - 14) + \epsilon_{ij}\\
+\epsilon_{ij} & \sim \text{Normal} (0, \sigma_\epsilon^2)
+\end{align*}
+$$
+
+where $\pi_{0i}$ is the initial status of participant $i$, $\pi_{1i}$ is participant $i$'s rate of change}, and $\epsilon_{ij}$ is the variation in participant $i$'s data not accounted for in the model.
+
+Singer and Willett made their Figure 4.2, "with a random sample of 32 of the adolescents" (p. 78). If we just wanted a random sample of rows, the `sample_n()` function would do the job. But since we're working with long data, we'll need some `group_by()` + `nest()` mojo. I got the trick from [Jenny Bryan](https://twitter.com/JennyBryan)'s [*Sample from groups, n varies by group*](https://jennybc.github.io/purrr-tutorial/ls12_different-sized-samples.html). Setting the seed makes the results from `sample_n()` reproducible. Here are the top panels.
+
+```{r, fig.width = 5, fig.height = 3}
+set.seed(4)
+
+alcohol1_pp %>% 
+  group_by(id) %>% 
+  nest() %>% 
+  sample_n(size = 32) %>% 
+  unnest() %>%
+  mutate(coa = ifelse(coa == 0, "coa = 0", "coa = 1")) %>%
+
+  ggplot(aes(x = age, y = alcuse, group = id)) +
+  stat_smooth(method = "lm", se = F, size = 1/4) +
+  coord_cartesian(xlim = 13:17,
+                  ylim = -1:4) +
+  theme(panel.grid = element_blank()) +
+  facet_wrap(~coa)
+```
+
+We have similar data wrangling needs for the bottom panels.
+
+```{r, fig.width = 5, fig.height = 3}
+set.seed(4)
+
+alcohol1_pp %>% 
+  group_by(id) %>% 
+  nest() %>% 
+  sample_n(size = 32) %>% 
+  unnest() %>%
+  mutate(hp = ifelse(peer < mean(peer), "low peer", "high peer")) %>%
+  mutate(hp = factor(hp, levels = c("low peer", "high peer"))) %>%
+
+  ggplot(aes(x = age, y = alcuse, group = id)) +
+  stat_smooth(method = "lm", se = F, size = 1/4) +
+  coord_cartesian(xlim = 13:17,
+                  ylim = -1:4) +
+  theme(panel.grid = element_blank()) +
+  facet_wrap(~hp)
+```
+
+Based on the exploratory analyses, Singer and Willett posit the initial level-2 submodel might take the form
+
+$$
+\begin{align*}
+\pi_{0i} & = \gamma_{00} + \gamma_{01} \text{coa}_i + \zeta_{0i}\\
+\pi_{1i} & = \gamma_{10} + \gamma_{11} \text{coa}_i + \zeta_{1i} \\
+
+\begin{bmatrix} \zeta_{0i} \\ \zeta_{1i} \end{bmatrix} & \sim \text{Normal} \Bigg ( 
+\begin{bmatrix} 0 \\ 0 \end{bmatrix}, 
+\begin{bmatrix} \sigma_0^2 & \sigma_{01}\\ \sigma_{01} & \sigma_1^2 \end{bmatrix}
+\Bigg )
+\end{align*}
+$$
+
+where $\gamma_{00}$ and $\gamma_{10}$ are the level-2 intercepts, the population averages when $\text{coa} = 0$, $\gamma_{10}$ and $\gamma_{11}$ are the level-2 slopes expressing the difference when $\text{coa} = 1$, $\zeta_{0i}$ and $\zeta_{1i}$ are the unexplained variation across the $\text{id}$-level intercepts and slopes.
+
+## 4.2 The composite specification of the multilevel model for change
+
+With a little algebra, we can combine the level-1 and level-2 submodels into the composite multilevel model for change, which follows the form
+
+$$
+\begin{align*}
+\text{alcuse}_{ij} & = \big [ \gamma_{00} + \gamma_{10} \text{age_14}_{ij} + \gamma_{01} \text{coa}_i + \gamma_{11} (\text{coa}_i \times \text{age_14}_{ij}) \big ] \\
+& \;\;\;\;\; + [ \zeta_{0i} + \zeta_{1i} \text{age_14}_{ij} + \epsilon_{ij} ] \\
+\epsilon_{ij} & \sim \text{Normal} (0, \sigma_\epsilon^2) \\
+
+\begin{bmatrix} \zeta_{0i} \\ \zeta_{1i} \end{bmatrix} & \sim \text{Normal} 
+\Bigg ( 
+\begin{bmatrix} 0 \\ 0 \end{bmatrix}, 
+\begin{bmatrix} \sigma_0^2 & \sigma_{01} \\ \sigma_{01} & \sigma_1^2 \end{bmatrix}
+\Bigg )
+\end{align*}
+$$
+
+where the brackets in the first line partition the structural model (i.e., the model for $\mu$) and the stochastic components (i.e., the $\sigma$ terms). We should note that this is the format that most closely mirrors what we use in the `formula` argument in `brms::brm()`. As long as `age` is not centered on the mean, our **brms** syntax would be: `formula = alcuse ~ 0 + intercept + age_c + coa + age_c:coa + (1 + age_c | id)`.
+
+### 4.2.1 The structural component of the composite model.
+
+> Although their interpretation is identical, the $\gamma$s in the composite model describe patterns of change in a different way. Rather than postulating first how *ALCUSE* is related to *TIME* and the individual growth parameters, and second how the individual growth parameters are related to *COA*, the composite specification in equation 4.3 postulates that *ALCUSE* depends *simultaneously* on: (1) the level-1 predictor, *TIME*; (2) the level-2 predictor, *COA*; and (3) the *cross-level* interaction, *COA* by *TIME*. From this perspective, the composite model’s structural portion strongly resembles a regular regression model with predictors, *TIME* and *COA*, appearing as main effects (associated with $\gamma_{10}$ and $\gamma_{01}$, respectively) and in a *cross-level* interaction (associated with $\gamma_{11}$). (p. 82, *emphasis* in the original)
+
+### 4.2.2 The stochastic component of the composite model.
+
+> A distinctive feature of the composite multilevel model is its composite residual, the three terms in the second set of brackets on the right of equation 4.3 that combine together the level-1 residual and the two level-2 residuals:
+>
+> $$\text{Composite residual: } [ \zeta_{0i} +  \zeta_{1i} \text{age_14}_{ij} + \epsilon_{ij} ].$$
+> The composite residual is not a simple sum. Instead, the second level-2 residual, $\zeta_{1i}$, is multiplied by the level-1 predictor, [$\text{age_14}_{ij}$], before joining its siblings. Despite its unusual construction, the interpretation of the composite residual is straightforward: it describes the difference between the observed and expected value of [$\text{alcuse}$] for individual $i$ on occasion $j$.
+>
+> The mathematical form of the composite residual reveals two important properties about the occasion-specific residuals not readily apparent in the level-1/level-2 specification: they can be both *autocorrelated* and *heteroscedastic* within person. (p. 84, *emphasis* in the original)
+
+## 4.3 Methods of estimation, revisited
+
+In this section, the authors introduced generalized least squares (GLS) estimation and iterative generalized least squares (IGLS) estimation and then distinguished between full and restricted maximum likelihood estimation. Since our goal is to fit these models as Bayesians, we won't be using or discussing any of these in this project. There are, of course, different ways to approach Bayesian estimation. E.g., though we're using Hamiltonian Monte Carlo, we could use other algorithms, such as the Gibbs sampler. However, all that is outside of the scope of this project.
+
+I suppose the only thing to add is that whereas GLS estimates come from mimimizing a weighted function of the residuals and maximum likelihood estimates come from maximizing the log-likelihood function, the results of our Bayesian analyses (i.e., the posterior distribution) come from the consequences of Bayes theorem:
+
+$$
+p(\theta | d) = \frac{p(d | \theta) p(\theta)}{p(d)}
+$$
+
+If you really want to dive into the details of this, I suggest referencing a proper introductory Bayesian textbook, such as McElreath ([2015](https://xcelab.net/rm/statistical-rethinking/)), Kruschke ([2014](http://www.indiana.edu/~kruschke/DoingBayesianDataAnalysis/)), or Gelman, Carlin, Stern, Dunson, Vehtari, and Rubin ([2013](http://www.stat.columbia.edu/~gelman/book/)). I haven't had time to check it out, but I've heard Labmert's ([2018](https://ben-lambert.com/a-students-guide-to-bayesian-statistics/)) text is good, too. And for details specific to **Stan**, and thus **brms**, you might check out the documentation resources at (https://mc-stan.org/users/documentation/)[https://mc-stan.org/users/documentation/].
+
+## 4.4 First steps: Fitting two unconditional multilevel models for change
+
+Singer and Willett recommended that before you fit your full theoretical multilevel model of change—you know; the one with all the interesting covariates—you should fit two simpler preliminary models. The first is the *unconditional means model*. The second is the *unconditional growth model*. 
+
+I agree. In addition to the reasons they cover in the text, this is just good pragmatic data analysis. Start simple and build up to the more complicated models only after you’re confident you understand what’s going on with the simpler ones. And if you’re new to them, you'll discover this is especially so with Bayesian methods. 
+
+### 4.4.1 The unconditional means model
+
+The unconditional means model follows the formula
+
+$$
+\begin{align*}
+\text{alcuse}_{ij} & =  \gamma_{00} +  \zeta_{0i} + \epsilon_{ij} \\
+\epsilon_{ij} & \sim \text{Normal} (0, \sigma_\epsilon^2) \\
+\zeta_{0i} & \sim \text{Normal} (0, \sigma_0^2)
+\end{align*}
+$$
+
+Let's open **brms**.
+
+```{r, warning = F, message = F}
+library(brms)
+```
+
+Up till this point, we haven’t focused on priors. It would have been reasonable to wonder if we’d been using them at all. Yes, we have. Even if you don’t specify your priors in `brm()`, it’ll compute default weakly-informative priors for you. You might be wondering, *What might these default priors look like?* The `get_prior()` function let us take a look.
+
+```{r}
+get_prior(data = alcohol1_pp, 
+          family = gaussian,
+          alcuse ~ 1 + (1 | id))
+```
+
+For this model, all three prior distributions are based on Student's $t$-distribution. In case you're rusty, the Normal distribution is just a special case of Student's $t$-distribution. Whereas the Normal is defined by two parameters ($\mu$ and $\sigma$), the $t$ distribution is defined by $\nu$, $\mu$, and $\sigma$. I frequentist circles, $\nu$ is often called the degrees of freedom. More generally, it's also sometimes referred to as a normality parameter. We'll esamine the prior more closely in a bit. 
+
+For now, let’s practice setting our priors by manually specifying them within `brm()`. You do with the `prior` argument. There are actually several ways to do this. To explore all the options, check out the `set_prior` section of the [Reference manual](https://cran.r-project.org/web/packages/brms/brms.pdf). I typically define my individual priors with the `prior()` function. When there are more than one priors to define, I typically bind them together within `c(...)`. 
+
+Other than the addition of our fancy `prior` statement, the rest of the settings within `brm()` are much like those in prior chapters. Let's fit the model.
+
+```{r fit1, cache = T, mesage = F, warning = F, results = "hide"}
+fit1 <-
+  brm(data = alcohol1_pp, 
+      family = gaussian,
+      alcuse ~ 1 + (1 | id),
+      prior = c(prior(student_t(3, 1, 10), class = Intercept),
+                prior(student_t(3, 0, 10), class = sd),
+                prior(student_t(3, 0, 10), class = sigma)),
+      iter = 2000, warmup = 1000, chains = 4, cores = 4,
+      seed = 4)
+```
+
+Here are the results.
+
+```{r}
+print(fit1)
+```
+
+Compare the results to those listed under "Model A" in Table 4.1. It's important to keep in mind that **brms** returns 'sigma' and 'sd(Intercept)' in the standard deviation metric rather than the variance metric. "*But I want them in the variance metric like in the text!*", you say. Okay fine. The best way to do the transformations is after saving the results from `posterior_samples()`.
+
+```{r}
+post <- posterior_samples(fit1)
+
+glimpse(post[, 1:12])
+```
+
+Since all we’re interested in are the variance components, we’ll `select()` out the relevant columns from `post`, compute the squared versions, and save the results in a mini data frame, `v`.
+
+```{r}
+v <-
+  post %>% 
+  select(sigma, sd_id__Intercept) %>% 
+  mutate(sigma_2_epsilon = sigma^2,
+         sigma_2_0       = sd_id__Intercept^2)
+
+head(v)
+```
+
+We can examine their distributions like this.
+
+```{r, fig.height = 3.25, fig.width = 6, warning = F, message = F}
+v %>% 
+  gather() %>% 
+  
+  ggplot(aes(x = value)) +
+  geom_vline(xintercept = c(.25, .5, .75, 1), color = "white") +
+  geom_density(size = 0, fill = "black") +
+  scale_x_continuous(NULL, limits = c(0, 1.25),
+                     breaks = seq(from = 0, to = 1.25, by = .25)) +
+  scale_y_continuous(NULL, breaks = NULL) +
+  theme(panel.grid = element_blank()) +
+  facet_wrap(~key, scales = "free_y")
+```
+
+In case it’s hard to follow what just happened, the estimates in the **brms**-default standard-deviation metric are the two panels on the top. Those on the bottom are in the Singer-and-Willett style variance metric. Like we discussed toward the end of last chapter, the variance parameters won't often be Gaussian. In my experience, they're typically skewed to the right. And there’s nothing wrong with that. It's the nature of distributions that cannot be negative.
+
+If you're interested, you can summarize them like so.
+
+```{r}
+v %>% 
+  gather() %>% 
+  group_by(key) %>% 
+  summarise(mean   = mean(value),
+            median = median(value),
+            sd     = sd(value),
+            ll     = quantile(value, prob = .025),
+            ul     = quantile(value, prob = .975)) %>% 
+  # this last bit just rounds the output
+  mutate_if(is.double, round, digits = 3)
+```
+
+For this model, our posterior medians are closer to the estimates in the text (Table 4.1) than the means. However, our posterior standard deviations are pretty close to the standard errors in the text.
+
+One of the advantages of our Bayesian method is that when we compute something like the intraclass correlation coefficient $\rho$, we get an entire distribution for the parameter rather than a measly point estimates. This is always the case with Bayes. The algebraic transformations of the posterior distribution are themselves distributions. Before we compute $\rho$, do pay close attention to the formulia:
+
+$$
+\rho = \frac{\sigma_0^2}{\sigma_0^2 + \sigma_\epsilon^2}
+$$
+
+Even though our **brms** output yields the variance parameters in the standard-deviation metric, the formula for $\rho$ demands we use variances. That's nothing a little squaring can’t fix. Here's what our $\rho$ looks like.
+
+```{r, fig.height = 2.25, fig.width = 3.5}
+v %>%
+  transmute(rho = sd_id__Intercept^2 / (sd_id__Intercept^2 + sigma^2)) %>% 
+  
+  ggplot(aes(x = rho)) +
+  geom_density(size = 0, fill = "black") +
+  scale_x_continuous(expression(rho), limits = 0:1) +
+  scale_y_continuous(NULL, breaks = NULL) +
+  theme(panel.grid = element_blank())
+```
+
+So even though it is indeed centered around .5, look at how wide and uncertain the distribution is. The bulk of the posterior mass takes up almost half of the parameter space. If you wanted the summary statistics, you might do what we did for the variance parameters, above.
+
+```{r}
+v %>%
+  transmute(rho = sd_id__Intercept^2 / (sd_id__Intercept^2 + sigma^2)) %>% 
+  summarise(mean   = mean(rho),
+            median = median(rho),
+            sd     = sd(rho),
+            ll     = quantile(rho, prob = .025),
+            ul     = quantile(rho, prob = .975)) %>% 
+  mutate_if(is.double, round, digits = 3)
+```
+
+Concerning $\rho$, Singer and Willett pointed out
+
+> it summarizes the size of the residual autocorrelation in the composite unconditional means mode...
+>
+> ...Each person has a different composite residual on each occasion of measurement. But notice the difference in the subscripts of the pieces of the composite residual: while the level-1 residual, $\epsilon_{ij}$ has two subscripts ($i$ and $j$), the level-2 residual, $\zeta_{0i}$, has only one ($i$). Each person can have a different $\epsilon_{ij}$ on each occasion, but has only one $\zeta_{0i}$ across every occasion. The repeated presence of $\zeta_{0i}$ in individual $i$’s composite residual links his or her composite residuals across occasions. The error autocorrelation coefficient quantifies the magnitude of this linkage; in the unconditional means model, the error autocorrelation coefficient *is* the intraclass correlation coefficient. Thus, we estimate that, for each person, the average correlation between any pair of composite residuals--between occasions 1 and 2, or 2 and 3, or 1 and 3--is [.5]. (pp. 96--97, *emphasis* in the original)
+
+Because of the differences in how they’re estimated with and presented by `brm()`, focused right on the variance components. But before we move on to the next section, we should back up a bit. On page 93, Singer and Willett discussed their estimate for $\gamma_{00}$. Here’s ours.
+
+```{r}
+fixef(fit1)
+```
+
+They talked about how squaring that value puts it back to the natural metric the data were originally collected in. [Recall that as discussed earlier in the text the `alcuse` variable was square-root transformed because of excessive skew.] If you want a quick and dirty look, you can square our results, too.
+
+```{r}
+fixef(fit1)^2 
+```
+
+However, I do not recommend this method. Though it did okay at transforming the posterior mean (i.e., Estimate), it’s not a great way to get the summary statistics correct. To do that, you’ll need to work with the posterior samples themselves. Remember how we saved them as `post`? Let’s refresh ourselves and look at the first few columns.
+
+```{r}
+post[, 1:3]
+```
+
+See that `b_Intercept` column there? That contains our posterior draws from $\gamma_{00}$. If you want proper summary statistics from the transformed estimate, get them after transforming that column.
+
+```{r}
+post %>% 
+  transmute(gamma_00_squared = b_Intercept^2) %>% 
+  summarise(mean   = mean(gamma_00_squared),
+            median = median(gamma_00_squared),
+            sd     = sd(gamma_00_squared),
+            ll     = quantile(gamma_00_squared, prob = .025),
+            ul     = quantile(gamma_00_squared, prob = .975)) %>%
+  mutate_if(is.double, round, digits = 3) %>% 
+  gather(statistic_for_gamma_00_squared, estimate)
+```
+
+And one last bit before we move on to the next section. Remember how we discovered what the `brm()`-default priors were for our model with the handy `get_prior()` function?. Let’s refresh ourselves on how that worked.
+
+```{r}
+get_prior(data = alcohol1_pp, 
+          family = gaussian,
+          alcuse ~ 1 + (1 | id))
+```
+
+We inserted the data and the model and `get_prior()` returned the default priors. Especially for new Bayesians, or even for experienced Bayesians working with unfamiliar models, it can be handy to plot your priors to get a sense of them.
+
+Base **R** has an array of functions based on the $t$ distribution (e.g., `rt()`, `dt()`). But they’re limited in that while they allow users to select the desired $\nu$ values (i.e., degrees of freedom), they fix $\mu = 0$ and $\sigma = 1$. Now there are tricky ways around this. But so as to avoid overwhelming anyone new to Bayes or the multilevel model or **R** or some exasperating combination, let's just make things simpler and use a different function. As it turns out, the [**metrology** package](https://cran.r-project.org/web/packages/metRology/index.html) contains a `dt.scaled()` function that allows users to define all three parameters for Student's $t$.
+
+We'll start with the default intercept prior, $t(\nu = 3, \mu = 1, \sigma = 10)$. Here's the density in the range $[-100, 100]$.
+
+```{r, fig.width = 4}
+tibble(x = seq(from = -100, to = 100, length.out = 1e3)) %>%
+  mutate(density = metRology::dt.scaled(x, df = 3, mean = 1, sd = 10)) %>% 
+  
+  ggplot(aes(x = x, y = density)) +
+  geom_vline(xintercept = 0, color = "white") +
+  geom_line() +
+  labs(title = expression(paste("prior for ", gamma[0][0])),
+       x = "parameter space") +
+  theme(panel.grid = element_blank())
+```
+
+Though it's centered on 1, the bulk of the mass seems to range from -40 to 40. Given the model estimate ended up about 0.9, it looks like that was a pretty broad and minimally-informative prior. However, the prior isn't flat and it does help guard against wasting time and iterations sampling from ridiculous regions of the parameter space such as -10,000 or +500,000,000. No adolescent is drinking that much (or that little--how does one drink a negative value?).
+
+Here's the shape of the variance priors.
+
+```{r, fig.width = 4}
+tibble(x = seq(from = 0, to = 100, length.out = 1e3)) %>%
+  mutate(density = metRology::dt.scaled(x, df = 3, mean = 0, sd = 10)) %>% 
+  
+  ggplot(aes(x = x, y = density)) +
+  geom_vline(xintercept = 0, color = "white") +
+  geom_line() +
+  labs(title = expression(paste("prior for both ", sigma[0], " and ", sigma[epsilon])),
+       x = "parameter space") +
+  theme(panel.grid = element_blank())
+```
+
+Recall that by **brms** default, the variance parameters have a lower-limit of 0. So specifying a Student’s $t$ or other Gaussian-like prior on them ends up cutting the distribution off at 0. Given that our estimates, and those presented in the text, were both below 1, it appears that these priors were minimally informative. But again, they did help prevent `brm()` from sampling from negative values or from obscenely-large values.
+
+*These priors look kinda silly*, you might say. *Anyone with a little common sense can do better*. Well, sure. Probably. Maybe. But keep in mind we're still getting the layout of the land. And plus, this was a pretty simple model. Selecting high-quality priors gets tricky as the models get more complicated. In other chapters, we'll explore other ways to specify priors for our multilevel models. But to keep things simple for now, let's keep practicing inspecting and using the defaults with `get_prior()` and so on.
+
+### 4.4.2 The unconditional growth model
+
+Using the composite formula, our next model, the unconditional growth model, follows the form
+
+$$
+\begin{align*}
+\text{alcuse}_{ij} & = \gamma_{00} + \gamma_{10} \text{age_14}_{ij} + \zeta_{0i} + \zeta_{1i} \text{age_14}_{ij} + \epsilon_{ij} \\
+\epsilon_{ij} & \sim \text{Normal} (0, \sigma_\epsilon^2) \\
+\begin{bmatrix} \zeta_{0i} \\ \zeta_{1i} \end{bmatrix} & \sim \text{Normal} 
+\Bigg ( 
+\begin{bmatrix} 0 \\ 0 \end{bmatrix}, 
+\begin{bmatrix} \sigma_0^2 & \sigma_{01} \\ \sigma_{01} & \sigma_1^2 \end{bmatrix}
+\Bigg )
+\end{align*}
+$$
+
+With it, we now have a full composite stochastic model. Let's query the `brms::brm()` default priors when we apply this model to our data.
+
+```{r}
+get_prior(data = alcohol1_pp, 
+          family = gaussian,
+          alcuse ~ 0 + intercept + age_14 + (1 + age_14 | id))
+```
+
+Several things of note. First, notice how we continue to use the `student_t(3, 0, 10)` for all three of our standard-deviation-metric variance parameters. Since we’re now estimating $\sigma_0$ and $\sigma_1$, which themselves have a correlation, $\sigma_{01}$, we have a prior for the class `cor`. I’m going to put off what is meant by the name `lkj`, but for the moment just realize that this prior is essentially noninformative within this context.
+
+There’s a major odd development with this output. Notice how there’s the `prior` column is empty for the rows for our two coefficients of class `b`. And if you’re a little confused, recall that because our predictor `age_14` is not mean-centered, we’ve used the `0 + intercept` syntax, which switches the model intercept parameter to the class of `b`. Anyway, it might seem odd that the `prior` values for those rows are blank. From the `set_prior` section of the Reference manual for **brms** version 2.9.0, we read: “The default prior for population-level effects (including monotonic and category specific effects) is an improper flat prior over the reals” (p. 150). At present, these priors are uniform across the entire parameter space. They’re not just weak, their entirely noninformative. That is, for those parameters, the likelihood dominates the posterior. 
+
+Here’s how to fit the model with these priors.
+
+```{r fit2, cache = T, warning = F, message = F, results = "hide"}
+fit2 <-
+  brm(data = alcohol1_pp, 
+      family = gaussian,
+      alcuse ~ 0 + intercept + age_14 + (1 + age_14 | id),
+      prior = c(prior(student_t(3, 0, 10), class = sd),
+                prior(student_t(3, 0, 10), class = sigma),
+                prior(lkj(1), class = cor)),
+      iter = 2000, warmup = 1000, chains = 4, cores = 4,
+      seed = 4)
+```
+
+How did we do?
+
+```{r}
+print(fit2, digits = 3)
+```
+
+If your compare our results with those in the "Model B" column in Table 4.1, you'll see our summary results match well with those in the text. Our $\gamma$s (i.e., 'Population-Level Effects:') are near identical. As far as our stochastic elements, let's do the conversions and see how they compare with Singer and Willett's.
+
+```{r}
+post <- posterior_samples(fit2)
+
+v <-
+  post %>% 
+  transmute(sigma_2_epsilon = sigma^2,
+            sigma_2_0       = sd_id__Intercept^2,
+            sigma_2_1       = sd_id__age_14^2,
+            sigma_01        = sd_id__Intercept * cor_id__Intercept__age_14 * sd_id__age_14)
+
+head(v)
+```
+
+This time, our `v` object only contains the stochastic components in the variance metric. Let's plot.
+
+```{r, fig.height = 3.25, fig.width = 6, warning = F, message = F}
+v %>% 
+  gather() %>% 
+  
+  ggplot(aes(x = value)) +
+  geom_density(size = 0, fill = "black") +
+  scale_y_continuous(NULL, breaks = NULL) +
+  theme(panel.grid = element_blank()) +
+  facet_wrap(~key, scales = "free")
+```
+
+For each, their posterior mass is centered near the point estimates Singer and Willet reported in the text. Here are the summary statistics.
+
+```{r}
+v %>% 
+  gather() %>% 
+  group_by(key) %>% 
+  summarise(mean   = mean(value),
+            median = median(value),
+            sd     = sd(value),
+            ll     = quantile(value, prob = .025),
+            ul     = quantile(value, prob = .975)) %>% 
+  mutate_if(is.double, round, digits = 3)
+```
+
+Quite comparable to those in the text.
+
+
+
+
+###4.4.3 Quantifying the proportion of outcome variation "explained"
+
+#### An overall summary of total outcome variability explained
+
+```{r}
+post_4.2 <- posterior_samples(b4.2)
+
+post_4.2 %>%
+  mutate(Y_i1 = b_Intercept + b_age_14*0,
+         Y_i2 = b_Intercept + b_age_14*1,
+         Y_i3 = b_Intercept + b_age_14*2) %>%
+  select(Y_i1:Y_i3) %>%
+  gather() %>%
+  group_by(key) %>%
+  summarise(median = median(value) %>% round(digits = 3),
+            LL = quantile(value, probs = .025) %>% round(digits = 3),
+            UL = quantile(value, probs = .975) %>% round(digits = 3))
+```
+
+#### Pseudo-*R*^2^ statistics computed from the variance components
+
+```{r}
+post_4.1 %>%
+  mutate(R2_e = (sigma^2 - post_4.2$sigma^2)/sigma^2) %>%
+  summarise(median = median(R2_e) %>% round(digits = 3),
+            LL = quantile(R2_e, probs = .025) %>% round(digits = 3),
+            UL = quantile(R2_e, probs = .975) %>% round(digits = 3))
+```
+
+###4.5.2 Interpreting fitted models
+
+#### Model C: The uncontrolled effects of COA
+
+```{r, warning = F, message = F}
+b4.3 <-
+  brm(data = alcohol1, family = gaussian,
+      alcuse ~ 1 + age_14 + coa + age_14:coa + (1 + age_14 | id),
+      prior = c(set_prior("normal(0, 10)", class = "Intercept"),
+                set_prior("normal(0, 10)", class = "b"),
+                set_prior("cauchy(0, 1)", class = "sd"),
+                set_prior("cauchy(0, 1)", class = "sigma"),
+                set_prior("lkj(4)", class = "cor")),
+      iter = 2000, warmup = 500, chains = 4, cores = 4)
+```
+
+```{r}
+print(b4.3)
+```
+
+#### Model D: The controlled effects of COA
+
+```{r, warning = F, message = F}
+b4.4 <-
+  brm(data = alcohol1, family = gaussian,
+      alcuse ~ 1 + age_14 + coa + peer + age_14:coa + age_14:peer + (1 + age_14 | id),
+      prior = c(set_prior("normal(0, 10)", class = "Intercept"),
+                set_prior("normal(0, 10)", class = "b"),
+                set_prior("cauchy(0, 1)", class = "sd"),
+                set_prior("cauchy(0, 1)", class = "sigma"),
+                set_prior("lkj(4)", class = "cor")),
+      iter = 2000, warmup = 500, chains = 4, cores = 4)
+```
+
+```{r}
+print(b4.4)
+```
+
+#### Model E: A tentative "final model" for the controlled effects of coa
+
+```{r, warning = F, message = F}
+b4.5 <-
+  brm(data = alcohol1, family = gaussian,
+      alcuse ~ 1 + age_14 + coa + peer + age_14:peer + (1 + age_14 | id),
+      prior = c(set_prior("normal(0, 10)", class = "Intercept"),
+                set_prior("normal(0, 10)", class = "b"),
+                set_prior("cauchy(0, 1)", class = "sd"),
+                set_prior("cauchy(0, 1)", class = "sigma"),
+                set_prior("lkj(4)", class = "cor")),
+      iter = 2000, warmup = 500, chains = 4, cores = 4)
+```
+
+```{r}
+print(b4.5)
+```
+
+###4.5.3 Displaying prototypical change trajectories
+
+```{r}
+post_4.3 <- posterior_samples(b4.3)
+
+post_4.3 <-
+  post_4.3 %>%
+  mutate(pi_0i_coa0 = b_Intercept + b_coa*0,
+         pi_1i_coa0 = b_age_14 + `b_age_14:coa`*0,
+         pi_0i_coa1 = b_Intercept + b_coa*1,
+         pi_1i_coa1 = b_age_14 + `b_age_14:coa`*1) 
+
+post_4.3 %>%
+  select(pi_0i_coa0:pi_1i_coa1) %>%
+  gather() %>%
+  group_by(key) %>%
+  summarise(posterior_mean = mean(value) %>% round(digits = 3))
+```
+
+```{r, fig.height = 3.5, fig.width = 2.5}  
+nd <- 
+  tibble(age_14 = seq(from = 0, to = 2, length.out = 30))
+
+ftd_4.2 <- 
+  fitted(b4.2, 
+         newdata = nd,
+         re_formula = NA) %>%
+  as_tibble() %>%
+  bind_cols(nd)
+
+ftd_4.2 %>%
+  ggplot(aes(x = age_14, y = Estimate,
+             ymin = `2.5%ile`, ymax = `97.5%ile`)) +
+  geom_ribbon(fill = "grey75", alpha = 3/4) +
+  geom_line() +
+  scale_x_continuous(breaks = -1:3,
+                     labels = 13:17) +
+  scale_y_continuous(breaks = 0:2) +
+  coord_cartesian(xlim = -1:3,
+                  ylim = 0:2) +
+  labs(x = "age", y = "alcuse") +
+  theme(panel.grid = element_blank())
+```  
+
+
+
+
+
+
+
+```{r, fig.height = 3.5, fig.width = 2.5}  
+nd <- 
+  tibble(age_14 = rep(seq(from = 0, to = 2, length.out = 30),
+                      times = 2),
+         coa = rep(0:1, each = 30))
+
+ftd_4.3 <- 
+  fitted(b4.3, 
+         newdata = nd,
+         re_formula = NA) %>%
+  as_tibble() %>%
+  bind_cols(nd)
+
+ftd_4.3 %>%
+  ggplot(aes(x = age_14, y = Estimate,
+             ymin = `2.5%ile`, ymax = `97.5%ile`,
+             group = coa)) +
+  geom_ribbon(fill = "grey75", alpha = 1/2) +
+  geom_line() +
+  annotate("text", x = 2.6, y = .90, label = "coa = 0") + 
+  annotate("text", x = 2.6, y = 1.55, label = "coa = 1") +
+  scale_x_continuous(breaks = -1:3,
+                     labels = 13:17) +
+  scale_y_continuous(breaks = 0:2) +
+  coord_cartesian(xlim = -1:3,
+                  ylim = 0:2) +
+  labs(x = "age", y = "alcuse") +
+  theme(panel.grid = element_blank())
+```  
+
+```{r, fig.height = 3.95, fig.width = 4.6}  
+nd <- 
+  tibble(age_14 = rep(seq(from = 0, to = 2, length.out = 30),
+                      times = 4),
+         coa = rep(c(0:1, 0:1), each = 30),
+         peer = rep(c(.655, 1.381), each = 30*2))
+
+ftd_4.5 <- 
+  fitted(b4.5, 
+         newdata = nd,
+         re_formula = NA) %>%
+  as_tibble() %>%
+  bind_cols(nd) %>%
+  mutate(group = rep(letters[1:4], each = 30))
+
+ftd_4.5 %>%
+  mutate(coa = ifelse(coa == 0, "coa = 0", "coa = 1")) %>%
+  
+  ggplot(aes(x = age_14, y = Estimate,
+             ymin = `2.5%ile`, ymax = `97.5%ile`,
+             group = group, 
+             color = peer %>% as.factor(), 
+             fill = peer %>% as.factor())) +
+  geom_ribbon(size = 0, alpha = 1/4) +
+  geom_line(aes(size = peer %>% as.factor())) +
+  scale_size_manual(values = c(1/2, 1)) +
+  scale_color_manual(values = c("blue3", "red3")) +
+  scale_fill_manual(values = c("blue3", "red3")) +
+  scale_x_continuous(breaks = -1:3,
+                     labels = 13:17) +
+  scale_y_continuous(breaks = 0:2) +
+  coord_cartesian(xlim = -1:3,
+                  ylim = 0:2) +
+  labs(subtitle = "High peer values are in red, low ones are in blue",
+       x = "age", y = "alcuse") +
+  theme(panel.grid = element_blank(),
+        legend.position = "none") +
+  facet_wrap(~coa)
+```  
+
+```{r, warning = F, message = F}
+b4.6 <-
+  brm(data = alcohol1, family = gaussian,
+      alcuse ~ 1 + age_14 + coa + cpeer + age_14:cpeer + (1 + age_14 | id),
+      prior = c(set_prior("normal(0, 10)", class = "Intercept"),
+                set_prior("normal(0, 10)", class = "b"),
+                set_prior("cauchy(0, 1)", class = "sd"),
+                set_prior("cauchy(0, 1)", class = "sigma"),
+                set_prior("lkj(4)", class = "cor")),
+      iter = 2000, warmup = 500, chains = 4, cores = 4)
+
+b4.7 <-
+  brm(data = alcohol1, family = gaussian,
+      alcuse ~ 1 + age_14 + ccoa + cpeer + age_14:cpeer + (1 + age_14 | id),
+      prior = c(set_prior("normal(0, 10)", class = "Intercept"),
+                set_prior("normal(0, 10)", class = "b"),
+                set_prior("cauchy(0, 1)", class = "sd"),
+                set_prior("cauchy(0, 1)", class = "sigma"),
+                set_prior("lkj(4)", class = "cor")),
+      iter = 2000, warmup = 500, chains = 4, cores = 4)
+```
+
+```{r}
+library(stringr)
+
+tidy(b4.5) %>%
+  filter(str_detect(term , "b_")) %>%
+  mutate_if(is.numeric, round, digits = 2)
+
+tidy(b4.6) %>%
+  filter(str_detect(term , "b_")) %>%
+  mutate_if(is.numeric, round, digits = 2)
+
+tidy(b4.7) %>%
+  filter(str_detect(term , "b_")) %>%
+  mutate_if(is.numeric, round, digits = 2)
+```
+
+##4.6 Comparing models using deviance statistics
+
+###4.6.3 Implementing deviance-based hypothesis tests
+
+Since we're within the Bayesian paradigm, we'll leave this one to the frequentists.
+
+###4.6.4 ~~AIC and BIC~~ WAIC and LOO statistics: Comparing nonnested models using information criteria
+
+```{r, warning = F, message = F}
+waic(b4.1, b4.2, b4.3, b4.4, b4.5, b4.6, b4.7)
+loo(b4.1, b4.2, b4.3, b4.4, b4.5, b4.6, b4.7)
+```
+
+##4.7 Using Wald statistics to test composite hypotheses about fixed effects
+
+This section is more appropriate from a frequentist perspective than it is from a Bayesian one. However, readers insistent in such methods might consult the brms reference manual for the section on `brms::hypothesis()`.
+
+##4.8 Evaluating the tenability of a model's assumptions
+
+```{r}
+post_4.5 <- posterior_samples(b4.5)
+
+coef(b4.5)$id[, , "Intercept"] %>%
+  rbind(coef(b4.5)$id[, , "age_14"]) %>%
+  as_tibble() %>%
+  mutate(id = rep(1:82, times = 2),
+         parameter = rep("Intercept"))
+```
+
+```{r}
+post_4.3 <-
+  post_4.3 %>%
+  mutate(pi_0i_coa0 = b_Intercept + b_coa*0,
+         pi_1i_coa0 = b_age_14 + `b_age_14:coa`*0,
+         pi_0i_coa1 = b_Intercept + b_coa*1,
+         pi_1i_coa1 = b_age_14 + `b_age_14:coa`*1) 
+
+
+post_4.5 %>% 
+  select(`r_id[1,Intercept]`:`r_id[82,Intercept]`) %>%
+  gather() %>%
+  mutate(coa = c(rep(alcohol1$coa[ , ]
+                   ))
+b4.5$formula
+```
+  
+```{r}  
+nd <- 
+  tibble(age_14 = rep(seq(from = 0, to = 2, length.out = 30),
+                      times = 4),
+         coa = rep(c(0:1, 0:1), each = 30),
+         peer = rep(c(.655, 1.381), each = 30*2))
+
+ftd_4.5 <- 
+  fitted(b4.5, 
+         newdata = nd,
+         re_formula = NA) %>%
+  as_tibble() %>%
+  bind_cols(nd) %>%
+  mutate(group = rep(letters[1:4], each = 30))
+    
+```
+
+
+
+
+
+
+
+
+
+
+
+## Reference {-}
+
+[Singer, J. D., & Willett, J. B. (2003). *Applied longitudinal data analysis: Modeling change and event occurrence*. New York, NY, US: Oxford University Press.](https://www.oxfordscholarship.com/view/10.1093/acprof:oso/9780195152968.001.0001/acprof-9780195152968)
+
+## Session info {-}
+
+```{r}
+sessionInfo()
+```
+
+```{r, echo = F, eval = F}
+# here we'll remove our objects
+rm(early_int, early_int_sim, d, fit1, f, path, text, arrow, by_id, n, nd, p, math, fit2, post, sigma, mu, z, g)
+
+theme_set(theme_grey())
+```
