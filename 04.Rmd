@@ -434,7 +434,23 @@ How did we do?
 print(fit2, digits = 3)
 ```
 
-If your compare our results with those in the "Model B" column in Table 4.1, you'll see our summary results match well with those in the text. Our $\gamma$s (i.e., 'Population-Level Effects:') are near identical. As far as our stochastic elements, let's do the conversions and see how they compare with Singer and Willett's.
+If your compare our results with those in the "Model B" column in Table 4.1, you'll see our summary results match well with those in the text. Our $\gamma$s (i.e., 'Population-Level Effects:') are near identical. The leftmost panel in Figure 4.3 shows the prototypical trajectory, based on the $\gamma$s. A quick way to get that within our **brms** framework is with the `marginal_effects()` function. Here's the default output.
+
+```{r, fig.width = 2.5, fig.height = 3}
+marginal_effects(fit2)
+```
+
+Staying with `marginal_effects()` allows users some flexibility for customizing the plot(s). For example, the default behavior is depict the trajectory in terms of its 95% intervals and posterior median. If you'd prefer the 80% intervals and the posterior mean, customize it like so.
+
+```{r, fig.width = 2.5, fig.height = 3}
+marginal_effects(fit2,
+                 robust = F,
+                 probs = c(.1, .9))
+```
+
+We'll explore more options with `brms::marginal_effects()` in a bit.
+
+For now, let's turn our focus on the stochastic elements in the model. Here we extract the posterior samples and do the conversions to see how they compare with Singer and Willett's.
 
 ```{r}
 post <- posterior_samples(fit2)
@@ -476,12 +492,191 @@ v %>%
   mutate_if(is.double, round, digits = 3)
 ```
 
-Quite comparable to those in the text.
+Happily, they're quite comparable to those in the text.
 
+We’ve been pulling the posterior samples for all parameters with `posterior_samples()` and subsetting to a few variables of interest, such as the variance parameters. But it our primary interest is just the iterations for the variance parameters, we can extract them in a more focused way with `VarCorr()`. Here’s how we’d do so for `fit2`.
 
+```{r}
+VarCorr(fit2,
+        summary = F) %>% 
+  str()
+```
 
+That last part, the contents of the second higher-level list indexed by `$ residual`, contains the contents for $\sigma_\epsilon$. On pate 100 in the text, Singer and Willett compared $\sigma_\epsilon^2$ from the first model to that from the second. We might do that like so.
+
+```{r, fig.width = 8, fig.height = 2.25}
+cbind(VarCorr(fit1, summary = F)[[2]][[1]],
+      VarCorr(fit2, summary = F)[[2]][[1]]) %>% 
+  data.frame() %>% 
+  mutate_all(~.^2) %>% 
+  set_names(str_c("fit", 1:2)) %>% 
+  mutate(`fit1 - fit2` = fit1 - fit2) %>% 
+  gather() %>% 
+  mutate(key = factor(key, levels = c("fit1", "fit2", "fit1 - fit2"))) %>% 
+  
+  ggplot(aes(x = value)) +
+  geom_vline(xintercept = .5, color = "white") +
+  geom_density(fill = "grey25", color = "transparent") +
+  scale_y_continuous(NULL, breaks = NULL) +
+  xlab(expression(sigma[epsilon]^2)) +
+  theme(panel.grid = element_blank()) +
+  facet_wrap(~key, scales = "free_y", ncol = 3)
+```
+
+To compute a formal summary of the decline in $\sigma_\epsilon^2$ after adding time to the model, we might summarize like before.
+
+```{r}
+cbind(VarCorr(fit1, summary = F)[[2]][[1]],
+      VarCorr(fit2, summary = F)[[2]][[1]]) %>% 
+  data.frame() %>% 
+  mutate_all(~.^2) %>% 
+  set_names(str_c("fit", 1:2)) %>% 
+  mutate(proportion_decline = (fit1 - fit2) / fit1) %>% 
+  summarise(mean   = mean(proportion_decline),
+            median = median(proportion_decline),
+            sd     = sd(proportion_decline),
+            ll     = quantile(proportion_decline, prob = .025),
+            ul     = quantile(proportion_decline, prob = .975)) %>%
+  mutate_if(is.double, round, digits = 3)
+```
+
+In case it wasn't clear, when we presented `fit1 – fit2` in the density plot, that was a simple difference score. However, we computed `proportion_decline` above by dividing that difference score by `fit1`; that's what put the difference in a proportion metric. Anyway, Singer and Willett's method led them to summarize the decline as .40. Our method was a more conservative .35 ish. And very happily, our method allows us to describe the proportion decline with summary statistics for the full posterior, such as with the $SD$ and the 95% intervals.
+
+```{r, fig.width = 6, fig.height = 2}
+post %>% 
+  ggplot(aes(x = cor_id__Intercept__age_14)) +
+  geom_vline(xintercept = 0, color = "white") +
+  geom_density(fill = "grey25", color = "transparent") +
+  scale_y_continuous(NULL, breaks = NULL) +
+  scale_x_continuous(expression(rho[0][1]), limits = c(-1, 1)) +
+  theme(panel.grid = element_blank())
+```
+
+The estimate Singer and Willett hand-computed in the text, -.22, is near the mean of our posterior distribution for $\rho_{01}$. However, our distribution provides a full expression of the uncertainty in the parameter. As are many other values within the parameter space, zero is indeed a credible value for $\rho_{01}$.
+
+On page 101, we get the generic formula for computing the residual variance for a given occasion $j$:
+
+$$
+\sigma_\text{Residual_j}^2 = \sigma_0^2 + \sigma_1^2 \text{time}_j + 2 \sigma_{01} \text{time}_j + \sigma_\epsilon^2
+$$
+
+If we were just interested in applying it to one of our `age` values, say 14, we might apply the formula to the posterior like this.
+
+```{r}
+post %>% 
+  transmute(sigma_2_residual_j = sd_id__Intercept^2 + sd_id__age_14^2 * 0 + 2 * sd_id__Intercept * cor_id__Intercept__age_14 * sd_id__age_14 * 0 + sigma^2) %>% 
+  head()
+```
+
+But given we’d like to do so over several values of `age`, it might be better to wrap the equation in a custom function. Let’s call it `make_s2rj()`.
+
+```{r}
+make_s2rj <- function(x) {
+  post %>% 
+  transmute(sigma_2_residual_j = sd_id__Intercept^2 + sd_id__age_14^2 * x + 2 * sd_id__Intercept * cor_id__Intercept__age_14 * sd_id__age_14 * x + sigma^2) %>% 
+    pull()
+}
+```
+
+Now we can put our custom `make_s2rj()` function to work within the `purrr::map()` paradigm. We'll plot the results.
+
+```{r, fig.width = 6, fig.height = 4}
+tibble(age = 14:16) %>% 
+  mutate(age_c = age - 14) %>% 
+  mutate(s2rj = map(age_c, make_s2rj)) %>% 
+  unnest(s2rj) %>% 
+  mutate(label = str_c("age = ", age)) %>% 
+  
+  ggplot(aes(x = s2rj)) +
+  geom_density(fill = "grey25", color = "transparent") +
+  geom_vline(xintercept = 1, color = "white") +
+  scale_y_continuous(NULL, breaks = NULL) +
+  labs(title = "Behold the shape of longitudinal heteroscedasticity.",
+       x = expression(sigma[italic(Residual[j])]^2)) +
+  theme(panel.grid = element_blank()) +
+  facet_wrap(~label, scales = "free_y", ncol = 1)
+```
+
+We see a subtle increase over time, particularly from `age = 15` to `age = 16`. Yep, that's heteroscedasticity. It is indeed "beyond the bland homoscedasticity we assume of residuals in cross-sectional data" (p. 101).
+
+We might also be interested in computing the autocorrelation between the composite residuals on occasions $j$ and $j’$, which follows the formula
+
+$$
+\rho_{\text{Residual}_j, \text{Residual}_{j'}} = \frac{\sigma_0^2 + \sigma_{01} (\text{time}_j + \text{time}_{j'}) + \sigma_1^2 \text{time}_j \text{time}_{j'}} {\sqrt{\sigma_\text{Residual_j}^2 \sigma_\text{Residual_{j'}}^2 }}
+$$
+
+We only want to do that by hand once. Let's make a custom function following the formula.
+
+```{r}
+make_rho_rj_rjp <- function(j, jp) {
+  
+  # define the elements in the denominator  
+  s2rj_j  <- make_s2rj(j)
+  s2rj_jp <- make_s2rj(jp)
+  
+  # compute
+  post %>% 
+    transmute(r = (sd_id__Intercept^2 + 
+                     sd_id__Intercept * cor_id__Intercept__age_14 * sd_id__age_14 * (j + jp) + 
+                     sd_id__age_14^2 * j * jp) /
+                sqrt(s2rj_j * s2rj_jp)) %>% 
+    pull()
+}
+```
+
+If you only cared about measures of central tendency, such as the posterior median, you could use the funciton like this.
+
+```{r}
+make_rho_rj_rjp(0, 1) %>% median()
+make_rho_rj_rjp(1, 2) %>% median()
+make_rho_rj_rjp(0, 2) %>% median()
+```
+
+Here are the full posteriors.
+
+```{r}
+tibble(occasion = 1:3) %>% 
+  mutate(age_c  = occasion - 1,
+         j      = c(1, 2, 1) - 1,
+         jp     = c(2, 3, 3) - 1) %>% 
+  mutate(r = map2(j, jp, make_rho_rj_rjp)) %>% 
+  unnest(r) %>% 
+  mutate(label = str_c("occasions ", j + 1, " and ", jp + 1)) %>% 
+  
+  ggplot(aes(x = r)) +
+  geom_vline(xintercept = c(.5, .75), color = "white") +
+  geom_density(fill = "grey25", color = "transparent") +
+  scale_x_continuous(expression(rho[Residual[italic(j)]][Residual[italic(j*minute)]]), limits = c(0, 1)) +
+  scale_y_continuous(NULL, breaks = NULL) +
+  ggtitle("Behold the shapes of our autocorrelations.") +
+  theme(panel.grid = element_blank()) +
+  facet_wrap(~label, scales = "free_y", ncol = 1)
+```
 
 ###4.4.3 Quantifying the proportion of outcome variation "explained"
+
+```{r}
+me <- marginal_effects(fit2)
+
+str(me)
+```
+
+
+```{r, fig.width = 2.5, fig.height = 3}
+me <- marginal_effects(fit2)
+
+plot(me, 
+     points = T, 
+     point_args = list(size = 1/4, alpha = 1/4, width = .2, height = .075),
+     plot = FALSE)[[1]] + 
+  scale_x_continuous("age", 
+                     limits = c(-1, 3),
+                     labels = 13:17) +
+  scale_y_continuous(limits = c(0, 2),
+                     breaks = 0:2) +
+  theme(panel.grid = element_blank())
+```
+
 
 #### An overall summary of total outcome variability explained
 
