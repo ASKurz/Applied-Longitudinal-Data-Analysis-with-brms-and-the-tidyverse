@@ -1343,31 +1343,31 @@ However, in contemporary Bayesian practice we don't tend to compare models with 
 
 In this project, we are not going to practice comparing deviances using frequentist $\chi^2$ tests. We will, however, cover Bayesian information criteria.
 
-### 4.6.4 ~~AIC and BIC~~ WAIC and LOO statistics: Comparing nonnested models using information criteria.
+### 4.6.4 ~~AIC and BIC~~ WAIC and LOO statistics: Comparing nonnested models using information criteria [and cross validation].
 
-We do not use the AIC or the BIC within the **Stan** ecosystem. The AIC is frequentist and cannot handle models with priors. The BIC is interesting is it’s a double misnomer. It is neither Bayesian nor is it a proper information criterion—though it does scale like one. However, it might be useful to walk out the ACI a bit. It'll ground our discussion of more recent advances. From [Spiegelhalter, Best, Carlin and van der Linde (2014)](https://www.jstor.org/stable/pdf/24774528.pdf?casa_token=cOkknddLwBsAAAAA:nwbGR1IDJtZHzGmhEUDJBLfELsSJUzgTR_r5j_gur7goLCihSBVdFhXeCZVxGKbj0B0Dr_4dZs52PsP4NEoFAM0M5OR7LusQSqGgGuyX147xIButrjzT), we read:
+We do not use the AIC or the BIC within the **Stan** ecosystem. The AIC is frequentist and cannot handle models with priors. The BIC is interesting is it’s a double misnomer. It is neither Bayesian nor is it a proper information criterion--though it does scale like one. However, it might be useful for our purposes to walk out the AIC a bit. It'll ground our discussion of the WAIC and LOO. From [Spiegelhalter, Best, Carlin and van der Linde (2014)](https://www.jstor.org/stable/pdf/24774528.pdf?casa_token=cOkknddLwBsAAAAA:nwbGR1IDJtZHzGmhEUDJBLfELsSJUzgTR_r5j_gur7goLCihSBVdFhXeCZVxGKbj0B0Dr_4dZs52PsP4NEoFAM0M5OR7LusQSqGgGuyX147xIButrjzT), we read:
 
-Suppose that we have a given set of candidate models, and we would like a criterion to assess which is 'better' in a defined sense. Assume that a model for observed data $y$ postulates a density $p(y | \theta)$ (which may include covariates etc.), and call $D(\theta) = -2 \text{log} {p(y | \theta)}$ the deviance, here considered as a function of $\theta$. Classical model choice uses hypothesis testing for comparing nested models, e.g. the deviance (likelihood ratio) test in generalized linear models. For non nested models, alternatives include the Akaike information criterion
+> Suppose that we have a given set of candidate models, and we would like a criterion to assess which is 'better' in a defined sense. Assume that a model for observed data $y$ postulates a density $p(y | \theta)$ (which may include covariates etc.), and call $D(\theta) = -2 \text{log} {p(y | \theta)}$ the deviance, here considered as a function of $\theta$. Classical model choice uses hypothesis testing for comparing nested models, e.g. the deviance (likelihood ratio) test in generalized linear models. For non nested models, alternatives include the Akaike information criterion
+>
+> $$AIC = -2 \text{log} {p(y | \hat{\theta})} + 2k$$
+>
+> where $\hat{\theta}$ is the maximum likelihood estimate and $k$ is the number of parameters in the model (dimension of $\Theta$).
+>
+> AIC is built with the aim of favouring models that are likely to make good predictions. Since we generally do not have independent validation data, we can assess which model best predicts the *observed* data by using the deviance, but if parameters have been estimated we need some penalty for this double use of the data. AIC's penalty of *2k* has been shown to be asymptotically equivalent to leave-one-out cross-validation. However, AIC does not work in models with informative prior information, such as hierarchical models, since the prior effectively acts to 'restrict' the freedom of the model parameters, so the appropriate 'number of parameters' is generally unclear. (pp. 485--486, *emphasis* in the original)
 
-$$
-AIC = -2 \text{log} {p(y | \hat{\theta})} + 2k
-$$
+For the past two decades, the Deviance Information Criterion (DIC; [Spiegelhalter, Best, Carlin and van der Linde (2002)](https://rss.onlinelibrary.wiley.com/doi/full/10.1111/1467-9868.00353)) has been a popular information criterion among Bayesians. Let's define $D$ as the posterior distribution of deviance values and $\bar{D}$ as its mean. If you compute deviance based on the posterior mean, you have $\hat{D}$. Within a multi-parameter model, this would be the deviance based on the collection of the posterior mean of each parameter. With these, we define the DIC as
 
-where $\hat{\theta}$ is the maximum likelihood estimate and $k$ is the number of parameters in the model (dimension of $\Theta$).
-
-AIC is built with the aim of favouring models that are likely to make good predictions. Since we generally do not have independent validation data, we can assess which model best predicts the *observed* data by using the deviance, but if parameters have been estimated we need some penalty for this double use of the data. AIC's penalty of *2k* has been shown to be asymptotically equivalent to leave-one-out cross-validation. However, AIC does not work in models with informative prior information, such as hierarchical models, since the prior effectively acts to 'restrict' the freedom of the model parameters, so the appropriate 'number of parameters' is generally unclear. (pp. 485--486)
-
-For the past two decades, the Deviance Information Criterion (DIC; [Spiegelhalter, Best, Carlin and van der Linde (2002)](https://rss.onlinelibrary.wiley.com/doi/full/10.1111/1467-9868.00353)) has been a popular information criterion among Bayesians. If we define $D$ as the posterior distribution if deviance values, $\bar{D}$ as its mean. If you compute deviance based on the posterior mean, you have $\hat{D}$. Within a multi-parameter model, this would be the deviance based on the collection of the posterior mean of each parameter. With these, we define the DIC as
-
-$$\text{DIC} = \bar{D} + (\bar{D} + \hat{D}) + \bar{D} + p_D$$
+$$\text{DIC} = \bar{D} + (\bar{D} + \hat{D}) + \bar{D} + p_D,$$
 
 where $p_D$ is the number of effective parameters in the model, which is also sometimes referred to as the penalty term. As McElreath pointed out in [*Statistical Rethinking*](https://xcelab.net/rm/statistical-rethinking/), the $p_D$
 
 > is just the expected distance between the deviance in-sample and the deviance out-of-sample. In the case of flat priors, DIC reduces directly to AIC, because the expected distance is just the number of parameters. But more generally, $p_D$ will be some fraction of the number of parameters, because regularizing priors constrain a model’s flexibility. (p. 191)
 
-As you'll see, you can get the $p_D$ for `brms::brm()` models. However, the DIC is limited in that it requires a multivariate Gaussian posterior and I'm not aware of a convenience function within **brms** that will compute the DIC. Which is fine. The DIC has been overshadowed in recent years by newer Bayesian information criteria. But for a great talk on the DIC, check out the authoritative David Spiegelhalter's [*Retrospective read paper: Bayesian measure of model complexity and fit*](https://www.youtube.com/watch?v=H-59eqmHuuQ&frags=pl%2Cwn). 
+As you'll see, you can get the $p_D$ for `brms::brm()` models. However, the DIC is limited in that it requires a multivariate Gaussian posterior and I'm not aware of a convenience function within **brms** that will compute the DIC. Which is fine. The DIC has been overshadowed in recent years by newer methods. But for a great talk on the DIC, check out the authoritative David Spiegelhalter's [*Retrospective read paper: Bayesian measure of model complexity and fit*](https://www.youtube.com/watch?v=H-59eqmHuuQ&frags=pl%2Cwn). 
 
-Within our **Stan** ecosystem paradigm, we might use the Widely Applicable Information Criterion (WAIC; [Watanabe, 2010](http://www.jmlr.org/papers/volume11/watanabe10a/watanabe10a.pdf)). From McElreath, again, we read:
+#### The Widely Applicable Information Criterion (WAIC).
+
+The main information criterion within our **Stan** ecosystem paradigm is the Widely Applicable Information Criterion (WAIC; [Watanabe, 2010](http://www.jmlr.org/papers/volume11/watanabe10a/watanabe10a.pdf)). From McElreath, again, we read:
 
 > It does not require a multivariate Gaussian posterior, and it is often more accurate than DIC. There are types of models for which it is hard to define at all, however. We'll discuss that issue more, after defining WAIC.
 >
@@ -1393,13 +1393,13 @@ Within our **Stan** ecosystem paradigm, we might use the Widely Applicable Infor
 >
 > And this value is yet another estimate of out-of-sample deviance. (pp. 191--192, emphasis in the original)
 
-In Chapter 6 of my project translating McElreath’s Statistical Rethinking into **brms** and **tidyverse** code, I walk out with him how to compute the WAIC for a `brm()` fit by hand. I’m not going to repeat the exercise, here. But do see the project and McElreath’s text if you’re interested. Rather, I’d like to get down to business. In **brms**, you can get a model’s WAIC with the `waic()` function. 
+In chapter 6 of [my project](https://bookdown.org/connect/#/apps/1850/access) translating McElreath’s Statistical Rethinking into **brms** and **tidyverse** code, I walk out with him how to hand compute the WAIC for a `brm()` fit. I'm not going to repeat the exercise, here. But do see the project and McElreath's text if you’re interested. Rather, I'd like to get down to business. In **brms**, you can get a model's WAIC with the `waic()` function. 
 
 ```{r}
 waic(fit1)
 ```
 
-We'll come back to that warning message, later. For now, notice the main output is a $3 \times 2$ data frame with named rows. For the statistic in each row, you get a point estimate and a standard error. The WAIC is on the bottom. The effective number of parameters, the $p_\text{WAIC}$, is in the middle. Notice the `elpd_waic` on the top. That's what you get without the $-2 \cdot ...$ in the formula. Remember how that part is just to put things in a metric amenable to $\chi^2$ difference testing? We'll, not all Bayesian like that and within the **Stan** ecosystem, you'll also see the WAIC expressed instead as the $\text{elpd}_\text{WAIC}$.
+We'll come back to that warning message, later. For now, notice the main output is a $3 \times 2$ data frame with named rows. For the statistic in each row, you get a point estimate and a standard error. The WAIC is on the bottom. The effective number of parameters, the $p_\text{WAIC}$, is in the middle. Notice the `elpd_waic` on the top. That's what you get without the $-2 \cdot ...$ in the formula. Remember how that part is just to put things in a metric amenable to $\chi^2$ difference testing? Well, not all Bayesian like that and within the **Stan** ecosystem, you'll also see the WAIC expressed instead as the $\text{elpd}_\text{WAIC}$.
 
 The current recommended workflow within **brms** is to attach the WAIC information to the model fit. You do it with the `add_criterion()` function.
 
@@ -1415,15 +1415,152 @@ fit1$waic
 
 And you might notice how that value is similar to the AIC and BIC values for Model A in Table 4.1. But it's not identical and we shouldn't expect it to be. It was computed by a different formula that accounts for priors. For our purposes, this is much better than the frequentist AIC and BIC. We need statistics that can handle priors.
 
+#### Leave-one-out cross-validation (LOO-CV).
 
+We have another big option for model comparison within the **Stan** ecosystem. It involves leave-one-out cross-validation (LOO-CV). It’s often the case that we aren’t just interested in modeling the data we have in hand. The hope is our findings would generalize to other data we could have collected or may collect in the future. We’d like our findings to tell us something more general about the world at large. But unless you’re studying something highly uniform like the weights of hydrogen atoms, chances are your data have idiosyncrasies that won’t generalize well to other data. Sure, if we had all the information on all the relevant variables, we could explain the discrepancies across samples with hidden moderators and such. But we don’t have all the data and we typically don’t even know what all the relevant variables are. 
+
+Welcome to science. 
+
+To address this problem, you might recommend we collect data from two samples for each project. Starting with sample A, we’d fit a series of models and settle on one or a small subset that both speak to our scientific hypothesis and seem to fit the sample A data well. Then we’d switch to sample B and rerun our primary model(s) from A to make sure our findings generalize. In this paradigm, we might call the A data in sample and the B data out of sample—or out of sample A, anyways.
+
+The problem is we often have time and funding constraints. We only have sample A and we may never collect sample B. So we’ll need to make the most out of our sample A. Happily, tricky statisticians have our back. Instead, what we might do is divide our data into $k$ equally-sized subsets. We’ll call those subsets *folds*. If we leave one of the folds out, we can fit the model with the remaining data and then see how well that model speaks to the left-out fold. After doing this for every fold, we can get an average performance across folds.
+
+Note how as $k$ increases, the number of cases with a fold get smaller. In the extreme, $k = N$, the number of cases within the data. At that point, $k$-fold cross-validation turns into leave-one-out cross-validation (LOO-CV).
+
+But there’s a practical difficulty with LOO-CV: it's costly. As you may have noticed, it takes some time to fit a Bayesian multilevel model. For large data and/or complicated models, sometimes it takes hours or days. Most of us just don’t have enough time or computational resources to fit that many models. Happily, we have an approximation to pure LOO-CV. [Vehtari, Gelman, and Gabry (2017)](https://arxiv.org/abs/1507.04544) proposed Pareto smoothed importance-sampling leave-one-out cross-validation (PSIS-LOO) as an efficient way to approximate true LOO-CV. At this point, it's probably best to let the statisticians speak for themselves:
+
+> To maintain comparability with the given dataset and to get easier interpretation of the differences in scale of effective number of parameters, we define a measure of predictive accuracy for the $n$ data points taken one at a time: 
+>
+> $$
+> \begin{align*}
+> \text{elpd} & = \text{expected log pointwise predictive density for a new dataset} \\
+> & = \sum_{i = 1}^n \int p_t (\tilde{y}_i) \text{log} p (\tilde{y}_i | y) d \tilde{y}_i,
+> \end{align*}
+> $$
+> 
+> where $p_t (\tilde{y}_i)$ is the distribution representing the true data-generating process for $\tilde{y}_i$. The $p_t (\tilde{y}_i)$'s are unknown, and we will use cross-validation or WAIC to approximate. In a regression, these distributions are also implicitly conditioned on any predictors in the model...
+> 
+> The Bayesian LOO estimate of out-of-sample predictive fit is
+> 
+> $$\text{elpd}_{\text{loo}} = \sum_{i = 1}^n \text{log } p (y_i | y - _i),$$
+> 
+> where
+> 
+> $$p (y_i | y - _i) = \int p (y_i | \theta) p (\theta | y - _i) d \theta$$
+> 
+> is the leave-one-out predictive density given the data without the ith data point. (pp. 2--3)
+
+For the rest of the details, check out the original paper. Our goal is to practice using the PSIS-LOO. Since this is the only version of the LOO we’ll be using in this project, I'm just going to refer to it as the LOO from here on. To use the LOO to evaluate a `brm()` fit, you just use the `loo()` function. Though you don't have to save the results as an object, we'll be forward thinking and do so here.
 
 ```{r}
+l_fit1 <- loo(fit1)
 
+print(l_fit1)
 ```
 
+Remember that warning message we got from the `waic()` a while back? We get more information along those lines from the `loo()`. As it turns out, a couple of the cases in the data were unduly influential in the model fit. Within the `loo()` paradigm, those are indexed by the `pareto_k` values. As it turns out, the Pareto $k$ [can be used as a diagnostic tool](https://cran.r-project.org/web/packages/loo/vignettes/loo2-example.html#plotting-pareto-k-diagnostics). Each case in the data gets its own $k$ value and we like it when those $k$s are low. We typically get worried when those $k$s exceed 0.7 and the `loo()` function spits out a warning message when they do.
 
+If you didn't know, the **brms** functions like the `waic()` and `loo()` actually come from the [**loo** package](https://github.com/stan-dev/loo). Explicitly loading **loo** will buy us some handy convenience functions.
 
-##4.7 Using Wald statistics to test composite hypotheses about fixed effects
+```{r, warning = F, message = F}
+library(loo)
+```
+
+We'll be leveraging those $k$ values with the `pareto_k_table()` and `pareto_k_ids()` functions. Both functions take objects created by the `loo()` or `psis()` functions. Let's take a look at the `pareto_k_table()` function first.
+
+```{r}
+pareto_k_table(l_fit1) 
+```
+
+This is the same table that popped out earlier after using the `loo()`. Recall that this data set has 246 observations (i.e., execute `count(alcohol1_pp)`). With `pareto_k_table()`, we see how the Pareto $k$ values have been categorized into bins ranging from "good" to "very bad". Clearly, we like nice and low $k$s. In this example, most of our observations are "good" or "ok", Two are in the "bad" $k$ range We can take a closer look by placing our `loo()` object into `plot()`.
+
+```{r, fig.width = 4.5, fig.height = 3.5}
+plot(l_fit1)
+```
+
+We got back a nice diagnostic plot for those $k$ values, ordered by row number. We can see that our two observations with the "very bad" $k$ values were earlier in the data and it appears their $k$ values are just a smidge above the recommended threshold. If we wanted to further verify to ourselves which observations those were, we'd use the `pareto_k_ids()` function.
+
+```{r}
+pareto_k_ids(l_fit1, threshold = .7)
+```
+
+Note our use of the `threshold` argument. Play around with it to see how it works. In case you're curious, here are those rows.
+
+```{r}
+alcohol1_pp[c(27, 33), ]
+```
+
+If you want an explicit look at those $k$ values, execute `l_fit1$diagnostics$pareto_k`. For the sake of space, I'm going to omit the output.
+
+```{r, eval = F}
+l_fit1$diagnostics$pareto_k
+```
+
+The `pareto_k` values can be used to examine cases that are overly-influential on the model parameters, something like a Cook's $D_{i}$. See, for example [this discussion on stackoverflow.com](https://stackoverflow.com/questions/39578834/linear-model-diagnostics-for-bayesian-models-using-rstan/39595436) in which several members of the [Stan team](http://mc-stan.org) weighed in. The issue is also discussed in [this paper](https://arxiv.org/abs/1507.04544) and in [this presentation by Aki Vehtari](https://www.youtube.com/watch?v=FUROJM3u5HQ&feature=youtu.be&a=).
+
+Anyway, the implication of all this is these values suggest `fit1` (i.e., Model A) might not be the best model of the data. Happily, we have other models to compare it to. That leads into the next section:
+
+#### You can compare Bayesian models with the WAIC and LOO.
+
+Remember how we used the `add_criterion()` function, above. That'll work for both WAIC and the LOO. Let's do that for Models A through E.
+
+```{r, warning = F, message = F}
+fit1 <- add_criterion(fit1, c("loo", "waic"))
+fit2 <- add_criterion(fit2, c("loo", "waic"))
+fit3 <- add_criterion(fit3, c("loo", "waic"))
+fit4 <- add_criterion(fit4, c("loo", "waic"))
+fit5 <- add_criterion(fit5, c("loo", "waic"))
+```
+
+And to refresh, we can pull the WAIC and LOO information with `$` indexing. Here's how to get the LOO info for `fit2`.
+
+```{r}
+fit2$loo
+```
+
+Sigh. Turns out there are even more overly-influential cases in the unconditional growth model. In the case of a real data analysis, this might suggest we need a more robust model. One possible solution might be switching out our Gaussian likelihood for the robust Student's $t$-distribution. For an introduction, you might check out [my blog on the topic](https://solomonkurz.netlify.com/post/robust-linear-regression-with-the-robust-student-s-t-distribution/). But that'll take us farther afield that I want to go. 
+
+The point to focus on, here, is we can use the `loo_compare()` function to compare fits by their WAIC or LOO. Let's practice with the WAIC.
+
+```{r}
+ws <- loo_compare(fit1, fit2, fit3, fit4, criterion = "waic")
+
+print(ws)
+```
+
+Remember how we said that some contemporary Bayesians aren't fans of putting Bayesian information criteria in a $\chi^2$ metric? Well, it turns out [Aki Vehtari](https://twitter.com/avehtari), of the **Stan**-team and **loo**-package fame--and also the primary author in that [PSIS-LOO paper](https://arxiv.org/abs/1507.04544), earlier--, is one of those Bayesians. So instead of getting difference scores in the WAIC metric, we get them in the $\text{elpd}_\text{WAIC}$ metric instead. But remember, if you prefer these estimates in the traditional metric, just multiply by -2. 
+
+```{r}
+cbind(waic_diff = ws[, 1] * -2,
+      se        = ws[, 2] *  2)
+```
+
+The reason we multiplied the `se_diff` column (i.e., the standard errors for the difference estimates) is because you can't have negative standard errors. That's be silly. But anyway, notice that the `brm()` fits have been rank ordered with the smallest differences at the top. Each row in the output is the difference of one of the fits compared to the best-fitting fit. Since `fit4` apparently had the lowest WAIC value, it was ranked at the top. And notice how its `waic_diff` is 0. That, of course, is because $x - x = 0$. So all the other difference scores are follow the formula $\text{Difference}_x = \text{WAIC}_\{fit_x} - \text{WAIC}_\{fit_4}$. 
+
+Concerning our `ws` object, we can get more information on our models' WAICs if we include a `simplify = F` argument within `print()`.
+
+```{r}
+print(ws,
+      simplify = F)
+```
+
+Their WAIC values and the associated standard errors are in the final two columns. And in the two before that, we get the $p_\text{WAIC}$ estimates and their standard errors. And we can get similar information for the LOO.
+
+```{r}
+loo_compare(fit1, fit2, fit3, fit4, criterion = "loo") %>% 
+  print(simplify = F)
+```
+
+And if you wanted a more focused comparison, say between `fit1` and `fit2`, you'd just simplify your input.
+
+```{r}
+loo_compare(fit1, fit2, criterion = "loo") %>% 
+  print(simplify = F)
+```
+
+We'll get more practice with these methods as we go along. But for your own edification, you might check out [the vignettes](https://cran.r-project.org/web/packages/loo/index.html) put out by the **loo** team.
+
+## 4.7 Using Wald statistics to test composite hypotheses about fixed effects
 
 This section is more appropriate from a frequentist perspective than it is from a Bayesian one. However, readers insistent in such methods might consult the brms reference manual for the section on `brms::hypothesis()`.
 
