@@ -1389,7 +1389,7 @@ The main information criterion within our **Stan** ecosystem paradigm is the Wid
 >
 > Now WAIC is defined as:
 >
-> $$\text{WAIC} = -2(\text{lppd - $p_\text{WAIC}$}$$
+> $$\text{WAIC} = -2(\text{lppd} - p_\text{WAIC})$$
 >
 > And this value is yet another estimate of out-of-sample deviance. (pp. 191--192, emphasis in the original)
 
@@ -1562,7 +1562,186 @@ We'll get more practice with these methods as we go along. But for your own edif
 
 ## 4.7 Using Wald statistics to test composite hypotheses about fixed effects
 
-This section is more appropriate from a frequentist perspective than it is from a Bayesian one. However, readers insistent in such methods might consult the brms reference manual for the section on `brms::hypothesis()`.
+I’m not going to address issues of composite null-hypothesis tests using the Wald statistic. However, we can address some of these issues from a different more estimation-based perspective. Consider the initial question posed on page 123: 
+
+> Suppose, for example, you wanted to test whether the entire true change trajectory for a particular type of adolescent--say, a child of non-alcoholic parents with an average value of *PEER*--differs from a "null" trajectory (one with zero intercept and zero slope). This is tantamount to asking whether the average child of non-alcoholic parents drinks no alcohol at age 14 and remains abstinent over time.
+
+Singer and Willett then expressed their joint null hypothesis as
+
+$$H_0: \gamma_{00} = 0 \; and \; \gamma_{10} = 0.$$
+
+This is a substantive question we can address more informatively with `fitted()`. First let's provide the necessary values for our predictor variables, `coa`, `peer`, and `age_14`.
+
+```{r}
+mu_peer <- mean(alcohol1_pp$peer)
+
+nd <-
+  tibble(coa    = 0,
+         peer   = mu_peer,
+         age_14 = seq(from = 0, to = 2, length.out = 30))
+
+head(nd)
+```
+
+Now we use `fitted()` to examine the model-implied trajectory for a child of non-alcoholic parents and average `peer` values.
+
+```{r, fig.height = 3.95, fig.width = 2.5}  
+f <-
+  fitted(fit5, 
+         newdata = nd,
+         re_formula = NA) %>%
+  data.frame() %>%
+  bind_cols(nd) %>%
+  mutate(age  = age_14 + 14) 
+
+f %>%
+
+  ggplot(aes(x = age)) +
+  geom_ribbon(aes(ymin = Q2.5, ymax = Q97.5),
+              size = 0, alpha = 1/4) +
+  geom_line(aes(y = Estimate)) +
+  scale_y_continuous("alcuse", breaks = 0:2, limits = c(0, 2)) +
+  coord_cartesian(xlim = 13:17) +
+  labs(subtitle = "Zero is credible for neither\nthe intercept nor the slope.") +
+  theme(panel.grid = element_blank(),
+        legend.position = "none")
+``` 
+
+Recall that the result of our Bayesian analyses are the probability of the parameters given the data (i.e., $p(\theta | \text{d})$). Based on our plot, there is much less than a .05 probability either intercept or slope for teens of this demographic are zero. If you really wanted to fixate on zero, you could even use `geom_hline()` to insert a horizontal line at zero in the figure. But all that fixating on zero detracts from what to my mind are the more important parts of the model. The intercept at `age = 14` is about 1/3 and the endpoint when `age = 16` is almost at 1. Those are our effect sizes. If you wanted to quantify those effect sizes more precisely, just query our `fitted()` object, `f`.
+
+```{r}
+f %>% 
+  select(age, Estimate, Q2.5, Q97.5) %>% 
+  filter(age %in% c(14, 16)) %>% 
+  mutate_all(round, digits = 2)
+```
+
+Works like a champ. But we haven’t fully covered part of Singer and Willett’s joint hypothesis text. They proposed a joint Null that included the $\gamma_{10} = 0$. Though it’s clear from the plot that the trajectory increases, we can address the issue more directly with a difference score. For our difference, we’ll subtract the estimate at `age = 14` from the one at `age = 15`. But to that, we’ll have to return to `fitted()`. So far, we’ve been using the default output which returns summaries of the posterior. To compute a proper difference score, we’ll need to work with all the posterior draws in order to approximate the full distribution. We do that by setting `summary = F`. And since we’re only interested in the estimates from these two `age` values, we’ll streamline our `nd` data.
+
+```{r}
+nd <-
+  tibble(coa    = 0,
+         peer   = mu_peer,
+         age_14 = 0:1)
+
+f <-
+  fitted(fit5, 
+         newdata = nd,
+         re_formula = NA,
+         summary = F) %>%
+  data.frame()
+
+str(f)
+```
+
+Now our `f` object has 4000 rows and 2 columns. Each of the rows corresponds to one of the 4000 post-warmup posterior draws. The columns correspond to the two rows in our `nd` data. To get a slope based on this combination of predictor values, we simply subtract the first column from the second.
+
+```{r, fig.width = 4, fig.height = 3}
+f <-
+  f %>% 
+  transmute(difference = X2 - X1)
+
+f %>% 
+  ggplot(aes(x = difference)) +
+  geom_density(size = 0, fill = "grey25") +
+  scale_y_continuous(NULL, breaks = NULL) +
+  labs(subtitle = "Based on 4000 posterior draws, not a single one\nsuggests the slope is even close to zero. Rather, the\nposterior mass is concentrated around 0.25.",
+       x = expression(paste(gamma[0][1], " (i.e., the difference between the two time points)"))) +
+  coord_cartesian(xlim = 0:1) +
+  theme(panel.grid = element_blank())
+```
+
+Here are the posterior mean and 95% intervals.
+
+```{r}
+f %>% 
+  summarise(mean = mean(difference),
+            ll   = quantile(difference, probs = .025),
+            ul   = quantile(difference, probs = .975))
+```
+
+On page 125, Singer and Willett further muse: 
+
+> When we examined the OLS estimated change trajectories in figure 4.2, we noticed that among children of non-alcoholic parents, those with low values of *CPEER* tended to have a lower initial status and steeper slopes than those with high values of *CPEER*. We might therefore ask whether the former group "catches up" to the latter. This is a question about the "vertical" separation between these two groups['] true change trajectories at some later age, say 16. 
+
+Within their joint hypothesis testing paradigm, they pose this as testing
+
+$$H_0: 0\gamma_{00} + 0\gamma_{01} + 1\gamma_{02} + 0\gamma_{10} + 2\gamma_{12} = 0$$
+
+From our perspective, this is a differences of differences analysis. That is, first we'll compute the model implied `alcuse` estimates for the four combinations of the two levels of `age` and `peer`, holding `coa` constant at 0. Second, we'll compute the differences between the two `peer` levels at each `age`. Third and finally, we'll compute a difference of those differences.
+
+For our first step, recall it was `fit6` that used the `cpeer` variable.
+
+```{r}
+# first step
+nd <-
+  tibble(age_14 = c(0, 2)) %>% 
+  expand(age_14,
+         cpeer = c(-.363, .363)) %>% 
+  mutate(coa = 0)
+
+head(nd)
+
+f <-
+  fitted(fit6, 
+         newdata = nd,
+         re_formula = NA,
+         summary = F) %>% 
+  data.frame()
+
+head(f)
+```
+
+For our initial difference scores, we'll subtract the estimates for the lower level of `cpeer` from the higher ones.
+
+```{r}
+# step 2
+f <-
+  f %>% 
+  transmute(`difference at 14` = X2 - X1,
+            `difference at 16` = X4 - X3)
+
+head(f)
+```
+
+For our final difference score, we’ll subtract the first difference score from the second.
+
+```{r}
+# step 3
+f <-
+  f %>% 
+  mutate(`difference in differences` = `difference at 16` - `difference at 14`)
+
+head(f)
+```
+
+Here we'll plot all three.
+
+```{r, fig.width = 8, fig.height = 2.25}
+f %>%
+  gather() %>% 
+  
+  ggplot(aes(x = value)) +
+  geom_density(size = 0, fill = "grey25") +
+  scale_y_continuous(NULL, breaks = NULL) +
+  xlab("different differences") +
+  theme(panel.grid = element_blank()) +
+  facet_wrap(~key, scales = "free_y")
+```
+
+Singer and Willett concluded they could "reject the null hypothesis at any conventional level of significance" (p. 126). If we must appearl to the Null, here are the posterior means and 95% intervals for our differences.
+
+```{r}
+f %>% 
+  gather() %>% 
+  group_by(key) %>% 
+  summarise(mean = mean(value),
+            ll   = quantile(value, probs = .025),
+            ul   = quantile(value, probs = .975)) %>% 
+  mutate_if(is.double, round, digits = 3)
+```
+
+Our results contrast a bit from Singer and Willett's. Though the bulk of our posterior mass is concentrated around -0.22, zero is a credible value within the difference of differences density. Our best bet is the differences to begin to converge over time. However, that rate of that convergence is subtle and somewhat imprecise relative to the effect size. Interpret with caution.
 
 ##4.8 Evaluating the tenability of a model's assumptions
 
