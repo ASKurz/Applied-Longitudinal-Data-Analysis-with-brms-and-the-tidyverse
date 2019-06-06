@@ -55,6 +55,7 @@ $$
 \end{align*}
 $$
 
+
 where $\pi_{0i}$ is the initial status of participant $i$, $\pi_{1i}$ is participant $i$'s rate of change}, and $\epsilon_{ij}$ is the variation in participant $i$'s data not accounted for in the model.
 
 Singer and Willett made their Figure 4.2, "with a random sample of 32 of the adolescents" (p. 78). If we just wanted a random sample of rows, the `sample_n()` function would do the job. But since we're working with long data, we'll need some `group_by()` + `nest()` mojo. I got the trick from [Jenny Bryan](https://twitter.com/JennyBryan)'s [*Sample from groups, n varies by group*](https://jennybc.github.io/purrr-tutorial/ls12_different-sized-samples.html). Setting the seed makes the results from `sample_n()` reproducible. Here are the top panels.
@@ -1607,7 +1608,7 @@ f %>%
         legend.position = "none")
 ``` 
 
-Recall that the result of our Bayesian analyses are the probability of the parameters given the data (i.e., $p(\theta | \text{d})$). Based on our plot, there is much less than a .05 probability either intercept or slope for teens of this demographic are zero. If you really wanted to fixate on zero, you could even use `geom_hline()` to insert a horizontal line at zero in the figure. But all that fixating on zero detracts from what to my mind are the more important parts of the model. The intercept at `age = 14` is about 1/3 and the endpoint when `age = 16` is almost at 1. Those are our effect sizes. If you wanted to quantify those effect sizes more precisely, just query our `fitted()` object, `f`.
+Recall that the result of our Bayesian analyses are the probability of the parameters given the data (i.e., $p(\theta | d)$). Based on our plot, there is much less than a .05 probability either intercept or slope for teens of this demographic are zero. If you really wanted to fixate on zero, you could even use `geom_hline()` to insert a horizontal line at zero in the figure. But all that fixating on zero detracts from what to my mind are the more important parts of the model. The intercept at `age = 14` is about 1/3 and the endpoint when `age = 16` is almost at 1. Those are our effect sizes. If you wanted to quantify those effect sizes more precisely, just query our `fitted()` object, `f`.
 
 ```{r}
 f %>% 
@@ -1743,7 +1744,251 @@ f %>%
 
 Our results contrast a bit from Singer and Willett's. Though the bulk of our posterior mass is concentrated around -0.22, zero is a credible value within the difference of differences density. Our best bet is the differences to begin to converge over time. However, that rate of that convergence is subtle and somewhat imprecise relative to the effect size. Interpret with caution.
 
-##4.8 Evaluating the tenability of a model's assumptions
+## 4.8 Evaluating the tenability of a model's assumptions
+
+"Whenever you fit a statistical model, you invoke assumptions" (p. 127). This is the case for multilevel Bayesian models, too.
+
+### 4.8.1 Checking functional form.
+
+We've already checked the functional form at level-1 with our version of Figure 4.1. When we made our version of Figure 4.1, we relied on `ggplot2::stat_smooth()` to compute the `id`-level OLS trajectories. To make our variants of Figure 4.4, we'll have to back up and compute them externally with `lm()`. Here we'll do so in bulk with a nested data frame. The **broom** package will help us extract the results.
+
+```{r, warning = F, message = F}
+library(broom)
+
+o <-
+  alcohol1_pp %>% 
+  nest(-id, -coa, -peer) %>% 
+  mutate(ols = map(data, ~lm(data = ., alcuse ~ 1 + age_14))) %>% 
+  mutate(tidy = map(ols, tidy)) %>% 
+  unnest(tidy) %>% 
+  # this is unnecessary, but will help with plotting
+  mutate(term = factor(term, 
+                       levels = c("(Intercept)", "age_14"),
+                       labels = c("pi[0]", "pi[1]")))
+
+head(o)
+```
+
+```{r, fig.width = 6, fig.height = 4}
+o %>% 
+  select(coa:estimate) %>% 
+  gather(predictor, value, -term, -estimate) %>% 
+  
+  ggplot(aes(x = value, y = estimate)) +
+  geom_hline(yintercept = 0, color = "white") +
+  geom_point(alpha = 2/3) +
+  theme(panel.grid = element_blank(),
+        strip.text = element_text(size = 11)) +
+  facet_grid(term~predictor, scales = "free", labeller = label_parsed)
+```
+
+With a little more wrangling, we can extract the Pearson’s correlation coefficients for each panel.
+
+```{r}
+o %>% 
+  select(coa:estimate) %>% 
+  gather(predictor, value, -term, -estimate) %>% 
+  group_by(term, predictor) %>% 
+  nest() %>%
+  mutate(r = map_dbl(data, ~cor(.)[2, 1] %>% round(digits = 2)))
+```
+
+### 4.8.2 Checking normality.
+
+The basic multilevel model of change yields three variance parameters, $\epsilon_{ij}$, $\zeta_0i$, and $\zeta_1i$. Each measurement occasion in the model receives a model-implied estimate for each. Singer and Willett referred to those estimates as $\hat{\epsilon}_{ij}$, $\hat{\zeta}_0i$, and $\hat{\zeta}_1i$. As with frequentist software, our Bayesian software **brms** will return these estimates.
+
+To extract our Bayesian $\hat{\epsilon}_{ij}$s, we use the `residuals()` function.
+
+```{r}
+e <- residuals(fit5)
+
+str(e)
+
+head(e)
+```
+
+For our `fit5`, the `residuals()` function returned a $246 \times 4$ numeric array. Each row corresponded to one of the rows of the original data set. The four vectors are the familiar summaries `Estimate`, `Est.Error`, `Q2.5`, and `Q97.5`. If we’d like to work with these in a **ggplot2**-made plot, we’ll have to convert our `e` object to a data frame. 
+
+After we make the conversion, we then make the top left panel of Figure 4.5.
+
+```{r, fig.width = 3.5, fig.height = 2.75}
+e <- 
+  e %>% 
+  data.frame()
+
+e %>% 
+  ggplot(aes(sample = Estimate)) +
+  geom_hline(yintercept = 0, color = "white") +
+  geom_qq() +
+  labs(x = "Normal score",
+       y = expression(hat(epsilon)[italic(ij)])) +
+  ylim(-2, 2) +
+  theme(panel.grid = element_blank())
+```
+
+For the right plot on the top, we need to add an `id` index. That's as easy as appending the one from the original data. If you followed closely with the text, you may have also noticed this panel is of the standardized residuals. That just means we’ll have to hand-standardize ours before plotting.
+
+```{r, fig.width = 3.5, fig.height = 2.75}
+e %>% 
+  bind_cols(alcohol1_pp %>% select(id)) %>% 
+  mutate(z = (Estimate - mean(Estimate)) / sd(Estimate)) %>% 
+  
+  ggplot(aes(x = id, y = z)) +
+  geom_hline(yintercept = 0, color = "white") +
+  geom_point() +
+  ylab(expression(italic(std)~hat(epsilon)[italic(ij)])) +
+  ylim(-2, 2) +
+  theme(panel.grid = element_blank())
+```
+
+We'll need to use the `ranef()` function to return the estimates for the $\zeta$s.
+
+```{r}
+z <- ranef(fit5)
+
+str(z)
+
+z[[1]][1:6, , "Intercept"]
+z[[1]][1:6, , "age_14"]
+```
+
+For our `fit5`, the `ranef()` function returned a list of 1, indexed by `id`. Therein lay a 3-dimensional array. The first two dimensions are the same as what we got from `residuals()`, above. The third dimension had two levels: `Intercept` and `age_14`. In other words, the third dimension is the one that differentiated between $\hat{\zeta}_0i$ and $\hat{\zeta}_1i$. to make this thing a little more useful, let’s convert it to a long-formatted data frame.
+
+```{r}
+z <-
+  rbind(z[[1]][ , , "Intercept"],
+        z[[1]][ , , "age_14"]) %>% 
+  data.frame() %>% 
+  mutate(ranef = rep(c("hat(zeta)[0][italic(i)]", "hat(zeta)[1][italic(i)]"), each = n() / 2))
+
+head(z)
+```
+
+Now we’re ready to plot the remaining panels on the left of Figure 4.5.
+
+```{r, fig.width = 3.5, fig.height = 5.5}
+z %>% 
+  ggplot(aes(sample = Estimate)) +
+  geom_hline(yintercept = 0, color = "white") +
+  geom_qq() +
+  labs(x = "Normal score",
+       y = NULL) +
+  ylim(-1, 1) +
+  theme(panel.grid = element_blank()) +
+  facet_wrap(~ranef, labeller = label_parsed, ncol = 1)
+```
+
+Here are the ones on the right.
+
+```{r, fig.width = 3.5, fig.height = 5.5}
+z %>% 
+  bind_cols(
+    bind_rows(
+      alcohol1_pp %>% distinct(id),
+      alcohol1_pp %>% distinct(id)
+      )
+    ) %>%
+  mutate(ranef = str_c("italic(std)~", ranef)) %>% 
+  # note we have to group them before standardizing
+  group_by(ranef) %>% 
+  mutate(z = (Estimate - mean(Estimate)) / sd(Estimate)) %>% 
+  
+  ggplot(aes(x = id, y = z)) +
+  geom_hline(yintercept = 0, color = "white") +
+  geom_point() +
+  labs(x = "Normal score",
+       y = NULL) +
+  ylim(-3, 3) +
+  theme(panel.grid = element_blank()) +
+  facet_wrap(~ranef, labeller = label_parsed, ncol = 1)
+```
+
+If you were paying close attention, you may have noticed that for all three of our `id`-level deviation estimates, they were summarized not only by a posterior mean but by standard deviations and 95% intervals, too. To give a sense of what that means, here are those last two plots, again, but this time including vertical bars defined by the 95% intervals.
+
+```{r, fig.width = 3.5, fig.height = 5.5}
+z %>% 
+  bind_cols(
+    bind_rows(
+      alcohol1_pp %>% distinct(id),
+      alcohol1_pp %>% distinct(id)
+      )
+    ) %>%
+
+  ggplot(aes(x = id, y = Estimate, ymin = Q2.5, ymax = Q97.5)) +
+  geom_hline(yintercept = 0, color = "white") +
+  geom_pointrange(shape = 20, size = 1/3) +
+  labs(x = "Normal score",
+       y = NULL) +
+  theme(panel.grid = element_blank()) +
+  facet_wrap(~ranef, labeller = label_parsed, ncol = 1)
+```
+
+So when you go Bayesian, even your residuals get full posterior distributions.
+
+### 4.8.3 Checking homoscedasticity.
+
+Here we examine the homoscedasticity assumption by plotting the residual estimates against our predictors. We’ll start with the upper left panel of Figure 4.6.
+
+```{r, fig.width = 3.5, fig.height = 2.75}
+e %>% 
+  bind_cols(alcohol1_pp) %>% 
+  
+  ggplot(aes(x = age, y = Estimate)) +
+  geom_hline(yintercept = 0, color = "white") +
+  geom_point(alpha = 1/4) +
+  ylab(expression(hat(epsilon)[italic(ij)])) +
+  coord_cartesian(xlim = 13:17,
+                  ylim = -2:2) +
+  theme(panel.grid = element_blank())
+```
+
+Here's a quick way to get the remaining four panels.
+
+```{r, fig.width = 7, fig.height = 5.25}
+z %>% 
+  bind_cols(
+    bind_rows(
+      alcohol1_pp %>% distinct(id, coa, peer),
+      alcohol1_pp %>% distinct(id, coa, peer)
+      )
+    ) %>%
+  select(Estimate, ranef, coa, peer) %>% 
+  gather(covariate, value, -Estimate, -ranef) %>% 
+  
+  ggplot(aes(x = value, y = Estimate)) +
+  geom_hline(yintercept = 0, color = "white") +
+  geom_point(alpha = 1/3) +
+  labs(x = "covariate value",
+       y = NULL) +
+  ylim(-1, 1) +
+  theme(panel.grid = element_blank(),
+        strip.text = element_text(size = 10)) +
+  facet_grid(ranef~covariate, labeller = label_parsed, scales = "free")
+```
+
+```{r}
+alcohol1_pp %>% distinct(id, coa, peer)
+```
+
+## 4.9 Model-based (Empirical Bayes) estimates of the individual growth parameters
+
+
+
+
+
+
+
+
+```{r}
+ranef(fit5) %>% 
+  str()
+```
+
+
+
+
+
+
 
 ```{r}
 post_4.5 <- posterior_samples(b4.5)
