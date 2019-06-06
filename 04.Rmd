@@ -6,11 +6,17 @@ output:
   github_document
 ---
 
+```{r, echo = FALSE, cache = FALSE}
+options(width = 100)
+```
+
 # Doing Data Analysis with the Multilevel Model for Change
 
 "We now delve deeper into the specification, estimation, and interpretation of the multilevel model for change" (p. 75).
 
 ## 4.1 Example: Changes in adolescent alcohol use
+
+Load the data.
 
 ```{r, warning = F, message = F}
 library(tidyverse)
@@ -21,9 +27,10 @@ head(alcohol1_pp)
 
 Do note we already have an $\text{age} - 14$ variable in the data, `age_14`.
 
-Here we load the early-intervention data from [this UCLA web site](https://stats.idre.ucla.edu/r/examples/alda/r-applied-longitudinal-data-analysis-ch-4/).
+```{r, warning = F, message = F, eval = F, echo = F}
+# Here we load the early-intervention data from [this UCLA web site](https://stats.idre.ucla.edu/r/examples/alda/r-applied-longitudinal-data-analysis-ch-4/).
 
-```{r, warning = F, message = F}
+
 library(tidyverse)
 # alcohol1 <- read.table("https://stats.idre.ucla.edu/stat/r/examples/alda/data/alcohol1_pp.txt", header = T, sep = ",")
 # 
@@ -56,7 +63,7 @@ $$
 $$
 
 
-where $\pi_{0i}$ is the initial status of participant $i$, $\pi_{1i}$ is participant $i$'s rate of change}, and $\epsilon_{ij}$ is the variation in participant $i$'s data not accounted for in the model.
+where $\pi_{0i}$ is the initial status of participant $i$, $\pi_{1i}$ is participant $i$'s rate of change, and $\epsilon_{ij}$ is the variation in participant $i$'s data not accounted for in the model.
 
 Singer and Willett made their Figure 4.2, "with a random sample of 32 of the adolescents" (p. 78). If we just wanted a random sample of rows, the `sample_n()` function would do the job. But since we're working with long data, we'll need some `group_by()` + `nest()` mojo. I got the trick from [Jenny Bryan](https://twitter.com/JennyBryan)'s [*Sample from groups, n varies by group*](https://jennybc.github.io/purrr-tutorial/ls12_different-sized-samples.html). Setting the seed makes the results from `sample_n()` reproducible. Here are the top panels.
 
@@ -113,7 +120,19 @@ $$
 \end{align*}
 $$
 
-where $\gamma_{00}$ and $\gamma_{10}$ are the level-2 intercepts, the population averages when $\text{coa} = 0$, $\gamma_{10}$ and $\gamma_{11}$ are the level-2 slopes expressing the difference when $\text{coa} = 1$, $\zeta_{0i}$ and $\zeta_{1i}$ are the unexplained variation across the $\text{id}$-level intercepts and slopes.
+where $\gamma_{00}$ and $\gamma_{10}$ are the level-2 intercepts, the population averages when $\text{coa} = 0$, $\gamma_{10}$ and $\gamma_{11}$ are the level-2 slopes expressing the difference when $\text{coa} = 1$, $\zeta_{0i}$ and $\zeta_{1i}$ are the unexplained variation across the $\text{id}$-level intercepts and slopes. Since we'll be fitting the model with `brms::brm()`, the $\Sigma$ matrix will be parameterized in the $\sigma$ metric. So we might reexpress the model as: 
+
+$$
+\begin{align*}
+\pi_{0i} & = \gamma_{00} + \gamma_{01} \text{coa}_i + \zeta_{0i}\\
+\pi_{1i} & = \gamma_{10} + \gamma_{11} \text{coa}_i + \zeta_{1i} \\
+
+\begin{bmatrix} \zeta_{0i} \\ \zeta_{1i} \end{bmatrix} & \sim \text{Normal} \Bigg ( 
+\begin{bmatrix} 0 \\ 0 \end{bmatrix}, 
+\begin{bmatrix} \sigma_0 & \rho_{01}\\ \rho_{01} & \sigma_1 \end{bmatrix}
+\Bigg )
+\end{align*}
+$$
 
 ## 4.2 The composite specification of the multilevel model for change
 
@@ -144,7 +163,7 @@ where the brackets in the first line partition the structural model (i.e., the m
 > A distinctive feature of the composite multilevel model is its composite residual, the three terms in the second set of brackets on the right of equation 4.3 that combine together the level-1 residual and the two level-2 residuals:
 >
 > $$\text{Composite residual: } [ \zeta_{0i} +  \zeta_{1i} \text{age_14}_{ij} + \epsilon_{ij} ].$$
-> The composite residual is not a simple sum. Instead, the second level-2 residual, $\zeta_{1i}$, is multiplied by the level-1 predictor, [$\text{age_14}_{ij}$], before joining its siblings. Despite its unusual construction, the interpretation of the composite residual is straightforward: it describes the difference between the observed and expected value of [$\text{alcuse}$] for individual $i$ on occasion $j$.
+> The composite residual is not a simple sum. Instead, the second level-2 residual, $\zeta_{1i}$, is multiplied by the level-1 predictor, $[\text{age_14}_{ij}]$, before joining its siblings. Despite its unusual construction, the interpretation of the composite residual is straightforward: it describes the difference between the observed and expected value of $[\text{alcuse}]$ for individual $i$ on occasion $j$.
 >
 > The mathematical form of the composite residual reveals two important properties about the occasion-specific residuals not readily apparent in the level-1/level-2 specification: they can be both *autocorrelated* and *heteroscedastic* within person. (p. 84, *emphasis* in the original)
 
@@ -158,7 +177,7 @@ $$
 p(\theta | d) = \frac{p(d | \theta) p(\theta)}{p(d)}
 $$
 
-If you really want to dive into the details of this, I suggest referencing a proper introductory Bayesian textbook, such as McElreath ([2015](https://xcelab.net/rm/statistical-rethinking/)), Kruschke ([2014](http://www.indiana.edu/~kruschke/DoingBayesianDataAnalysis/)), or Gelman, Carlin, Stern, Dunson, Vehtari, and Rubin ([2013](http://www.stat.columbia.edu/~gelman/book/)). I haven't had time to check it out, but I've heard Labmert's ([2018](https://ben-lambert.com/a-students-guide-to-bayesian-statistics/)) text is good, too. And for details specific to **Stan**, and thus **brms**, you might check out the documentation resources at (https://mc-stan.org/users/documentation/)[https://mc-stan.org/users/documentation/].
+If you really want to dive into the details of this, I suggest referencing a proper introductory Bayesian textbook, such as McElreath ([2015](https://xcelab.net/rm/statistical-rethinking/)), Kruschke ([2014](http://www.indiana.edu/~kruschke/DoingBayesianDataAnalysis/)), or Gelman, Carlin, Stern, Dunson, Vehtari, and Rubin ([2013](http://www.stat.columbia.edu/~gelman/book/)). I haven't had time to check it out, but I've heard Labmert's ([2018](https://ben-lambert.com/a-students-guide-to-bayesian-statistics/)) text is good, too. And for details specific to **Stan**, and thus **brms**, you might check out the documentation resources at [https://mc-stan.org/users/documentation/](https://mc-stan.org/users/documentation/).
 
 ## 4.4 First steps: Fitting two unconditional multilevel models for change
 
@@ -192,13 +211,13 @@ get_prior(data = alcohol1_pp,
           alcuse ~ 1 + (1 | id))
 ```
 
-For this model, all three prior distributions are based on Student's $t$-distribution. In case you're rusty, the Normal distribution is just a special case of Student's $t$-distribution. Whereas the Normal is defined by two parameters ($\mu$ and $\sigma$), the $t$ distribution is defined by $\nu$, $\mu$, and $\sigma$. I frequentist circles, $\nu$ is often called the degrees of freedom. More generally, it's also sometimes referred to as a normality parameter. We'll esamine the prior more closely in a bit. 
+For this model, all three prior distributions are based on Student's $t$-distribution. In case you're rusty, the Normal distribution is just a special case of Student's $t$-distribution. Whereas the Normal is defined by two parameters ($\mu$ and $\sigma$), the $t$ distribution is defined by $\nu$, $\mu$, and $\sigma$. In frequentist circles, $\nu$ is often called the degrees of freedom. More generally, it's also sometimes referred to as a normality parameter. We'll examine the prior more closely in a bit. 
 
 For now, let’s practice setting our priors by manually specifying them within `brm()`. You do with the `prior` argument. There are actually several ways to do this. To explore all the options, check out the `set_prior` section of the [Reference manual](https://cran.r-project.org/web/packages/brms/brms.pdf). I typically define my individual priors with the `prior()` function. When there are more than one priors to define, I typically bind them together within `c(...)`. 
 
 Other than the addition of our fancy `prior` statement, the rest of the settings within `brm()` are much like those in prior chapters. Let's fit the model.
 
-```{r fit1, cache = T, mesage = F, warning = F, results = "hide"}
+```{r fit1, cache = T, message = F, warning = F, results = "hide"}
 fit1 <-
   brm(data = alcohol1_pp, 
       family = gaussian,
@@ -324,7 +343,7 @@ fixef(fit1)^2
 However, I do not recommend this method. Though it did okay at transforming the posterior mean (i.e., Estimate), it’s not a great way to get the summary statistics correct. To do that, you’ll need to work with the posterior samples themselves. Remember how we saved them as `post`? Let’s refresh ourselves and look at the first few columns.
 
 ```{r}
-post[, 1:3]
+post[1:6, 1:3]
 ```
 
 See that `b_Intercept` column there? That contains our posterior draws from $\gamma_{00}$. If you want proper summary statistics from the transformed estimate, get them after transforming that column.
@@ -355,7 +374,7 @@ Base **R** has an array of functions based on the $t$ distribution (e.g., `rt()`
 
 We'll start with the default intercept prior, $t(\nu = 3, \mu = 1, \sigma = 10)$. Here's the density in the range $[-100, 100]$.
 
-```{r, fig.width = 4}
+```{r, fig.width = 4, fig.height = 3}
 tibble(x = seq(from = -100, to = 100, length.out = 1e3)) %>%
   mutate(density = metRology::dt.scaled(x, df = 3, mean = 1, sd = 10)) %>% 
   
@@ -371,7 +390,7 @@ Though it's centered on 1, the bulk of the mass seems to range from -40 to 40. G
 
 Here's the shape of the variance priors.
 
-```{r, fig.width = 4}
+```{r, fig.width = 4, fig.height = 3}
 tibble(x = seq(from = 0, to = 100, length.out = 1e3)) %>%
   mutate(density = metRology::dt.scaled(x, df = 3, mean = 0, sd = 10)) %>% 
   
@@ -411,7 +430,7 @@ get_prior(data = alcohol1_pp,
           alcuse ~ 0 + intercept + age_14 + (1 + age_14 | id))
 ```
 
-Several things of note. First, notice how we continue to use the `student_t(3, 0, 10)` for all three of our standard-deviation-metric variance parameters. Since we’re now estimating $\sigma_0$ and $\sigma_1$, which themselves have a correlation, $\sigma_{01}$, we have a prior for the class `cor`. I’m going to put off what is meant by the name `lkj`, but for the moment just realize that this prior is essentially noninformative within this context.
+Several things of note. First, notice how we continue to use the `student_t(3, 0, 10)` for all three of our standard-deviation-metric variance parameters. Since we’re now estimating $\sigma_0$ and $\sigma_1$, which themselves have a correlation, $\rho_{01}$, we have a prior for the class `cor`. I’m going to put off what is meant by the name `lkj`, but for the moment just realize that this prior is essentially noninformative within this context.
 
 There’s a major odd development with this output. Notice how there’s the `prior` column is empty for the rows for our two coefficients of class `b`. And if you’re a little confused, recall that because our predictor `age_14` is not mean-centered, we’ve used the `0 + intercept` syntax, which switches the model intercept parameter to the class of `b`. Anyway, it might seem odd that the `prior` values for those rows are blank. From the `set_prior` section of the Reference manual for **brms** version 2.9.0, we read: “The default prior for population-level effects (including monotonic and category specific effects) is an improper flat prior over the reals” (p. 150). At present, these priors are uniform across the entire parameter space. They’re not just weak, their entirely noninformative. That is, for those parameters, the likelihood dominates the posterior. 
 
@@ -503,7 +522,7 @@ VarCorr(fit2,
   str()
 ```
 
-That last part, the contents of the second higher-level list indexed by `$ residual`, contains the contents for $\sigma_\epsilon$. On pate 100 in the text, Singer and Willett compared $\sigma_\epsilon^2$ from the first model to that from the second. We might do that like so.
+That last part, the contents of the second higher-level list indexed by `$ residual`, contains the contents for $\sigma_\epsilon$. On page 100 in the text, Singer and Willett compared $\sigma_\epsilon^2$ from the first model to that from the second. We might do that like so.
 
 ```{r, fig.width = 8, fig.height = 2.25}
 cbind(VarCorr(fit1, summary = F)[[2]][[1]],
@@ -541,7 +560,7 @@ cbind(VarCorr(fit1, summary = F)[[2]][[1]],
   mutate_if(is.double, round, digits = 3)
 ```
 
-In case it wasn't clear, when we presented `fit1 – fit2` in the density plot, that was a simple difference score. However, we computed `proportion_decline` above by dividing that difference score by `fit1`; that's what put the difference in a proportion metric. Anyway, Singer and Willett's method led them to summarize the decline as .40. Our method was a more conservative .35 ish. And very happily, our method allows us to describe the proportion decline with summary statistics for the full posterior, such as with the $SD$ and the 95% intervals.
+In case it wasn't clear, when we presented `fit1 – fit2` in the density plot, that was a simple difference score. However, we computed `proportion_decline` above by dividing that difference score by `fit1`; that's what put the difference in a proportion metric. Anyway, Singer and Willett's method led them to summarize the decline as .40. Our method was a more conservative .35-ish. And very happily, our method allows us to describe the proportion decline with summary statistics for the full posterior, such as with the $SD$ and the 95% intervals.
 
 ```{r, fig.width = 6, fig.height = 2}
 post %>% 
@@ -558,14 +577,18 @@ The estimate Singer and Willett hand-computed in the text, -.22, is near the mea
 On page 101, we get the generic formula for computing the residual variance for a given occasion $j$:
 
 $$
-\sigma_\text{Residual_j}^2 = \sigma_0^2 + \sigma_1^2 \text{time}_j + 2 \sigma_{01} \text{time}_j + \sigma_\epsilon^2
+\sigma_{\text{Residual}_j}^2 = \sigma_0^2 + \sigma_1^2 \text{time}_j + 2 \sigma_{01} \text{time}_j + \sigma_\epsilon^2
 $$
+
 
 If we were just interested in applying it to one of our `age` values, say 14, we might apply the formula to the posterior like this.
 
 ```{r}
 post %>% 
-  transmute(sigma_2_residual_j = sd_id__Intercept^2 + sd_id__age_14^2 * 0 + 2 * sd_id__Intercept * cor_id__Intercept__age_14 * sd_id__age_14 * 0 + sigma^2) %>% 
+  transmute(sigma_2_residual_j = sd_id__Intercept^2 + 
+              sd_id__age_14^2 * 0 + 
+              2 * sd_id__Intercept * cor_id__Intercept__age_14 * sd_id__age_14 * 0 + 
+              sigma^2) %>% 
   head()
 ```
 
@@ -682,7 +705,7 @@ tibble(age_14 = 0:2) %>%
 
 
 
-```{r}
+```{r, eval = F}
 tibble(age_14 = 0:2) %>% 
   mutate(fitted = map(age_14, ~ post$b_intercept + post$b_age_14 * .)) %>% 
   full_join(alcohol1_pp %>% select(id, age_14, alcuse),
@@ -759,15 +782,15 @@ If you look back up at the shape of the full posterior of $R_\epsilon^2$, you’
 
 ### A taxonomy of statistical models.
 
-> We suggest that you base decisions to enter, retain, and remove predictors on a combination of logic, theory, and prior research, supplemented by judicious [parameter evaluation] and comparison of model fit. At the outset, you might examine the effect of each predictor individually. You might then focus on predictors of primary interest (while including others whose effects you want to control). As in regular regression, you can add predictors singly or in groups and you can address issues of functional form using interactions and transformations. As you develop the taxonomy, you will progress toward a "final model" whose interpretation addresses your research questions. We place quotes around this term to emphasize that we believe no statistical model is *ever* final; it is simply a placeholder until a better model is found. (p. 105, emphasis in the original)
+> We suggest that you base decisions to enter, retain, and remove predictors on a combination of logic, theory, and prior research, supplemented by judicious [parameter evaluation] and comparison of model fit. At the outset, you might examine the effect of each predictor individually. You might then focus on predictors of primary interest (while including others whose effects you want to control). As in regular regression, you can add predictors singly or in groups and you can address issues of functional form using interactions and transformations. As you develop the taxonomy, you will progress toward a "final model" whose interpretation addresses your research questions. We place quotes around this term to emphasize that we believe no statistical model is *ever* final; it is simply a placeholder until a better model is found. (p. 105, *emphasis* in the original)
 
 ### 4.5.2 Interpreting fitted models.
 
 > You need not interpret every model you fit, especially those designed to guide interim decision making. When writing up findings for presentation and publication, we suggest that you identify a manageable subset of models that, taken together, tells a persuasive story parsimoniously. At a minimum, this includes the unconditional means model, the unconditional growth model, and a "final model". You may also want to present intermediate models that either provide important building blocks or tell interesting stories in their own right. (p. 106)
 
-In the dawn of the post-replication crisis era, it’s astonishing to reread and transcribe this section and the one above. I like a lot of what the authors had to say. Much of it seems like good pragmatic advice. But if they were to rewrite these sections again, I wonder what changes they’d make. Would the recommend researchers [preregister](https://www.pnas.org/content/pnas/115/11/2600.full.pdf) their primary hypothesis, variables of interest, and perhaps their model building strategy? Would they be interested in a [multiverse analysis](https://journals.sagepub.com/doi/10.1177/1745691616658637)? Would the still recommend sharing only a subset of one’s analyses in the era of sharing platforms like [GitHub](https://github.com) and the [Open Science Framework](https://osf.io)? Would they weigh in on development in [causal inference](https://www.wiley.com/en-us/Causal+Inference+in+Statistics%3A+A+Primer-p-9781119186847)?
+In the dawn of the post-replication crisis era, it’s astonishing to reread and transcribe this section and the one above. I like a lot of what the authors had to say. Much of it seems like good pragmatic advice. But if they were to rewrite these sections again, I wonder what changes they’d make. Would the recommend researchers [preregister](https://www.pnas.org/content/pnas/115/11/2600.full.pdf) their primary hypothesis, variables of interest, and perhaps their model building strategy? Would they be interested in a [multiverse analysis](https://journals.sagepub.com/doi/10.1177/1745691616658637)? Would the still recommend sharing only a subset of one’s analyses in the era of sharing platforms like [GitHub](https://github.com) and the [Open Science Framework](https://osf.io)? Would they weigh in on developments in [causal inference](https://www.wiley.com/en-us/Causal+Inference+in+Statistics%3A+A+Primer-p-9781119186847)?
 
-#### Model C: The uncontrolled effects of COA
+#### Model C: The uncontrolled effects of COA.
 
 The default priors for Model C are the same as for the unconditional growth model. All we’ve done is add parameters of `class = b`. As these default to improper flat priors, we have nothing to add to the `prior` argument to include them. Feel free to check with `get_prior()`. For the sake of practice, this model follows the form
 
@@ -846,7 +869,7 @@ marginal_effects(fit3_c,
                  effects = "age_14:coa")
 ```
 
-Earlier we discussed how `marginal_effects()` let’s users adjust some of the output. But if you want an extensive overhaul, it’s better to save the output of `marginal_effects()` as an object and manipulate that object with the `plot()` function.
+Earlier we discussed how `marginal_effects()` lets users adjust some of the output. But if you want an extensive overhaul, it’s better to save the output of `marginal_effects()` as an object and manipulate that object with the `plot()` function.
 
 ```{r}
 me <- marginal_effects(fit3_c, effects = "age_14:coa")
@@ -1057,7 +1080,8 @@ posterior_samples(fit2) %>%
   summarise_all(median) %>% 
   transmute(`% decline in sigma_2_epsilon` = 100 * (fit2_sigma_2_epsilon - fit4_sigma_2_epsilon) / fit2_sigma_2_epsilon,
             `% decline in sigma_2_0` = 100 * (fit2_sigma_2_0 - fit4_sigma_2_0) / fit2_sigma_2_0,
-            `% decline in sigma_2_1` = 100 * (fit2_sigma_2_1 - fit4_sigma_2_1) / fit2_sigma_2_1)
+            `% decline in sigma_2_1` = 100 * (fit2_sigma_2_1 - fit4_sigma_2_1) / fit2_sigma_2_1) %>% 
+  gather()
 ```
 
 The percentages in which our variance componence declined relative to the unconditional growth model are of similar orders of magnitude as those presented in the text.
@@ -1246,7 +1270,7 @@ In my opinion, it works better to split the plot into two when you include the 9
 
 > The easiest strategy for recentering a time-invariant predictor is to subtract its sample mean from each observed value. When we center a predictor on its sample mean, the level-2 fitted intercepts represent the average fitted values of initial status (or rate of change). We can also recenter a time-invariant predictor by subtracting another meaningful value… Recentering works best when the centering constant is substantively meaningful. (pp. 113--114)
 
-As we'’'ll see later, centering can also make it easier to select meaningful priors on the model intercept. If you look at our `alcohol1_pp` data, you'll see we already have centered versions of our time-invariant predictors. They're the last two columns: `cpeer` and `ccoa`.
+As we'll see later, centering can also make it easier to select meaningful priors on the model intercept. If you look at our `alcohol1_pp` data, you'll see we already have centered versions of our time-invariant predictors. They're the last two columns: `cpeer` and `ccoa`.
 
 ```{r}
 alcohol1_pp %>% 
@@ -1314,10 +1338,10 @@ ll <-
   log_lik(fit1) %>%
   data.frame() %>% 
   mutate(sums     = rowSums(.)) %>% 
-  transmute(deviance = -2 * sums) %>% 
+  mutate(deviance = -2 * sums) %>% 
   select(sums, deviance, everything())
 
-head(ll)
+dim(ll)
 ```
 
 Because we used HMC, deviance is a distribution rather than a single number. Here's what it looks like for `fit1`.
@@ -1330,7 +1354,7 @@ ll %>%
   theme(panel.grid = element_blank())
 ```
 
-As do the frequentists, we Bayesian generally prefer models with smaller deviances, too.
+As do the frequentists, we Bayesian generally prefer models with smaller deviances.
 
 The reasons frequentists multiply the LL by -2 is because after doing so, the difference in deviances between two models follows a $\chi^2$ distribution and the old $\chi^2$ difference test is widely-used in frequentist statistics. Bayesians often just go ahead and use the -2 multiplication, too. It's largely out of tradition. But as we'll see, some contemporary Bayesians are challenging that tradition.
 
@@ -1400,7 +1424,7 @@ In chapter 6 of [my project](https://bookdown.org/connect/#/apps/1850/access) tr
 waic(fit1)
 ```
 
-We'll come back to that warning message, later. For now, notice the main output is a $3 \times 2$ data frame with named rows. For the statistic in each row, you get a point estimate and a standard error. The WAIC is on the bottom. The effective number of parameters, the $p_\text{WAIC}$, is in the middle. Notice the `elpd_waic` on the top. That's what you get without the $-2 \cdot ...$ in the formula. Remember how that part is just to put things in a metric amenable to $\chi^2$ difference testing? Well, not all Bayesian like that and within the **Stan** ecosystem, you'll also see the WAIC expressed instead as the $\text{elpd}_\text{WAIC}$.
+We'll come back to that warning message, later. For now, notice the main output is a $3 \times 2$ data frame with named rows. For the statistic in each row, you get a point estimate and a standard error. The WAIC is on the bottom. The effective number of parameters, the $p_\text{WAIC}$, is in the middle. Notice the `elpd_waic` on the top. That's what you get without the $-2 \times ...$ in the formula. Remember how that part is just to put things in a metric amenable to $\chi^2$ difference testing? Well, not all Bayesians like that and within the **Stan** ecosystem you'll also see the WAIC expressed instead as the $\text{elpd}_\text{WAIC}$.
 
 The current recommended workflow within **brms** is to attach the WAIC information to the model fit. You do it with the `add_criterion()` function.
 
@@ -1422,7 +1446,7 @@ We have another big option for model comparison within the **Stan** ecosystem. I
 
 Welcome to science. 
 
-To address this problem, you might recommend we collect data from two samples for each project. Starting with sample A, we’d fit a series of models and settle on one or a small subset that both speak to our scientific hypothesis and seem to fit the sample A data well. Then we’d switch to sample B and rerun our primary model(s) from A to make sure our findings generalize. In this paradigm, we might call the A data in sample and the B data out of sample—or out of sample A, anyways.
+To address this problem, you might recommend we collect data from two samples for each project. Starting with sample A, we’d fit a series of models and settle on one or a small subset that both speak to our scientific hypothesis and seem to fit the sample A data well. Then we’d switch to sample B and rerun our primary model(s) from A to make sure our findings generalize. In this paradigm, we might call the A data *in sample* and the B data *out of sample*--or out of sample A, anyways.
 
 The problem is we often have time and funding constraints. We only have sample A and we may never collect sample B. So we’ll need to make the most out of our sample A. Happily, tricky statisticians have our back. Instead, what we might do is divide our data into $k$ equally-sized subsets. We’ll call those subsets *folds*. If we leave one of the folds out, we can fit the model with the remaining data and then see how well that model speaks to the left-out fold. After doing this for every fold, we can get an average performance across folds.
 
@@ -1510,7 +1534,6 @@ fit1 <- add_criterion(fit1, c("loo", "waic"))
 fit2 <- add_criterion(fit2, c("loo", "waic"))
 fit3 <- add_criterion(fit3, c("loo", "waic"))
 fit4 <- add_criterion(fit4, c("loo", "waic"))
-fit5 <- add_criterion(fit5, c("loo", "waic"))
 ```
 
 And to refresh, we can pull the WAIC and LOO information with `$` indexing. Here's how to get the LOO info for `fit2`.
@@ -1519,7 +1542,7 @@ And to refresh, we can pull the WAIC and LOO information with `$` indexing. Here
 fit2$loo
 ```
 
-Sigh. Turns out there are even more overly-influential cases in the unconditional growth model. In the case of a real data analysis, this might suggest we need a more robust model. One possible solution might be switching out our Gaussian likelihood for the robust Student's $t$-distribution. For an introduction, you might check out [my blog on the topic](https://solomonkurz.netlify.com/post/robust-linear-regression-with-the-robust-student-s-t-distribution/). But that'll take us farther afield that I want to go. 
+Sigh. Turns out there are even more overly-influential cases in the unconditional growth model. In the case of a real data analysis, this might suggest we need a more robust model. One possible solution might be switching out our Gaussian likelihood for the robust Student's $t$-distribution. For an introduction, you might check out [my blog on the topic](https://solomonkurz.netlify.com/post/robust-linear-regression-with-the-robust-student-s-t-distribution/). But that'll take us farther afield than I want to go. 
 
 The point to focus on, here, is we can use the `loo_compare()` function to compare fits by their WAIC or LOO. Let's practice with the WAIC.
 
@@ -1536,7 +1559,9 @@ cbind(waic_diff = ws[, 1] * -2,
       se        = ws[, 2] *  2)
 ```
 
-The reason we multiplied the `se_diff` column (i.e., the standard errors for the difference estimates) is because you can't have negative standard errors. That's be silly. But anyway, notice that the `brm()` fits have been rank ordered with the smallest differences at the top. Each row in the output is the difference of one of the fits compared to the best-fitting fit. Since `fit4` apparently had the lowest WAIC value, it was ranked at the top. And notice how its `waic_diff` is 0. That, of course, is because $x - x = 0$. So all the other difference scores are follow the formula $\text{Difference}_x = \text{WAIC}_\{fit_x} - \text{WAIC}_\{fit_4}$. 
+The reason we multiplied the `se_diff` column (i.e., the standard errors for the difference estimates) by 2 is because you can't have negative standard errors. That's be silly. 
+
+But anyway, notice that the `brm()` fits have been rank ordered with the smallest differences at the top. Each row in the output is the difference of one of the fits compared to the best-fitting fit. Since `fit4` apparently had the lowest WAIC value, it was ranked at the top. And notice how its `waic_diff` is 0. That, of course, is because $x - x = 0$. So all the other difference scores are follow the formula $\text{Difference}_x = \text{WAIC}_\{fit_x} - \text{WAIC}_\{fit_4}$. 
 
 Concerning our `ws` object, we can get more information on our models' WAICs if we include a `simplify = F` argument within `print()`.
 
@@ -1661,7 +1686,7 @@ f %>%
             ul   = quantile(difference, probs = .975))
 ```
 
-On page 125, Singer and Willett further muse: 
+On page 125, Singer and Willett further mused: 
 
 > When we examined the OLS estimated change trajectories in figure 4.2, we noticed that among children of non-alcoholic parents, those with low values of *CPEER* tended to have a lower initial status and steeper slopes than those with high values of *CPEER*. We might therefore ask whether the former group "catches up" to the latter. This is a question about the "vertical" separation between these two groups['] true change trajectories at some later age, say 16. 
 
@@ -1730,7 +1755,7 @@ f %>%
   facet_wrap(~key, scales = "free_y")
 ```
 
-Singer and Willett concluded they could "reject the null hypothesis at any conventional level of significance" (p. 126). If we must appearl to the Null, here are the posterior means and 95% intervals for our differences.
+Singer and Willett concluded they could "reject the null hypothesis at any conventional level of significance" (p. 126). If we must appeal to the Null, here are the posterior means and 95% intervals for our differences.
 
 ```{r}
 f %>% 
@@ -1828,7 +1853,7 @@ e %>%
 
 For the right plot on the top, we need to add an `id` index. That's as easy as appending the one from the original data. If you followed closely with the text, you may have also noticed this panel is of the standardized residuals. That just means we’ll have to hand-standardize ours before plotting.
 
-```{r, fig.width = 3.5, fig.height = 2.75}
+```{r, fig.width = 3.5, fig.height = 2.75, warning = F, message = F}
 e %>% 
   bind_cols(alcohol1_pp %>% select(id)) %>% 
   mutate(z = (Estimate - mean(Estimate)) / sd(Estimate)) %>% 
@@ -1861,10 +1886,10 @@ z <-
   data.frame() %>% 
   mutate(ranef = rep(c("hat(zeta)[0][italic(i)]", "hat(zeta)[1][italic(i)]"), each = n() / 2))
 
-head(z)
+glimpse(z)
 ```
 
-Now we’re ready to plot the remaining panels on the left of Figure 4.5.
+Now we're ready to plot the remaining panels on the left of Figure 4.5.
 
 ```{r, fig.width = 3.5, fig.height = 5.5}
 z %>% 
@@ -1980,13 +2005,16 @@ alcohol1_pp %>%
 post_23 <-
   posterior_samples(fit6) %>% 
   select(starts_with("b_")) %>% 
+  # make our pis
   mutate(`pi[0][",23"]` = b_intercept + b_coa * 1 + b_cpeer * -1.018,
          `pi[1][",23"]` = b_age_14 + `b_age_14:cpeer` * -1.018)
 
 head(post_23)
 ```
 
-More than a couple point estimates, we return full posterior distributions which we might summarize.
+It doesn't help us much now, but the reason we've formatted the names for our two $\pi$ columns so oddly is because those names will work much nicer in the figure we'll make, below. Just wait and see.
+
+Anyways, more than a couple point estimates, we returned the draws from the full posterior distribution. We might summarize them.
 
 ```{r}
 post_23 %>% 
@@ -2021,7 +2049,7 @@ post_23 <-
   posterior_samples(fit6) %>% 
   select(starts_with("b_"), contains("23"))
 
-head(post_23)
+glimpse(post_23)
 ```
 
 With the `r_id` prefix, **brms** tells you these are residual estimates for the levels in the `id` grouping variable. Within the brackets, we learn these particular columns are for `id == 23`, the first with respect to the `Intercept` and second with respect to the `age_14` parameter. Let's put them to use.
@@ -2065,7 +2093,7 @@ post_23 %>%
 
 We've been focusing on the $\pi$ parameters. Notice that when we turn our attention to Figure 4.7, we're now shifting focus slightly to the consequences of those parameters. We're not attending to trajectories. It's important to pick up on this distinction, because it has consequences for our programming workflow. If you wanted to keep a parameter-centric workflow, we could continue to expand on our `posterior_samples()` by applying the full composite formula to explicitly add in predictions for various levels of `age_14`. And we could do that separately or in bulk for the eight participants highlighted in the figure. 
 
-However pedagogically useful that might be, it's be very tedious. If we instead take a trajectory-centric perspective, it's more natural and efficient to work with a `fitted()` based workflow. Let's define our `nd` data.
+However pedagogically useful that might be, it'd be very tedious. If we instead take a trajectory-centric perspective, it'll be more natural and efficient to work with a `fitted()` based workflow. Let's define our `nd` data.
 
 ```{r}
 nd <-
@@ -2091,7 +2119,7 @@ f <-
 glimpse(f)
 ```
 
-Notice how this time, we omitted the `re_formula = NA` argument. By default, `re_formula = NULL`, the consequence of which is the output is based on all the parameters in the multilevel model, not just the $\gamma$s. Here are what they look like.
+Notice how this time we omitted the `re_formula = NA` argument. By default, `re_formula = NULL`, the consequence of which is the output is based on all the parameters in the multilevel model, not just the $\gamma$s. Here are what they look like.
 
 ```{r, fig.height = 5, fig.width = 8}  
 f %>% 
@@ -2104,7 +2132,7 @@ f %>%
   facet_wrap(~id_label, ncol = 4)
 ```
 
-Now we've warmed up, let's add in the data and the other lines so make the full version of Figure 4.7. Before we do so, we'll revisit `fitted()` one more time. Notice the return of the `re_formula = NA` argument. The trajectories in our `f_gamma_only` data frame will only be sensitive to the $\gamma$s.
+Now we've warmed up, let's add in the data and the other lines so make the full version of Figure 4.7. Before we do so, we'll revisit `fitted()`. Notice the return of the `re_formula = NA` argument. The trajectories in our `f_gamma_only` data frame will only be sensitive to the $\gamma$s.
 
 ```{r}
 f_gamma_only <-
@@ -2172,6 +2200,7 @@ nd_expanded <-
   alcohol1_pp %>% 
   select(id, coa, cpeer) %>% 
   filter(id %in% c(4, 14, 23, 32, 41, 56, 65, 82)) %>% 
+  # this part is important!
   expand(nesting(id, coa, cpeer),
          age_14 = seq(from = 0, to = 2, length.out = 30)) %>% 
   mutate(id_label = ifelse(id < 10, str_c("0", id), id)) %>% 
@@ -2224,7 +2253,7 @@ sessionInfo()
 
 ```{r, echo = F, eval = F}
 # here we'll remove our objects
-rm(early_int, early_int_sim, d, fit1, f, path, text, arrow, by_id, n, nd, p, math, fit2, post, sigma, mu, z, g)
+rm()
 
 theme_set(theme_grey())
 ```
