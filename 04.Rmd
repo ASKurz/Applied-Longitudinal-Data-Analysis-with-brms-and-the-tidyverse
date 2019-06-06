@@ -1896,8 +1896,7 @@ z %>%
   ggplot(aes(x = id, y = z)) +
   geom_hline(yintercept = 0, color = "white") +
   geom_point() +
-  labs(x = "Normal score",
-       y = NULL) +
+  labs(y = NULL) +
   ylim(-3, 3) +
   theme(panel.grid = element_blank()) +
   facet_wrap(~ranef, labeller = label_parsed, ncol = 1)
@@ -1917,8 +1916,7 @@ z %>%
   ggplot(aes(x = id, y = Estimate, ymin = Q2.5, ymax = Q97.5)) +
   geom_hline(yintercept = 0, color = "white") +
   geom_pointrange(shape = 20, size = 1/3) +
-  labs(x = "Normal score",
-       y = NULL) +
+  labs(y = NULL) +
   theme(panel.grid = element_blank()) +
   facet_wrap(~ranef, labeller = label_parsed, ncol = 1)
 ```
@@ -1966,83 +1964,253 @@ z %>%
   facet_grid(ranef~covariate, labeller = label_parsed, scales = "free")
 ```
 
-```{r}
-alcohol1_pp %>% distinct(id, coa, peer)
-```
-
 ## 4.9 Model-based (Empirical Bayes) estimates of the individual growth parameters
 
+In this section, the authors discussed two methods for constructing `id`-level trajectories: a) use a weighted average of the OLS and multilevel estimates and b) rely solely on the multilevel model by making use of the three sources of residual variation. Our method will be the latter. 
 
-
-
-
-
-
+Here are the data for `id == 23`.
 
 ```{r}
-ranef(fit5) %>% 
-  str()
-```
-
-
-
-
-
-
-
-```{r}
-post_4.5 <- posterior_samples(b4.5)
-
-coef(b4.5)$id[, , "Intercept"] %>%
-  rbind(coef(b4.5)$id[, , "age_14"]) %>%
-  as_tibble() %>%
-  mutate(id = rep(1:82, times = 2),
-         parameter = rep("Intercept"))
+alcohol1_pp %>% 
+  select(id:coa, cpeer, alcuse) %>% 
+  filter(id == 23)
 ```
 
 ```{r}
-post_4.3 <-
-  post_4.3 %>%
-  mutate(pi_0i_coa0 = b_Intercept + b_coa*0,
-         pi_1i_coa0 = b_age_14 + `b_age_14:coa`*0,
-         pi_0i_coa1 = b_Intercept + b_coa*1,
-         pi_1i_coa1 = b_age_14 + `b_age_14:coa`*1) 
+post_23 <-
+  posterior_samples(fit6) %>% 
+  select(starts_with("b_")) %>% 
+  mutate(`pi[0][",23"]` = b_intercept + b_coa * 1 + b_cpeer * -1.018,
+         `pi[1][",23"]` = b_age_14 + `b_age_14:cpeer` * -1.018)
 
-
-post_4.5 %>% 
-  select(`r_id[1,Intercept]`:`r_id[82,Intercept]`) %>%
-  gather() %>%
-  mutate(coa = c(rep(alcohol1$coa[ , ]
-                   ))
-b4.5$formula
+head(post_23)
 ```
+
+More than a couple point estimates, we return full posterior distributions which we might summarize.
+
+```{r}
+post_23 %>% 
+  select(starts_with("pi")) %>% 
+  gather() %>% 
+  group_by(key) %>% 
+  summarise(mean = mean(value),
+            ll = quantile(value, probs = .025),
+            ul = quantile(value, probs = .975)) %>% 
+  mutate_if(is.double, round, digits = 3)
+```
+
+Or we could plot them.
+
+```{r, fig.width = 6, fig.height = 2.25}
+post_23 %>% 
+  select(starts_with("pi")) %>% 
+  gather() %>% 
   
-```{r}  
-nd <- 
-  tibble(age_14 = rep(seq(from = 0, to = 2, length.out = 30),
-                      times = 4),
-         coa = rep(c(0:1, 0:1), each = 30),
-         peer = rep(c(.655, 1.381), each = 30*2))
-
-ftd_4.5 <- 
-  fitted(b4.5, 
-         newdata = nd,
-         re_formula = NA) %>%
-  as_tibble() %>%
-  bind_cols(nd) %>%
-  mutate(group = rep(letters[1:4], each = 30))
-    
+  ggplot(aes(x = value)) +
+  geom_density(size = 0, fill = "grey25") +
+  scale_y_continuous(NULL, breaks = NULL) +
+  xlab("participant-specific parameter estimates") +
+  theme(panel.grid = element_blank()) +
+  facet_wrap(~key, labeller = label_parsed, scales = "free_y")
 ```
 
+Yet this approach neglects the $\zeta$s. W've been extracting the $\zeta$s with `ranef()`. We also get them when we use `posterior_samples()`. Here we'll extract both the $\gamma$s as well as the $\zeta$s for `id == 23`.
 
+```{r}
+post_23 <-
+  posterior_samples(fit6) %>% 
+  select(starts_with("b_"), contains("23"))
 
+head(post_23)
+```
 
+With the `r_id` prefix, **brms** tells you these are residual estimates for the levels in the `id` grouping variable. Within the brackets, we learn these particular columns are for `id == 23`, the first with respect to the `Intercept` and second with respect to the `age_14` parameter. Let's put them to use.
 
+```{r}
+post_23 <-
+  post_23 %>% 
+  mutate(`pi[0][",23"]` = b_intercept + b_coa * 1 + b_cpeer * -1.018 + `r_id[23,Intercept]`,
+         `pi[1][",23"]` = b_age_14 + `b_age_14:cpeer` * -1.018 + `r_id[23,age_14]`)
 
+glimpse(post_23)
+```
 
+Here are our updated summaries.
 
+```{r}
+post_23 %>% 
+  select(starts_with("pi")) %>% 
+  gather() %>% 
+  group_by(key) %>% 
+  summarise(mean = mean(value),
+            ll = quantile(value, probs = .025),
+            ul = quantile(value, probs = .975)) %>% 
+  mutate_if(is.double, round, digits = 3)
+```
 
+And here are the updated density plots.
 
+```{r, fig.width = 6, fig.height = 2.25}
+post_23 %>% 
+  select(starts_with("pi")) %>% 
+  gather() %>% 
+  
+  ggplot(aes(x = value)) +
+  geom_density(size = 0, fill = "grey25") +
+  scale_y_continuous(NULL, breaks = NULL) +
+  xlab("participant-specific parameter estimates") +
+  theme(panel.grid = element_blank()) +
+  facet_wrap(~key, labeller = label_parsed, scales = "free_y")
+```
+
+We've been focusing on the $\pi$ parameters. Notice that when we turn our attention to Figure 4.7, we're now shifting focus slightly to the consequences of those parameters. We're not attending to trajectories. It's important to pick up on this distinction, because it has consequences for our programming workflow. If you wanted to keep a parameter-centric workflow, we could continue to expand on our `posterior_samples()` by applying the full composite formula to explicitly add in predictions for various levels of `age_14`. And we could do that separately or in bulk for the eight participants highlighted in the figure. 
+
+However pedagogically useful that might be, it's be very tedious. If we instead take a trajectory-centric perspective, it's more natural and efficient to work with a `fitted()` based workflow. Let's define our `nd` data.
+
+```{r}
+nd <-
+  alcohol1_pp %>% 
+  select(id:coa, age_14:alcuse, cpeer) %>% 
+  filter(id %in% c(4, 14, 23, 32, 41, 56, 65, 82)) %>% 
+  # these next two lines will make plotting easier
+  mutate(id_label = ifelse(id < 10, str_c("0", id), id)) %>% 
+  mutate(id_label = str_c("id = ", id_label))
+
+glimpse(nd)
+```
+
+We've isolated the relevant predictor variables for our eight focal participants. Next we'll pump them through `fitted()` and wrangle as usual. 
+
+```{r}
+f <-
+  fitted(fit6,
+         newdata = nd) %>% 
+  data.frame() %>% 
+  bind_cols(nd)
+
+glimpse(f)
+```
+
+Notice how this time, we omitted the `re_formula = NA` argument. By default, `re_formula = NULL`, the consequence of which is the output is based on all the parameters in the multilevel model, not just the $\gamma$s. Here are what they look like.
+
+```{r, fig.height = 5, fig.width = 8}  
+f %>% 
+  ggplot(aes(x = age, y = Estimate)) +
+  geom_line(size = 1) +
+  scale_y_continuous("alcuse", breaks = 0:4, limits = c(-1, 4)) +
+  coord_cartesian(xlim = 13:17) +
+  theme(panel.grid = element_blank(),
+        legend.position = "none") +
+  facet_wrap(~id_label, ncol = 4)
+```
+
+Now we've warmed up, let's add in the data and the other lines so make the full version of Figure 4.7. Before we do so, we'll revisit `fitted()` one more time. Notice the return of the `re_formula = NA` argument. The trajectories in our `f_gamma_only` data frame will only be sensitive to the $\gamma$s.
+
+```{r}
+f_gamma_only <-
+  fitted(fit6,
+         newdata = nd,
+         re_formula = NA) %>% 
+  data.frame() %>% 
+  bind_cols(nd)
+
+glimpse(f_gamma_only)
+```
+
+Let's plot!
+
+```{r, fig.height = 5, fig.width = 8}  
+f %>% 
+  ggplot(aes(x = age)) +
+  # `id`-specific lines
+  geom_line(aes(y = Estimate),
+            size = 1) +
+  # gamma-centric lines
+  geom_line(data = f_gamma_only,
+            aes(y = Estimate),
+            size = 1/2) +
+  # OLS lines
+  stat_smooth(data = nd,
+            aes(y = alcuse),
+            method = "lm", se = F,
+            color = "black", linetype = 2, size = 1/2) +
+  # data points
+  geom_point(data = nd,
+             aes(y = alcuse)) +
+  scale_y_continuous("alcuse", breaks = 0:4, limits = c(-1, 4)) +
+  coord_cartesian(xlim = 13:17) +
+  theme(panel.grid = element_blank(),
+        legend.position = "none") +
+  facet_wrap(~id_label, ncol = 4)
+```
+
+Though our purpose was largely to reproduce Figure 4.7, we might push ourselves a little further. Our Bayesian estimates came with measures of uncertainty, the posterior standard deviations and the 95% intervals. Whenever possible, it's good form to include some expression of our uncertainty in our plots. Here let's focus on the `id`-specific trajectories.
+
+```{r, fig.height = 5, fig.width = 8}  
+f %>% 
+  ggplot(aes(x = age, y = Estimate)) +
+  # `id`-specific 95% intervals
+  geom_ribbon(aes(ymin = Q2.5, ymax = Q97.5),
+              fill = "grey75") +
+  # `id`-specific lines
+  geom_line(size = 1) +
+  # data points
+  geom_point(data = nd,
+             aes(y = alcuse)) +
+  scale_y_continuous("alcuse", breaks = 0:4, limits = c(-1, 4)) +
+  coord_cartesian(xlim = 13:17) +
+  theme(panel.grid = element_blank(),
+        legend.position = "none") +
+  facet_wrap(~id_label, ncol = 4)
+```
+
+This also clarifies an important visualization point. If you only care about plotting straight lines, you only need two points. However, if you want to express shapes with curves, such as the typically-bowtie-shaped 95% intervals, you need estimates over a larger number of predictor values. Back to `fitted()`!
+
+```{r}
+# we need an expanded version of the `nd`
+nd_expanded <-
+  alcohol1_pp %>% 
+  select(id, coa, cpeer) %>% 
+  filter(id %in% c(4, 14, 23, 32, 41, 56, 65, 82)) %>% 
+  expand(nesting(id, coa, cpeer),
+         age_14 = seq(from = 0, to = 2, length.out = 30)) %>% 
+  mutate(id_label = ifelse(id < 10, str_c("0", id), id)) %>% 
+  mutate(id_label = str_c("id = ", id_label),
+         age = age_14 + 14)
+
+# pump our `nd_expanded` into `fitted()`
+f <-
+  fitted(fit6,
+         newdata = nd_expanded) %>% 
+  data.frame() %>% 
+  bind_cols(nd_expanded)
+
+glimpse(f)
+```
+
+Notice how we now have many more rows. Let's plot.
+
+```{r, fig.height = 5, fig.width = 8}  
+f %>% 
+  ggplot(aes(x = age, y = Estimate)) +
+  # `id`-specific 95% intervals
+  geom_ribbon(aes(ymin = Q2.5, ymax = Q97.5),
+              fill = "grey75") +
+  # `id`-specific lines
+  geom_line(size = 1) +
+  # data points
+  geom_point(data = nd,
+             aes(y = alcuse)) +
+  scale_y_continuous("alcuse", breaks = 0:4, limits = c(-1, 4)) +
+  coord_cartesian(xlim = 13:17) +
+  theme(panel.grid = element_blank(),
+        legend.position = "none") +
+  facet_wrap(~id_label, ncol = 4)
+```
+
+When we add in the measures of uncertainty, the 95% intervals, this plot also serves as a posterior predictive check (PPC). The idea behind PPCs is that the estimates in your model should do a reasonable job capturing the original data. Here we examine that by noticing how well our 95% intervals do at marking off the space we'd expect the data to live in. Ideally, they'd engulf 95% of the data. In this example, they did okay but it seems like the model isn't fully capturing the trends in the data. Sometimes this is the best you can get. Other times it can be a sign there are other important covariates lurking that might improve the model.
+
+Singer and Willett pointed out that one of the ways in which the multilevel model is more parsimonious than a series of `id`-specific single-level models is that all `id` levels share the same $\sigma_\epsilon$ parameter. At this point, we should just point out that it's possible to relax this assumption with modern Bayesian software, such as **brms**. For ideas on how, check out [Donald Williams](https://twitter.com/wdonald_1985)’ work (e.g., [this preprint](https://psyarxiv.com/gwatq)).
 
 ## Reference {-}
 
