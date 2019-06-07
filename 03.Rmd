@@ -113,7 +113,8 @@ path <-
 text <-
   tibble(age = c(1.2, 1.65, 2.15, 1.125, 2.075),
          cog = c(105, 101, 137, 75, 110),
-         label = c("epsilon[italic(i)][1]", "epsilon[italic(i)][2]", "epsilon[italic(i)][3]", "pi[0][italic(i)]", "pi[1][italic(i)]"))
+         label = c("epsilon[italic(i)][1]", "epsilon[italic(i)][2]", 
+                   "epsilon[italic(i)][3]", "pi[0][italic(i)]", "pi[1][italic(i)]"))
 
 arrow <-
   tibble(age  = c(1.15, 1.6, 2.1, 1.1),
@@ -224,7 +225,7 @@ by_id %>%
   head()
 ```
 
-If you want to extract the intercepts from the `tidy` column, you might do.
+If you want to extract the intercepts from the `tidy` column, you might do this.
 
 ```{r}
 unnest(by_id, tidy) %>%
@@ -251,7 +252,7 @@ unnest(by_id, tidy) %>%
   stem()
 ```
 
-If you want the residual variances (i.e., $\sigma_\epsilon$), you'd `unnest()` the `glance` column. They'll be listed in the `sigma` column.
+If you want the residual variances (i.e., $\sigma_\epsilon^2$), you'd `unnest()` the `glance` column. They'll be listed in the `sigma` column.
 
 ```{r}
 unnest(by_id, glance) %>% 
@@ -422,7 +423,7 @@ Talking about the various software options, Singer and Willett wrote:
 
 > All have their strengths, and we use many of them in our research and in this book. At their core, each program does the same job; it fits the multilevel model for change to data and provides parameter estimates, measures of precision, diagnostics, and so on. There is also some evidence that all the different packages produce the same, or similar, answers to a given problem ([Kreft & de Leeuw, 1990](https://files.eric.ed.gov/fulltext/ED340731.pdf)). So, in one sense, it does not matter which program you choose. (p. 64)
 
-But importantly, in the next paragraph the authors clarified their text focuses on "one particular method of estimation--maximum likelihood" (p, 64, *emphasis* in the original). This is quite important because, whereas we might expect various maximum-likelihood-based packages to yield the same or similar results, this will not necessarily hold when working with Bayesian software which, in addition to point estimates and expressions of uncertainty, yields an entire posterior distribution as a consequence of Bayes’ theorem 
+But importantly, in the next paragraph the authors clarified their text focuses on "one particular method of estimation--*maximum likelihood*" (p, 64, *emphasis* in the original). This is quite important because, whereas we might expect various maximum-likelihood-based packages to yield the same or similar results, this will not necessarily hold when working with Bayesian software which, in addition to point estimates and expressions of uncertainty, yields an entire posterior distribution as a consequence of Bayes’ theorem 
 
 $$
 p(\theta | d) = \frac{p(d | \theta) p(\theta)}{p(d)}
@@ -470,15 +471,15 @@ Here's the big new thing: our `formula` specified a multilevel model! Check out 
 
 Another important part of the `formula` syntax is concerns the intercept for the fixed effects. See the `0 + intercept` part? Here’s the deal. If we were using default behavior, we’d have coded either `1 + …` or just left that part out entirely. Both would have estimated the fixed intercept according to **brms** default behavior. But that’s the issue. By default, `brms::brm()` presumes your predictors are mean centered. This is critical because the default priors set by `brms::brm()` are also set based on this assumption. As it turns out, neither our `age_c` nor `program` variables are centered that way. `program` is a dummy variable and `age_c` is centered on 1, not the mean. Now since the `brm()` default priors are rather broad and uninformative, we may as well address this issue now and avoid bad practices. So, with our `0 + intercept` solution, we told `brm()` to suppress the default intercept and replace it with our smartly-named `intercept` parameter. This is our fixed effect for the population intercept and, importantly, `brms()` will assign default priors to it based on the data themselves without assumptions about centering. 
 
-I’d like to acknowledge at this point that if **brms** and/or the multilevel model are new to you, this can be disorienting and confusing. I’m sorry. The world’s unfair and Singer and Willett didn’t write their text with **brms** in mind. Had they done so, they’d have used mean-centered predictors for the first few models to put off this technical issue until later chapters. And here we are. So if you’re feeling frustrated, that mainly just means you’re paying attention. Forge on, friends. It’ll get better.
+I'd like to acknowledge at this point that if **brms** and/or the multilevel model are new to you, this can be disorienting and confusing. I’m sorry. The world is unfair and Singer and Willett didn't write their text with **brms** in mind. Had they done so, they'd have used mean-centered predictors for the first few models to put off this technical issue until later chapters. And here we are. So if you're feeling frustrated, that mainly just means you're paying attention. Good job. Forge on, friends! It'll get better.
 
 The line starting with `iter` largely explicates `brms::brm()` default settings. The only change from the defaults is `cores = 4`, which allow you to sample from all four `chains` simultaneously.
 
-The `control` line opens up a can of worms I just don’t want to address at this point in the text. It’s a technical setting that helped us do a better job sampling form the posterior. We’ll have more opportunities to talk about it later. For now, know that the default setting for `adapt_delta` is `0.8`. That parameter ranges from 0 to 1. 
+The `control` line opens up a can of worms I just don't want to address at this point in the text. It's a technical setting that helped us do a better job sampling form the posterior. We'll have more opportunities to talk about it later. For now, know that the default setting for `adapt_delta` is `0.8`. That parameter ranges from 0 to 1. 
 
-Last line: `seed = 3`. Markov chain Monte Carlo methods use pseudo-random number generators to sample from the posterior. To make the results of a pseudo-random process reproducible, you set the seed. There’s nothing special about setting it to 3. I just did so because that’s the chapter we’re on. Play around with other values and see what happens. 
+Last line: `seed = 3`. Markov chain Monte Carlo methods use pseudo-random number generators to sample from the posterior. To make the results of a pseudo-random process reproducible, you set the seed. There's nothing special about setting it to 3. I just did so because that’s the chapter we're on. Play around with other values and see what happens. 
 
-Okay, that’s a lot of boring technical talk. Let’s use `print()` to see what we did!
+Okay, that's a lot of boring technical talk. Let's use `print()` to see what we did!
 
 ```{r}
 print(fit2)
