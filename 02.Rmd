@@ -48,7 +48,7 @@ tolerance %>%
   nrow()
 ```
 
-With the base R `cor()` function, you can get the Pearson's correlation matrix shown in Table 2.1. 
+With the base R `cor()` function, you can get the Pearson's correlation matrix shown in Table 2.1.
 
 ```{r}
 cor(tolerance[ , 2:6]) %>%
@@ -73,9 +73,8 @@ cor(tolerance[ , 2:6]) %>%
             size = 3.5) +
   scale_fill_gradient(low = "white", high = "red4",
                       limits = c(0, 1)) +
-  scale_x_discrete(position = "top", expand = c(0, 0)) +
-  scale_y_discrete(expand = c(0, 0)) +
-  labs(x = NULL, y = NULL) +
+  scale_x_discrete(NULL, position = "top", expand = c(0, 0)) +
+  scale_y_discrete(NULL, expand = c(0, 0)) +
   theme(axis.ticks = element_blank())
 ```
 
@@ -90,7 +89,8 @@ psych::lowerCor(tolerance[ , 2:6])
 Here are the person-period data (i.e., those shown in the bottom of Figure 2.1).
 
 ```{r, warning = F, message = F}
-tolerance_pp <- read_csv("https://stats.idre.ucla.edu/wp-content/uploads/2016/02/tolerance1_pp.txt", col_names = T)
+tolerance_pp <- read_csv("https://stats.idre.ucla.edu/wp-content/uploads/2016/02/tolerance1_pp.txt",
+                         col_names = T)
 
 tolerance_pp %>%
   slice(c(1:9, 76:80))
@@ -104,7 +104,7 @@ tolerance_pp %>%
   count()
 ```
 
-A fundamental skill is knowing how to convert longitudinal data in one format to the other. If you're using packages within the tidyverse, `gather()` function will get you from the person-level format to the person-period format.
+A fundamental skill is knowing how to convert longitudinal data in one format to the other. If you're using packages within the tidyverse, the `gather()` function will get you from the person-level format to the person-period format.
 
 ```{r}
 tolerance %>%
@@ -148,9 +148,9 @@ tolerance_pp %>%
   facet_wrap(~id)
 ```
 
-By default, ggplot2 sets the scales of the x- and y-axes to the same values across subpanels. If you'd like to free that constraint, play around with the `scales` argument within `facet_wrap()`.
+By default, **ggplot2** sets the scales of the x- and y-axes to the same values across subpanels. If you'd like to free that constraint, play around with the `scales` argument within `facet_wrap()`.
 
-### Using a trajectory to summarize each person's empirical growth record
+### Using a trajectory to summarize each person's empirical growth record.
 
 If we wanted to connect the dots, we might just add a `geom_line()` line.
 
@@ -171,7 +171,7 @@ However, Singer and Willett recommend two other approaches:
 
 #### Smoothing the empirical growth trajectory nonparametrically.
 
-For our version of Figure 2.3, we'll use a loess smoother. When using the `stat_smooth()` function in ggplot2, you can control how smooth or wiggly the line is with the `span` argument.
+For our version of Figure 2.3, we'll use a loess smoother. When using the `stat_smooth()` function in **ggplot2**, you can control how smooth or wiggly the line is with the `span` argument.
 
 ```{r, fig.width = 4.5, fig.height = 5, message = F, warning = F}
 tolerance_pp %>%
@@ -196,13 +196,13 @@ by_id <-
   nest()
 ```
 
-You can get a sense of what we did with `head()`
+You can get a sense of what we did with `head()`.
 
 ```{r}
 by_id %>% head()
 ```
 
-As indexed by `id`, each participant has their own data set, denoted by the `data` column. To bet a better sense, we'll double-bracket subsetting skills to open up the first data set, the one for `id == 9`. If you're not familiar with this skill, you can learn more from [Chapter 9](https://bookdown.org/rdpeng/rprogdatascience/subsetting-r-objects.html) of [Roger Peng](https://twitter.com/rdpeng?lang=en)'s great online book, [*R Programming for Data Science*](https://bookdown.org/rdpeng/rprogdatascience/).
+As indexed by `id`, each participant now has their own data set, denoted by the `data` column. To bet a better sense, we'll use our double-bracket subsetting skills to open up the first data set, the one for `id == 9`. If you're not familiar with this skill, you can learn more from [Chapter 9](https://bookdown.org/rdpeng/rprogdatascience/subsetting-r-objects.html) of [Roger Peng](https://twitter.com/rdpeng?lang=en)'s great online book, [*R Programming for Data Science*](https://bookdown.org/rdpeng/rprogdatascience/) or [Jenny Bryan](https://twitter.com/JennyBryan)'s fun and useful talk [*Behind every great plot there's a great deal of wrangling*](https://www.youtube.com/watch?v=4MfUCX_KpdE).
 
 ```{r}
 by_id$data[[1]]
@@ -217,7 +217,7 @@ by_id$data[[1]] %>%
 
 Did you notice how our `age_minus_11` variable is the same as the `time` variable already in the data set? Yep, that's why we'll be using `time` in the model. In our data, $(\text{age} - 11)$ is encoded as `time`.
 
-Singer and Willett used OLS to fit their exploratory models. We could do that to with the `lm()` function. Let's get frisky and fit the models as Bayesians, instead. Our primary statistical package for fitting Bayesian models will be [Paul Bürkner](https://twitter.com/paulbuerkner?lang=en)'s [**brms** package](https://github.com/paul-buerkner/brms). Let's open it up.
+Singer and Willett used OLS to fit their exploratory models. We could do that to with the `lm()` function and we will do a little of that in thie project. But let's get frisky and fit the models as Bayesians, instead. Our primary statistical package for fitting Bayesian models will be [Paul Bürkner](https://twitter.com/paulbuerkner?lang=en)'s [**brms** package](https://github.com/paul-buerkner/brms). Let's open it up.
 
 ```{r, warning = F, message = F}
 library(brms)
@@ -264,7 +264,7 @@ print(fit2)
 
 Different participant, different model results.
 
-Looking ahead a bit, we'll need to know how to get the $R^2$ for a single-level Gaussian model. With brms, you do that with the `bayes_R2()` function.
+Looking ahead a bit, we'll need to know how to get the $R^2$ for a single-level Gaussian model. With **brms**, you do that with the `bayes_R2()` function.
 
 ```{r}
 bayes_R2(fit2)
@@ -313,7 +313,7 @@ models <-
   mutate(model = map(data, ~update(fit1, newdata = .)))
 ```
 
-Let’s walk through what we did. The `map()` function takes two primary arguments, `.x` and `.f`, respectively. We set `.x = data`, which meant we wanted to iterate over the contents in our `data` vector. Recall that each row of `data` itself contained an entire data set—one for each of the 16 participants. It’s the second argument `.f` that we indicated what we wanted to do with our rows of `data`. We set that to `.f = ~update(fit1, newdata = .)`. By the `~` syntax, we entered in a formula. That formula was `update(fit1, newdata = .)`. Just like we did with `fit2`, above`, re reused the model formula and other technical specs from `fit1`. Now notice the last part of the formula, `newdata = .`. That little `.` refers to the element we specified in the `.x` argument. What this combination means is that for each of the 16 rows of our nested `by_id` tibble, we plugged in the `id`-specific data set into `update(fit`, newdata[[i]])` where `i` is simply meant as a row index. The results from all this is a new column, `model`, which contains the output of each of the 16 iterations.
+Let’s walk through what we did. The `map()` function takes two primary arguments, `.x` and `.f`, respectively. We set `.x = data`, which meant we wanted to iterate over the contents in our `data` vector. Recall that each row of `data` itself contained an entire data set—one for each of the 16 participants. It's with the second argument `.f` that we indicated what we wanted to do with our rows of `data`. We set that to `.f = ~update(fit1, newdata = .)`. With the `~` syntax, we entered in a formula, which was `update(fit1, newdata = .)`. Just like we did with `fit2`, above, we reused the model formula and other technical specs from `fit1`. Now notice the last part of the formula, `newdata = .`. That little `.` refers to the element we specified in the `.x` argument. What this combination means is that for each of the 16 rows of our nested `by_id` tibble, we plugged in the `id`-specific data set into `update(fit, newdata[[i]])` where `i` is simply meant as a row index. The new column, `model`, contains the output of each of the 16 iterations.
 
 ```{r}
 print(models)
@@ -361,7 +361,7 @@ r2 <-
 head(r2)
 ```
 
-Here we combine all the components with a series of `left_join()` statements and present it in a [knitr](https://yihui.name/knitr/)-type table.
+Here we combine all the components with a series of `left_join()` statements and present it in a [**knitr**](https://yihui.name/knitr/)-type table.
 
 ```{r}
 table <-
@@ -480,13 +480,11 @@ fixef(fit3)[1, 1]
 fixef(fit3)[2, 1]
 ```
 
-For this plot, we'll work more directly with the model formulas to plot the trajectories. We can use `init_stat_est` and `rate_chante_est` from the `mean_structure` object as stand-ins for $\beta_0_\text{id}$ and $\beta_1_\text{id}$ from our model equation
+For this plot, we'll work more directly with the model formulas to plot the trajectories. We can use `init_stat_est` and `rate_chante_est` from the `mean_structure` object as stand-ins for $\beta_0_\text{id}$ and $\beta_1_\text{id}$ from our model equation,
 
 $$
-\text{tolerance}_\text{id} = \beta_0_\text{id} + \beta_1_\text{id} \cdot \text{time}_\text{id} + \epsilon_\text{id}
+\text{tolerance}_\text{id} = \beta_0_\text{id} + \beta_1_\text{id} \cdot \text{time}_\text{id} + \epsilon_\text{id}.
 $$
-
-
 
 All we need to do is plug in the appropriate values for `time` and we'll have the fitted `tolerance` values for each level of `id`. After a little wrangling, the data will be in good shape for plotting.
 
@@ -569,9 +567,9 @@ Here's how to use `fixef()` and the model equation to get fitted values for `tol
 
 ```{r}
 tol_fitted_male <-
-  tibble(male = rep(0:1, each = 2),
-         age  = rep(c(11, 15), times = 2)) %>% 
-  mutate(time = age - 11) %>% 
+  tibble(male      = rep(0:1, each = 2),
+         age       = rep(c(11, 15), times = 2)) %>% 
+  mutate(time      = age - 11) %>% 
   mutate(tolerance = fixef(fit4)[1, 1] + 
            fixef(fit4)[2, 1] * time + 
            fixef(fit4)[3, 1] * male + 
@@ -628,9 +626,9 @@ Now use `fixef()` and the model equation to get fitted values for `tolerance` ba
 ```{r}
 tol_fitted_exposure <-
   tibble(exposure_01 = rep(0:1, each = 2),
-         age  = rep(c(11, 15), times = 2)) %>% 
-  mutate(time = age - 11) %>% 
-  mutate(tolerance = fixef(fit5)[1, 1] + 
+         age         = rep(c(11, 15), times = 2)) %>% 
+  mutate(time        = age - 11) %>% 
+  mutate(tolerance   = fixef(fit5)[1, 1] + 
            fixef(fit5)[2, 1] * time + 
            fixef(fit5)[3, 1] * exposure_01 + 
            fixef(fit5)[4, 1] * time * exposure_01)
@@ -710,7 +708,7 @@ As interesting as these plots are, do remember that "the need for ad hoc correla
 
 > Statisticians assess the precision of a parameter estimate in terms of its *sampling variation*, a measure of the variability that would be found across infinite resamplings from the same population. The most common measure of sampling variability is an estimate’s *standard error*, the square root of its estimated sampling variance. Precision and standard error have an inverse relationship; the smaller the standard error, the more precise the estimate. (p. 41, *emphasis* in the original)
 
-So here’s the deal: When Singer and Willett wrote "Statisticians assess..." a more complete expression would have been 'Frequentist statisticians assess...' Bayesian statistics are not based on asymptotic theory. They do not presume an idealized infinite distribution of replications. Rather, Bayesian statistics use Bayes theorem to estimate the probability of the parameters given the data. That probability has a distribution. Analogous to frequentist statistics, we often summarize that distribution (i.e., the posterior distribution) in terms of central tendency (e.g., posterior mean, posterior median, posterior mode) and spread. Spread? you say. We typically express spread in one or both of two ways. One typical expression of spread is the 95% intervals. In the Bayesian world, these are often called credible or probability intervals. The other typical expression of spread is the *posterior standard deviation*. In brms, this of typically summarized in the 'Est.error' column. The posterior standard deviation is analogous to the frequentist standard error. Philosophically and mechanically, they are not the same. But in practice, they are often quite similar.
+So here’s the deal: When Singer and Willett wrote "Statisticians assess..." a more complete expression would have been 'Frequentist statisticians assess...' Bayesian statistics are not based on asymptotic theory. They do not presume an idealized infinite distribution of replications. Rather, Bayesian statistics use Bayes theorem to estimate the probability of the parameters given the data. That probability has a distribution. Analogous to frequentist statistics, we often summarize that distribution (i.e., the posterior distribution) in terms of central tendency (e.g., posterior mean, posterior median, posterior mode) and spread. *Spread?* you say. We typically express spread in one or both of two ways. One typical expression of spread is the 95% intervals. In the Bayesian world, these are often called credible or probability intervals. The other typical expression of spread is the *posterior standard deviation*. In brms, this of typically summarized in the 'Est.error' column. The posterior standard deviation is analogous to the frequentist standard error. Philosophically and mechanically, they are not the same. But in practice, they are often quite similar.
 
 Later we read:
 
