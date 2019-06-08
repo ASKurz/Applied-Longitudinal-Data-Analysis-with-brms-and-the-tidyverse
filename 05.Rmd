@@ -1,0 +1,297 @@
+---
+title: 'Chapter 5. Treating Time More Flexibly'
+author: "A Solomon Kurz"
+date: "`r format(Sys.Date())`"
+output:
+  github_document
+---
+
+```{r, echo = FALSE, cache = FALSE}
+options(width = 100)
+```
+
+# Treating Time More Flexibly
+
+> All the illustrative longitudinal data sets in previous chapters share two structural features that simplify analysis. Each is: (1) balanced--everyone is assessed on the identical number of occasions; and (2) time-structured--each set of occasions is identical across individuals. Our analyses have also been limited in that we have used only: (1) time-invariant predictors that describe immutable characteristics of individuals or their environment (except for *TIME* itself); and (2) a representation of *TIME* that forces the level-1 individual growth parameters to represent "initial status" and "rate of change."
+>
+> The multilevel model for change is far more flexible than these examples suggest. With little or no adjustment, you can use the same strategies to analyze more complex data sets. Not only can the waves of data be irregularly spaced, their number and spacing can vary across participants. Each individual can have his or her own data collection schedule and number of waves can vary without limit from person to person. So, too, predictors of change can be time-invariant or time-varying, and the level-1 submodel can be parameterized in a variety of interesting ways. (p. 138, *emphasis* in the original)
+
+## Variably spaced measurement occasions
+
+> Many researchers design their studies with the goal of assessing each individual on an identical set of occasions...
+>
+> Yet sometimes, despite a valiant attempt to collect time-structured data, actual measurement occasions will differ. Variation often results from the realities of fieldwork and data collection...
+>
+> So, too, many researchers design their studies knowing full well that the measurement occasions may differ across participants. This is certainly true, for example, of those who use an *accelerated cohort* design in which an age-heterogeneous cohort of individuals is followed for a constant period of time. Because respondents initial vary in age, and age, not *wave*, is usually the appropriate metric for analyses (see the discussion of time metrics in section 1.3.2), observed measurement occasions will differ across individuals. (p. 139, *emphasis* in the original)
+
+### The structure of variably spaced data sets.
+
+You can find the PIAT data from the CNLSY study in the `reading_pp.csv` file.
+
+```{r, warning = F, message = F}
+library(tidyverse)
+reading_pp <- read_csv("data/reading_pp.csv")
+
+head(reading_pp)
+```
+
+On pages 141 and 142, Singer and Willett discussed the phenomena of *occasion creep*, which is when "the temporal separations of occasions widens as the actual ages exceed design projections". Here's what that looks like:
+
+```{r, fig.width = 6, fig.height = 2.5}
+reading_pp %>% 
+
+  ggplot(aes(x = age, y = wave)) +
+  geom_vline(xintercept = c(6.5, 8.5, 10.5), color = "white") +
+  geom_jitter(alpha = .5, height = .33, width = 0) +
+  scale_x_continuous(breaks = c(6.5, 8.5, 10.5)) +
+  scale_y_continuous(breaks = 1:3) +
+  ggtitle("This is what occasion creep looks like.",
+          subtitle = "As the waves go by, the variation of the ages widens and their central tendency\ncreeps away from the ideal point.") +
+  theme(panel.grid = element_blank())
+```
+
+But back to the book, here's how we might make our version of Figure 5.1.
+
+```{r, fig.width = 5.5, fig.height = 5}
+set.seed(5)
+
+# wrangle
+reading_pp %>% 
+  nest(-id) %>% 
+  sample_n(size = 9) %>% 
+  unnest() %>% 
+  # this will help format and order the facets
+  mutate(id = ifelse(id < 10, str_c("0", id), id) %>% str_c("id = ", .)) %>% 
+  gather(key, age, -id, -wave, -piat) %>% 
+  
+  # plot
+  ggplot(aes(x = age, y = piat, color = key)) +
+  geom_point(alpha = 2/3) +
+  stat_smooth(method = "lm", se = F, size = 1/2) +
+  scale_color_viridis_d(option = "B", end = .5, direction = -1) +
+  coord_cartesian(xlim = 5:12,
+                  ylim = 0:80) +
+  xlab("measure of age") +
+  theme(panel.grid = element_blank()) +
+  facet_wrap(~id)
+```
+
+Since it wasn't clear which `id` values the authors used in the text, we just randomized. Change the seed to view different samples.
+
+### Postulating and fitting multilevel models with variably spaced waves of data.
+
+The composite formula for our first model is
+
+$$
+\begin{align*}
+\text{piat}_{ij} & = \gamma_{00} + \gamma_{10} (\text{agegrp}_{ij} - 6.5) + \zeta_{0i} + \zeta_{1i} (\text{agegrp}_{ij} - 6.5) + \epsilon_{ij} \\
+
+\epsilon_{ij}    & \sim \text{Normal} (0, \sigma_\epsilon) \\
+
+\begin{bmatrix} 
+\zeta_{0i} \\ \zeta_{1i} 
+\end{bmatrix} & \sim \text{Normal} 
+\Bigg ( 
+\begin{bmatrix} 0 \\ 0 \end{bmatrix},
+\mathbf \Sigma
+\Bigg ), \text{where} \\
+
+\mathbf \Sigma   & = \mathbf{D} \mathbf{\Omega} \mathbf{D}', \text{where} \\
+
+\mathbf{D}       & = \begin{bmatrix} \sigma_0 & 0 \\ 0 & \sigma_1 \end{bmatrix} \text{and} \\ 
+
+\mathbf{\Omega}  & = \begin{bmatrix} 1 & \rho_{01} \\ \rho_{01} & 1 \end{bmatrix}
+
+\end{align*}
+$$
+
+It's the same for the twin model using `age` rather than `agegrp`. Notice how we've switched from Singer and Willett's $\sigma^2$ parameterization to the $\sigma$ parameterization typical of **brms**.
+
+
+```{r}
+reading_pp <-
+  reading_pp %>% 
+  mutate(agegrp_c = agegrp - 6.5,
+         age_c    = age    - 6.5)
+  
+head(reading_pp)
+```
+
+In the last chapter, we began familiarizing ourselves with `brms::brm()` default priors. It's time to level up. Another approach is to use domain knowledge to set weakly-informative priors. Let's start with the PIAT. The Peabody Individual Achievement Test is a standardized individual test of scholastic achievement. It has yields several subtest scores. The reading subtest is the one we're focusing on, here. As is typical for such test, the PIAT scores are normed to yield a population mean of 100 and a standard deviation of 15.
+
+With that information alone, even a PIAT novice should have an idea about how to specify the priors. Since our sole predictor variables are versions of age centered at 6.5, we know that the model intercept is interpreted as the expected value on the PIAT when the children are 6.5 years old. If you knew nothing else, you'd guess the mean score would be 100 with a standard deviation around 15. One way to use a weakly-informative prior on the intercept would be to multiply that $SD$ by a number like 2.
+
+Next we need a prior for the time variables, `age_c` and agegrp_c`. A one-unit increase in either of these is the expected increase in the PIAT with one year’s passage of age. Bringing in a little domain knowledge, IQ and achievement tests tend to be rather stable over time. However, we also expect children to get better as they age and we also don’t know exactly how these data have been adjusted for the children’s ages. It's also important to know that it's typical within the Bayesian world to place Normal priors on $\beta$ parameters. So one approach would be to center the Normal prior on 0 and put something like twice the PIAT's standard deviation on the prior’s &\sigma&. If we were PIAT researchers, we could do much better. But with minimal knowledge of the test, this approach is certainly better than mindless defaults.
+
+Next we have the variance parameters. Recall that `brms::brm()` defaults are Student’s $t$-distributions with $\nu = 3$ and $\mu = 0$. Let's start there. Now we just need to put values on $\sigma$. Since the PIAT has a standard deviation of 15 in the population, why not just use 15? If you felt insecure about this, multiply if by a factor of 2 or so. Also recall that when Student's $t$-distributions has a $\nu = 3$, it's tails are quite fat. Within the context of Bayesian priors, those fat tails make it easy for the likelihood to dominate the prior even when it’s a good way into the tail.
+
+Finally we have the correlation among the group-level variance parameters, $\sigma_0$ and $\sigma_1$. Recall that last chapter we learned the `brms::brm()` default was `lkj(1)`. To get a sense of what the LKJ does, it might make sense to simulate from it. McElreath's **rethinking** package contains a handy `rlkjcorr()` function, which will allow us to simulate `n` draws from a `K` by `K` correlation matrix for which $\eta$ is defined by `eta`. Let's take `n <- 1e6` draws from two LKJ prior distributions, one with $\eta = 1$ and the other with $\eta = 4$.
+
+```{r, warning = F, message = F}
+library(rethinking)
+
+n <- 1e6
+set.seed(5)
+
+lkj <-
+  tibble(eta = c(1, 4)) %>% 
+  mutate(draws = purrr::map(eta, ~rlkjcorr(n, K = 2, eta = .)[, 2, 1])) %>% 
+  unnest()
+
+head(lkj)
+```
+
+Now let's plot.
+
+```{r, fig.width = 4, fig.height = 2.5}
+lkj %>% 
+  mutate(eta = factor(eta)) %>% 
+  
+  ggplot(aes(x = draws, fill = eta, color = eta)) +
+  geom_density(size = 0, alpha = 2/3) +
+  geom_text(data = tibble(
+    draws = c(.75, .35),
+    y     = c(.6, 1.05),
+    label = c("eta = 1", "eta = 4"),
+    eta   = c(1, 4) %>% as.factor()),
+    aes(y = y, label = label)) +
+  scale_y_continuous(NULL, breaks = NULL) +
+  scale_fill_viridis_d(option = "A", end = .5) +
+  scale_color_viridis_d(option = "A", end = .5) +
+  xlab(expression(rho)) +
+  theme(panel.grid = element_blank(),
+        legend.position = "none")
+```
+
+When we use `lkj(1)`, the prior is flat over the parameter space. However, setting `lkj(4)` is tantamount to a prior with a probability mass concentrated a bit towards zero. It's a prior that’s skeptical of extremely large or small correlations. Within the context of our multilevel model $\rho$ parameters, this will be our weakly-regularizing prior.
+
+Let's prepare to fit our models and load **brms**.
+
+```{r, warning = F, message = F}
+detach(package:rethinking, unload = T)
+library(brms)
+```
+
+Fit the model.
+
+```{r fit1_fit2, cache = T, warning = F, message = F, results = "hide"}
+fit1 <-
+  brm(data = reading_pp, 
+      family = gaussian,
+      piat ~ 0 + intercept + agegrp_c + (1 + agegrp_c | id),
+      prior = c(prior(normal(100, 30), class = b, coef = "intercept"),
+                prior(normal(0, 30),   class = b, coef = "agegrp_c"),
+                prior(student_t(3, 0, 15), class = sd),
+                prior(student_t(3, 0, 15), class = sigma),
+                prior(lkj(4), class = cor)),
+      iter = 2000, warmup = 1000, chains = 4, cores = 4,
+      seed = 5)
+
+fit2 <-
+  brm(data = reading_pp, 
+      family = gaussian,
+      piat ~ 0 + intercept + age_c + (1 + age_c | id),
+      prior = c(prior(normal(100, 30), class = b, coef = "intercept"),
+                prior(normal(0, 30),   class = b, coef = "age_c"),
+                prior(student_t(3, 0, 15), class = sd),
+                prior(student_t(3, 0, 15), class = sigma),
+                prior(lkj(4), class = cor)),
+      iter = 2000, warmup = 1000, chains = 4, cores = 4,
+      seed = 5)
+```
+
+Focusing first on `fit1`, our analogue to the *AGEGRP* – 6.5 model displayed in Table 5.2, here is our model summary.
+
+```{r}
+print(fit1, digits = 3)
+```
+
+Here's the `age_c` model.
+
+```{r}
+print(fit2, digits = 3)
+```
+
+For a more focused look, we can use `fixef()` compare our $gamma$s to each other and those in the text.
+
+```{r}
+fixef(fit1) %>% round(digits = 3)
+fixef(fit2) %>% round(digits = 3)
+```
+
+Here are our $\sigma_\epsilon$s.
+
+```{r}
+VarCorr(fit1)$residual$sd %>% round(digits = 3)
+VarCorr(fit2)$residual$sd %>% round(digits = 3)
+```
+
+From a quick glance, you can see they are about the square of the $\sigma_\epsilon^2$ estimates in the text.
+
+Let's go ahead and compute the LOO and WAIC.
+
+```{r, warning = F, message = F}
+fit1 <- add_criterion(fit1, c("loo", "waic"))
+fit2 <- add_criterion(fit2, c("loo", "waic"))
+```
+
+Here are their WAIC comparisons.
+
+```{r}
+loo_compare(fit1, fit2, criterion = "waic") %>% 
+  print(simplify = F)
+```
+
+By their WAIC estimates, the difference between the two isn't that large relative to it's standard error. It's a similar story by the LOO.
+
+```{r}
+loo_compare(fit1, fit2, criterion = "loo") %>% 
+  print(simplify = F)
+```
+
+The uncertainty in our WAIC and LOO estimates provide information on their comparison that was not available for the AIC and the BIC comparisons in the text. We can also compare the WAIC and the LOO with model weights. Given the WAIC, from McElreath (2015) we learn
+
+> A total weight of 1 is partitioned among the considered models, making it easier to compare their relative predictive accuracy. The weight for a model $i$ in a set of $m$ models is given by:
+>
+> $$w_i = \frac{\text{exp}(-\frac{1}{2} \text{dWAIC}_i)}{\sum_{j = 1}_m \text{exp}(-\frac{1}{2} \text{dWAIC}_i)}$$
+>
+> where dWAIC is the `dWAIC` in the `compare` table output. This example uses WAIC but the formula is the same for any other information criterion, since they are all on the deviance scale. (p. 199) 
+
+The `compare()` function McElreath referenced is from his [**rethinking** package](https://github.com/rmcelreath/rethinking), which is meant to accompany his [text](https://xcelab.net/rm/statistical-rethinking/). We don't have that. Our analogue to the `rethinking::compare()` function is `loo_compare()`. We don't quite have a `dWAIC` column from `loo_compare()`. Remember how last chapter we discussed how Aki Vehtari isn't a fan of converting information criteria to the $\chi^2$ difference metric with that last $-2 \times ...$ step? That's why we have an `elpd_diff` instead of a `dWAIC`. But to get the corresponding value, you just multiply those values by -2. And yet if you look closely at the formula for $w_i$, you'll see that each time the dWAIC term appears, it's multiplied by $-\frac{1}{2}$. So we don't really need that `dWAIC` value anyway. As it turns out, we're good to go with our `elpd_diff`. Thus the above equation simplifies to
+
+$$
+w_i = \frac{\text{exp}(\text{elpd_diff}_i)}{\sum_{j = 1}_m \text{exp}(\text{elpd_diff}_i)}
+$$
+
+But recall you don't have to do any of this by hand. We have the `brms::model_weights()` function.
+
+```{r}
+model_weights(fit1, fit2, weights = "waic") %>% round(digits = 3)
+model_weights(fit1, fit2, weights = "loo") %>% round(digits = 3)
+```
+
+> But what do these weights mean? There actually isn't a consensus about htat. But here's Akaike’s interpretation, which is common. 
+>
+>> *A model’s weight is an estimate of the probability that the model will make the best predictions on new data, conditional on the set of models considered*.
+>
+> Here's the heuristic explanation. First, regard WAIC as the expected deviance of a model on future data. That is to say that WAIC gives us an estimate of $\text{E} (D_\text{test})$. Akaike weights convert these deviance values, which are log-likelihoods, to plain likelihoods and then standardize them all. This is just like Bayes' theorem uses a sum in the denominator to standardize the produce of the likelihood and prior. Therefore the Akaike weights are analogous to posterior probabilities of models, conditional on expected future data. (p. 199, *emphasis* in the original)
+
+
+
+
+## Reference {-}
+
+[Singer, J. D., & Willett, J. B. (2003). *Applied longitudinal data analysis: Modeling change and event occurrence*. New York, NY, US: Oxford University Press.](https://www.oxfordscholarship.com/view/10.1093/acprof:oso/9780195152968.001.0001/acprof-9780195152968)
+
+## Session info {-}
+
+```{r}
+sessionInfo()
+```
+
+```{r, echo = F, eval = F}
+# here we'll remove our objects
+rm()
+
+theme_set(theme_grey())
+```
