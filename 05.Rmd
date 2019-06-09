@@ -253,16 +253,15 @@ The uncertainty in our WAIC and LOO estimates provide information on their compa
 
 > A total weight of 1 is partitioned among the considered models, making it easier to compare their relative predictive accuracy. The weight for a model $i$ in a set of $m$ models is given by:
 >
-> $$w_i = \frac{\text{exp}(-\frac{1}{2} \text{dWAIC}_i)}{\sum_{j = 1}_m \text{exp}(-\frac{1}{2} \text{dWAIC}_i)}$$
+> $$w_i = \frac{\text{exp}(-\frac{1}{2} \text{dWAIC}_i)}{\sum_{j = 1}^m \text{exp}(-\frac{1}{2} \text{dWAIC}_i)}$$
 >
 > where dWAIC is the `dWAIC` in the `compare` table output. This example uses WAIC but the formula is the same for any other information criterion, since they are all on the deviance scale. (p. 199) 
 
 The `compare()` function McElreath referenced is from his [**rethinking** package](https://github.com/rmcelreath/rethinking), which is meant to accompany his [text](https://xcelab.net/rm/statistical-rethinking/). We don't have that. Our analogue to the `rethinking::compare()` function is `loo_compare()`. We don't quite have a `dWAIC` column from `loo_compare()`. Remember how last chapter we discussed how Aki Vehtari isn't a fan of converting information criteria to the $\chi^2$ difference metric with that last $-2 \times ...$ step? That's why we have an `elpd_diff` instead of a `dWAIC`. But to get the corresponding value, you just multiply those values by -2. And yet if you look closely at the formula for $w_i$, you'll see that each time the dWAIC term appears, it's multiplied by $-\frac{1}{2}$. So we don't really need that `dWAIC` value anyway. As it turns out, we're good to go with our `elpd_diff`. Thus the above equation simplifies to
 
 $$
-w_i = \frac{\text{exp}(\text{elpd_diff}_i)}{\sum_{j = 1}_m \text{exp}(\text{elpd_diff}_i)}
+w_i = \frac{\text{exp}(\text{elpd_diff}_i)}{\sum_{j = 1}^m \text{exp}(\text{elpd_diff}_i)}
 $$
-
 But recall you don't have to do any of this by hand. We have the `brms::model_weights()` function.
 
 ```{r}
@@ -270,11 +269,443 @@ model_weights(fit1, fit2, weights = "waic") %>% round(digits = 3)
 model_weights(fit1, fit2, weights = "loo") %>% round(digits = 3)
 ```
 
-> But what do these weights mean? There actually isn't a consensus about htat. But here's Akaike’s interpretation, which is common. 
+Back to McElreath (2015):
+
+> But what do these weights mean? There actually isn't a consensus about htat. But here's Akaike’s interpretation, which is [common](https://www.springer.com/us/book/9780387953649). 
 >
 >> *A model’s weight is an estimate of the probability that the model will make the best predictions on new data, conditional on the set of models considered*.
 >
 > Here's the heuristic explanation. First, regard WAIC as the expected deviance of a model on future data. That is to say that WAIC gives us an estimate of $\text{E} (D_\text{test})$. Akaike weights convert these deviance values, which are log-likelihoods, to plain likelihoods and then standardize them all. This is just like Bayes' theorem uses a sum in the denominator to standardize the produce of the likelihood and prior. Therefore the Akaike weights are analogous to posterior probabilities of models, conditional on expected future data. (p. 199, *emphasis* in the original)
+
+## 5.2 Varying numbers of measurement occasions
+
+> Once you allow the spacing of waves to vary across individuals, it is a small leap to allow their *number* to vary as well. Statisticians say that such data sets are *unbalanced.* As you would expect, balance facilitates analysis: models can be parameterized ore easily, random effects can be estimated more precisely, and computer algorithms will converge more rapidly.
+>
+> Yet a major advantage of the multilevel model for change is that it is easily fit to unbalanced data. (p. 146, *emphasis* in the original) 
+
+### Analyzing data sets in which the number of waves per person varies.
+
+Here we load the `wages_pp.csv` data.
+
+```{r, warning = F, message = F}
+wages_pp <- read_csv("data/wages_pp.csv")
+
+glimpse(wages_pp)
+```
+
+Here's a more focused look along the lines of Table 5.3.
+
+```{r}
+wages_pp %>% 
+  select(id, exper, lnw, black, hgc, uerate) %>% 
+  filter(id %in% c(206, 332, 1028))
+```
+
+To get a sense of the diversity in the number of occasions per `id`, use `group_by()` and `count()`.
+
+```{r, fig.width = 6, fig.height = 3}
+wages_pp %>% 
+  group_by(id) %>% 
+  count() %>% 
+   
+  ggplot(aes(x = n)) +
+  geom_bar() +
+  scale_x_continuous(breaks = 1:13) +
+  coord_flip() +
+  labs(x = "# measurement occasions",
+       y = "count of cases") +
+  theme(panel.grid = element_blank())
+```
+
+The spacing of the measurement occasions also differs a lot across cases. Recall that `exper` "identifies the specific moment--to the nearest day--in each man's labor force history associated with each observed value of" `lnw` (p. 147). Here's a sense of what that looks like.
+
+```{r, fig.width = 6, fig.height = 2.25}
+wages_pp %>% 
+  filter(id %in% c(206, 332, 1028)) %>% 
+  mutate(id = factor(id)) %>% 
+  
+  ggplot(aes(x = exper, y = lnw, color = id)) +
+  geom_point() +
+  geom_line() +
+  scale_color_viridis_d(option = "B", begin = .35, end = .8) +
+  theme(panel.grid = element_blank())
+```
+
+Uneven for dayz.
+
+Here's the **brms** version of the composite formula for Model A, the uncondiitonal growth model for `lnw`.
+
+$$
+\begin{align*}
+\text{lnw}_{ij} & = \gamma_{00} + \gamma_{10} \text{exper}_{ij} + \zeta_{0i} + \zeta_{1i} \text{exper}_{ij} + \epsilon_{ij} \\
+\epsilon_{ij} & \sim \text{Normal} (0, \sigma_\epsilon) \\
+
+\begin{bmatrix} 
+\zeta_{0i} \\ \zeta_{1i} 
+\end{bmatrix} & \sim \text{Normal} 
+\Bigg ( 
+\begin{bmatrix} 0 \\ 0 \end{bmatrix},
+\mathbf \Sigma
+\Bigg ), \text{where} \\
+
+\mathbf \Sigma   & = \mathbf{D} \mathbf{\Omega} \mathbf{D}', \text{where} \\
+
+\mathbf{D}       & = \begin{bmatrix} \sigma_0 & 0 \\ 0 & \sigma_1 \end{bmatrix}, \text{and} \\ 
+
+\mathbf{\Omega}  & = \begin{bmatrix} 1 & \rho_{01} \\ \rho_{01} & 1 \end{bmatrix}
+\end{align*}
+$$
+
+To attempt setting priors for this, we need to review what `lnw` is. From the text: "To adjust for inflation, each hourly wage is expressed in constant 1990 dollars. To address the skewness commonly found in wage data and to linearize the individual wage trajectories, we analyze the natural logarithm of wages, *LNW*" (p. 147). So it's the log of participant wages in 1990 dollars. From the official [US Social Secutiry website](https://www.ssa.gov/oact/cola/central.html), we learn the average yearly wage in 1990 was $20,172.11. Here's that natural log for that.
+
+```{r}
+log(20172.11)
+```
+
+However, that's the yearly wage. In the text, this is conceptualized as rate per hour. If we presume a 40 hour week for 52 weeks, this translates to a little less than $10 per hour.
+
+```{r}
+20172.11 / (40 * 52)
+```
+
+And here's what that looks like in a log metric.
+
+```{r}
+log(20172.11 / (40 * 52))
+```
+
+But keep in mind that "to track wages on a common temporal scale, Murnane and colleagues decided to clock time from each respondent's first day of work" (p. 147). So the wages at one's initial point in the study were often entry-level wages. From the official website for the [US Department of Labor](https://www.dol.gov/whd/minwage/chart.htm), we learn the national US minimum wage in 1990 was $3.80 per hour. Here's what that looks like on the log scale.
+
+```{r}
+log(3.80)
+```
+
+So perhaps this is a better figure to center our prior for the model intercept on. If we stay with a conventional Gaussian prior and put $\mu = 1.335$, what value should we use for the standard deviation. Well, if that's the log minimum and 2.27 is the log mean, then there's less than a log value of 1 between the minimum and the mean. If we'd like to continue our practice of weakly regularizing priors a value of 1 or even 0.5 on the log scale would seem reasonable. For simplicity, we'll use `normal(1.335, 1)`.
+
+Next we need a prior for the expected increase over a single year’s employment. A conservative default might be to center it on zero—no change from year to year. Since as we’ve established a 1 on the log scale is more than the difference between the minimum and average hourly wages in 1990 dollars, we might just use `normal(0, 0.5)` as a starting point.
+
+So then what about our variance parameters. Given these are all entry-level workers and given how little we’d expect them to increase from year to year, a `student_t(3, 0, 1)` on the log scale would seem pretty permissive.
+
+So then here's how we might formally specify our model priors:
+
+$$
+\begin{align*}
+\gamma_{00}     & \sim \text{Normal}(1.335, 1) \\
+\gamma_{10}     & \sim \text{Normal}(0, 0.5) \\
+\sigma_\epsilon & \sim \text{Student-t} (3, 0, 1) \\
+\sigma_0        & \sim \text{Student-t} (3, 0, 1) \\
+\sigma_1        & \sim \text{Student-t} (3, 0, 1) \\
+\rho_{01}       & \sim \text{LKJ} (4)
+\end{align*}
+$$
+
+For a point of comparison, here are the `brms::brm()` default priors.
+
+```{r}
+get_prior(data = wages_pp, 
+          family = gaussian,
+          lnw ~ 0 + intercept + exper + (1 + exper | id))
+```
+
+Even though our priors are still quite permissive on the scale of the data, they're much more informative than the defaults. And clearly, if we had formal backgrounds in the entry-level economy of the US in the early 1900s, we'd be able to specify much better priors. But hopefully this walk-through gives a sense of how to start thinking about model prior. 
+
+Let's fit the model.
+
+```{r fit3, cache = T, warning = F, message = F, results = "hide"}
+fit3 <-
+  brm(data = wages_pp, 
+      family = gaussian,
+      lnw ~ 0 + intercept + exper + (1 + exper | id),
+      prior = c(prior(normal(1.335, 1), class = b, coef = "intercept"),
+                prior(normal(0, 0.5),   class = b, coef = "exper"),
+                prior(student_t(3, 0, 1), class = sd),
+                prior(student_t(3, 0, 1), class = sigma),
+                prior(lkj(4), class = cor)),
+      iter = 2000, warmup = 1000, chains = 4, cores = 4,
+      seed = 5)
+```
+
+Here are the results.
+
+```{r}
+print(fit3, digits = 3)
+```
+
+Since the criterion `lnw` is on the log scale, Singer and Willett pointed out our estimate for $\gamma_{10}$ indicates a nonlinear growth rate on the natural dollar scale. They further explicated that "if an outcome in a linear relationship, $Y$, is expressed as a natural logarithm and $\hat{\gamma}_{01}$ is the regression coefficient for a predictor $X$, then $100(e^{\hat{\gamma}_{01}} - 1)$ is the *percentage change* in $Y$ per unit difference in $X$" (p. 148, *emphasis* in the original). Here's how to do that conversion with our **brms** output.
+
+```{r}
+post <-
+  posterior_samples(fit3) %>% 
+  transmute(percent_change = 100 * (exp(b_exper) - 1))
+
+head(post)
+```
+
+For our plot, let’s break out [Matthew Kay](https://twitter.com/mjskay)'s handy [**tidybayes** package](mjskay.github.io/tidybayes/ ). With the `tidybayes::geom_halfeyeh()` function, it’s easy to put horizontal point intervals beneath out parameter densities. Here we’ll use 95% intervals.
+
+```{r, fig.width = 3.5, fig.height = 2.5, warning = F, message = F}
+library(tidybayes)
+
+post %>% 
+  ggplot(aes(x = percent_change, y = 0)) +
+  geom_halfeyeh(.prob = .95) +
+  scale_y_continuous(NULL, breaks = NULL) +
+  labs(title = "Percent change",
+       x = expression(100*(italic(e)^(hat(gamma)[1][0])-1))) +
+  theme(panel.grid = element_blank())
+```
+
+The **tidybayes** package also has a group of functions that make it easy to summarize posterior parameters with measures of central tendency (i.e., mean, median, mode) and intervals (i.e., percentile based, highest posterior density intervals). Here we’ll use `median_qi()` to get the posterior median and percentile-based 95% intervals.
+
+```{r}
+post %>% 
+  median_qi(percent_change)
+```
+
+For our next model, Model B in Table 5.4, we add two time-invariant covariates. In the data, these are listed as `black` and `hgc.9`. Before we proceed, let's rename `hgc.9` to be more consistent with tydyverse style.
+
+```{r}
+wages_pp <-
+  wages_pp %>% 
+  rename(hgc_9 = hgc.9)
+
+glimpse(wages_pp)
+```
+
+There we go. Let's take a look at the distributions of our covariates.
+
+```{r, fig.width = 6, fig.height = 2.5}
+wages_pp %>% 
+  select(black, hgc_9) %>% 
+  gather() %>% 
+  
+  ggplot(aes(x = value)) +
+  geom_bar() +
+  theme(panel.grid = element_blank()) +
+  facet_wrap(~key, scales = "free")
+```
+
+We see `black` is a dummy variable coded "Black" = 1, "Non-black" = 0; `hgc_9` is a somewhat Gaussian integer centered around zero. For context, it might also help to check its standard deviation. 
+
+```{r}
+sd(wages_pp$hgc_9)
+```
+
+With a mean near 0 and an $SD$ near 1, `hgc_9` is almost in a standardized metric. If we wanted to keep with our weakly-regularizing approach, `normal(0, 1)` or even `normal(0, 0.5)` would be pretty permissive for both these variables. Recall that we're predicting wage on the log scale. A $\gamma$ value of 1 or even 0.5 would be humongous for the social sciences. Since we already have the $\gamma$ for `exper` set to `normal(0, 0.5)`, let's just keep with that. Here's how we might describe our model in statistical terms:
+
+$$
+\begin{align*}
+\text{lnw}_{ij} & = \gamma_{00} + \gamma_{01} (\text{hgc}_{i} - 9) + \gamma_{02} \text{black}_{i} \\
+& \;\;\; + \gamma_{10} \text{exper}_{ij} + \gamma_{11} \text{exper}_{ij} \times (\text{hgc}_{i} - 9) + \gamma_{12} \text{exper}_{ij} \times \text{black}_{i} \\
+& \;\;\; + \zeta_{0i} + \zeta_{1i} \text{exper}_{ij} + \epsilon_{ij} \\
+\epsilon_{ij} & \sim \text{Normal} (0, \sigma_\epsilon) \\
+
+\begin{bmatrix} 
+\zeta_{0i} \\ \zeta_{1i} 
+\end{bmatrix}   & \sim \text{Normal} 
+\Bigg ( 
+\begin{bmatrix} 0 \\ 0 \end{bmatrix},
+\mathbf{D} \mathbf{\Omega} \mathbf{D}'
+\Bigg ) \\
+
+\mathbf{D}      & = \begin{bmatrix} \sigma_0 & 0 \\ 0 & \sigma_1 \end{bmatrix} \\ 
+\mathbf{\Omega} & = \begin{bmatrix} 1 & \rho_{01} \\ \rho_{01} & 1 \end{bmatrix} \\
+
+\gamma_{00}     & \sim \text{Normal}(1.335, 1) \\
+\gamma_{01}     & \sim \text{Normal}(0, 0.5) \\
+\gamma_{02}     & \sim \text{Normal}(0, 0.5) \\
+\gamma_{10}     & \sim \text{Normal}(0, 0.5) \\
+\gamma_{11}     & \sim \text{Normal}(0, 0.5) \\
+\gamma_{12}     & \sim \text{Normal}(0, 0.5) \\
+\sigma_\epsilon & \sim \text{Student-t} (3, 0, 1) \\
+\sigma_0        & \sim \text{Student-t} (3, 0, 1) \\
+\sigma_1        & \sim \text{Student-t} (3, 0, 1) \\
+\rho_{01}       & \sim \text{LKJ} (4)
+\end{align*}
+$$
+
+The top portion up through the $\mathbf{\Omega}$ line is the likelihood. Starting with $\gamma_{00} \sim \text{Normal}(1.335, 1)$ on down, we've listed our priors. Here's how to fit the model with **brms**.
+
+```{r fit4, cache = T, warning = F, message = F, results = "hide"}
+fit4 <-
+  brm(data = wages_pp, 
+      family = gaussian,
+      lnw ~ 0 + intercept + hgc_9 + black + exper + exper:hgc_9 + exper:black + (1 + exper | id),
+      prior = c(prior(normal(1.335, 1), class = b, coef = "intercept"),
+                prior(normal(0, 0.5),   class = b),
+                prior(student_t(3, 0, 1), class = sd),
+                prior(student_t(3, 0, 1), class = sigma),
+                prior(lkj(4), class = cor)),
+      iter = 2000, warmup = 1000, chains = 4, cores = 4,
+      seed = 5)
+```
+
+Let's take a look at the results.
+
+```{r}
+print(fit4, digits = 3)
+```
+
+The $\gamma$s are on par with those in the text. When we convert the $\sigma$ parameters to the $\sigma^2$ metric, here's what they look like.
+
+```{r, fig.width = 8, fig.height = 2.5}
+post <- posterior_samples(fit4) 
+
+post %>% 
+  transmute(sigma_2_0 = sd_id__Intercept^2,
+            sigma_2_1 = sd_id__exper^2,
+            sigma_2_e = sigma^2) %>% 
+  gather() %>% 
+  
+  ggplot(aes(x = value, y = key)) +
+  geom_halfeyeh(.width = .95, scale = "width") +
+  coord_cartesian(ylim = c(1.4, 3.4)) +
+  theme(panel.grid = element_blank())
+```
+
+We might plot our $\gamma$s, too. Here we'll use `tidybayes::stat_pointintervalh()` to just focus on the points and intervals.
+
+```{r, fig.width = 8, fig.height = 2}
+post %>% 
+  select(b_intercept:`b_black:exper`) %>% 
+  set_names(str_c(rep(0:1, each = 3), rep(0:2, times = 2))) %>% 
+  gather(gamma, value) %>% 
+  
+  ggplot(aes(x = value, y = key)) +
+  geom_vline(xintercept = 0, color = "white") +
+  stat_pointintervalh(.width = .95, size = 1/2) +
+  theme(panel.grid = element_blank())
+```
+
+As in the text, our $\gamma_{02}$ and $\gamma_{11}$ parameters hovered around zero. For our next model, Model C in Table 5.4, we’ll drop those parameters.
+
+```{r fit5, cache = T, warning = F, message = F, results = "hide"}
+fit5 <-
+  brm(data = wages_pp, 
+      family = gaussian,
+      lnw ~ 0 + intercept + hgc_9 + exper + exper:black + (1 + exper | id),
+      prior = c(prior(normal(1.335, 1), class = b, coef = "intercept"),
+                prior(normal(0, 0.5),   class = b),
+                prior(student_t(3, 0, 1), class = sd),
+                prior(student_t(3, 0, 1), class = sigma),
+                prior(lkj(4), class = cor)),
+      iter = 2000, warmup = 1000, chains = 4, cores = 4,
+      seed = 5)
+```
+
+Let's take a look at the results.
+
+```{r}
+print(fit5, digits = 3)
+```
+
+Perhaps unsurprisingly, the parameter estimates for `fit5` ended up quite similar to those from `fit4`. And happily they're also similar to those in the text. Let's compute the WAIC estimates.
+
+```{r, warning = F, message = F}
+fit3 <- add_criterion(fit3, criterion = "waic")
+fit4 <- add_criterion(fit4, criterion = "waic")
+fit5 <- add_criterion(fit5, criterion = "waic")
+```
+
+Compare their WAIC estimates using $\text{elpd}$ difference scores.
+
+```{r}
+loo_compare(fit3, fit4, fit5, criterion = "waic") %>% 
+  print(simplify = F)
+```
+
+The differences are subtle. Here are the WAIC weights.
+
+```{r}
+model_weights(fit3, fit4, fit5, weights = "waic") %>% 
+  round(digits = 3)
+```
+
+When we use weights, almost all goes to `fit4` and `fit5`, with the full model, `fit4`, showing a slight edge.
+
+Let's get ready to make our version of Figure 5.2. We'll start with `fitted()` work.
+
+```{r}
+nd <-
+  tibble(black = 0:1) %>% 
+  expand(black,
+         hgc_9 = c(0, 3)) %>% 
+  expand(nesting(black, hgc_9),
+         exper = seq(from = 0, to = 11, length.out = 30))
+
+nd
+
+f <-
+  fitted(fit5, 
+         newdata = nd,
+         re_formula = NA) %>% 
+  data.frame() %>% 
+  bind_cols(nd)
+
+head(f)
+```
+
+Here it is, our two-panel version of Figure 5.2.
+
+```{r, fig.width = 6, fig.height = 3}
+f %>%
+  mutate(black = factor(black,
+                        labels = c("Latinos and Whites", "Blacks")),
+         hgc_9 = factor(hgc_9, 
+                        labels = c("9th grade dropouts", "12th grade dropouts"))) %>% 
+  
+  ggplot(aes(x = exper,
+             color = black, fill = black)) +
+  geom_ribbon(aes(ymin = Q2.5, ymax = Q97.5),
+              size = 0, alpha = 1/4) +
+  geom_line(aes(y = Estimate)) +
+  scale_color_viridis_d(NULL, option = "C", begin = .25, end = .75) +
+  scale_fill_viridis_d(NULL, option = "C", begin = .25, end = .75) +
+  ylab("lnw") +
+  coord_cartesian(ylim = c(1.6, 2.4)) +
+  theme(panel.grid = element_blank()) +
+  facet_wrap(~hgc_9)
+```
+
+Recall how in the end of Chapter 4, we briefly discussed posterior predictive checks (PPC). The basic idea is that good models should be able to retrodict the data used to produce them. Table 5.3 in the text introduced the data set by highlighting three participants and we went ahead and looked at their data in a plot. One way to do a PPC might be to plot their original data atop their model estimates. The `fitted()` function will help us with the prepatory work.
+
+```{r}
+nd <-
+  wages_pp %>% 
+  filter(id %in% c(206, 332, 1028))
+
+f <-
+  fitted(fit5, 
+         newdata = nd) %>% 
+  data.frame() %>% 
+  bind_cols(nd)
+
+head(f)
+```
+
+Here's the plot.
+
+```{r, fig.width = 8, fig.height = 2.5}
+f %>% 
+  mutate(id = str_c("id = ", id)) %>% 
+  
+  ggplot(aes(x = exper)) +
+  geom_pointrange(aes(y = Estimate, ymin = Q2.5, ymax = Q97.5,
+                      color = id)) +
+  geom_point(aes(y = lnw)) +
+  scale_color_viridis_d(option = "B", begin = .35, end = .8) +
+  labs(subtitle = "The black dots are the original data. The colored points and vertical lines are the participant-specific posterior\nmeans and 95% intervals.") +
+  theme(panel.grid = element_blank(),
+        legend.position = "none") +
+  facet_wrap(~id)
+```
+
+Although each participant got their own intercept and slope, the estimates all fall in straight lines. Since we're only working with time-invariant covariates, I’m afraid that's about the best we can do. Though our models can express gross trends over time, they're unable to speak to variation from occasion to occasion. As we go on in the project, we'll learn how to do better.
+
+
+
+
+
 
 
 
