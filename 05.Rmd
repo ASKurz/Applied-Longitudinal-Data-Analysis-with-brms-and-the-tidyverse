@@ -702,12 +702,366 @@ f %>%
 
 Although each participant got their own intercept and slope, the estimates all fall in straight lines. Since we're only working with time-invariant covariates, I’m afraid that's about the best we can do. Though our models can express gross trends over time, they're unable to speak to variation from occasion to occasion. As we go on in the project, we'll learn how to do better.
 
+### Practical problems that may arise when analyzing unbalanced data sets. 
+
+With HMC, the issues with non-convergence aren't quite the same as with maximum likelihood estimation. However, the basic issue still remains: 
+
+> Estimation of variance components requires that enough people have sufficient data to allow quantification of within-person residual variation--variation in the residuals over and above the fixed effects. If too many people have too little data, you will ~~be unable to quantify~~ [have difficulty quantifying] this residual variability. (p. 152)
+
+The big difference is that as Bayesians, our priors add additional information that will help us define the posterior distributions of our variance components. Thus our challenge will choosing sensible priors for our $\sigma$s.  
+
+#### Boundary constraints.
+
+Unlike with the frequentist multilevel software discussed in the text, **brms** will not yield negative values on the $\sigma$ parameters. This is because the **brms** default is to set a lower limit of zero on those parameters. For example, see what happens when we execute `fit1$model`. 
+
+```{r}
+fit1$model
+```
+
+That produced the **Stan** code corresponding to our `brms::brm()` code, above. Notice the second and third lines in the `parameters` block. Both contained `<lower=0>`, which indicated the lower bounds for those parameters was zero. See? **Stan** has you covered.
 
 
 
 
+Let's load the `wages_small_pp.csv` data.
+
+```{r, warning = F, message = F}
+wages_small_pp <- read_csv("data/wages_small_pp.csv") %>% 
+  rename(hgc_9 = hcg.9)
+
+glimpse(wages_small_pp)
+```
+
+Here's the distribution of the number of measurement occasions for our small data set.
+
+```{r, fig.width = 6, fig.height = 3}
+wages_small_pp %>% 
+  group_by(id) %>% 
+  count() %>% 
+   
+  ggplot(aes(x = n)) +
+  geom_bar() +
+  scale_x_continuous(breaks = 1:13, limits = c(.5, 13)) +
+  coord_flip() +
+  labs(x = "# measurement occasions",
+       y = "count of cases") +
+  theme(panel.grid = element_blank())
+```
+
+Our `brm()` code is the same as that for `fit5`, above, with just a slightly different `data` argument. If we wanted to, we could be hasty and just use `update()`, instead. But since we’re still practicing setting our priors and such, here we’ll be exhaustive.
+
+```{r fit6, cache = T, warning = F, message = F, results = "hide"}
+fit6 <-
+  brm(data = wages_small_pp, 
+      family = gaussian,
+      lnw ~ 0 + intercept + hgc_9 + exper + exper:black + (1 + exper | id),
+      prior = c(prior(normal(1.335, 1), class = b, coef = "intercept"),
+                prior(normal(0, 0.5),   class = b),
+                prior(student_t(3, 0, 1), class = sd),
+                prior(student_t(3, 0, 1), class = sigma),
+                prior(lkj(4), class = cor)),
+      iter = 2000, warmup = 1000, chains = 4, cores = 4,
+      seed = 5)
+```
 
 
+```{r}
+print(fit6)
+```
+
+Let's walk through this slow. 
+
+You may have noticed that warning message about divergent transitions. We’ll get to that in a minute. But let's first focus on the parameter estimates for `sd(exper)`. Unlike in the text, our posterior mean is not 0.000. But do remember that our posterior is parameterized in the $\sigma$ metric. Let's do a little converting and look at it in a plot.
+
+```{r}
+post <- posterior_samples(fit6)
+
+v <-
+  post %>%
+  transmute(sigma_1 = sd_id__exper) %>% 
+  mutate(sigma_2_1 = sigma_1^2) %>% 
+  set_names("sigma[1]", "sigma[1]^2") %>% 
+  gather()
+```
+
+Plot.
+
+```{r, fig.width = 8, fig.height = 2.5}
+v %>% 
+  ggplot(aes(x = value, y = key)) +
+  geom_halfeyeh(.width = .95, scale = "width") +
+  scale_y_discrete(labels = parse(text = c("sigma[1]", "sigma[1]^2"))) +
+  theme(panel.grid = element_blank())
+```
+
+In the $\sigma$ metric, the posterior is bunched up a little on the boundary, but much of its mass is a gently right-skewed mound concentrated in the 0—0.1 range. When we convert the posterior to the $\sigma^2$ metric, the parameter appears much more bunched up against the boundary. Because we typically summarize our posteriors with means or medians, the point estimate still moves away from zero.
+
+```{r}
+v %>% 
+  group_by(key) %>% 
+  mean_qi() %>% 
+  mutate_if(is.double, round, digits = 4)
+
+v %>% 
+  group_by(key) %>% 
+  median_qi() %>% 
+  mutate_if(is.double, round, digits = 4)
+```
+
+But it really does start to shoot to zero if we attempt to summarize the central tendency with the mode.
+
+```{r}
+v %>% 
+  group_by(key) %>% 
+  mode_qi() %>% 
+  mutate_if(is.double, round, digits = 4)
+```
+
+Backing up to that warning message, we were informed that “Increasing adapt_delta above 0.8 may help.” The `adapt_delta` parameter ranges from 0 to 1. The `brm()` default is .8. In my experience, increasing to .9 or .99 is often a good place to start. For this model, .9 wasn’t quite enough. But .95 worked. Here’s how to do it.
+
+```{r fit6a, cache = T, warning = F, message = F, results = "hide"}
+fit6a <-
+  brm(data = wages_small_pp, 
+      family = gaussian,
+      lnw ~ 0 + intercept + hgc_9 + exper + exper:black + (1 + exper | id),
+      prior = c(prior(normal(1.335, 1), class = b, coef = "intercept"),
+                prior(normal(0, 0.5),   class = b),
+                prior(student_t(3, 0, 1), class = sd),
+                prior(student_t(3, 0, 1), class = sigma),
+                prior(lkj(4), class = cor)),
+      iter = 2000, warmup = 1000, chains = 4, cores = 4,
+      seed = 5,
+      control = list(adapt_delta = .95))
+```
+
+Now look at the summary.
+
+```{r}
+print(fit6a)
+```
+
+Our estimates were pretty much the same as before, but without any warning signs. 
+
+Now do note that for both `fit6` and `fit6a`, our effective sample sizes for $\sigma_0$ and $\sigma_1$ aren’t terribly large relative to the total number of post-warmup draws, 4000. So if it was really important you had high-quality summary statistics for these parameters, you might need to refit the model with something like `iter = 20000, warmup = 2000`.
+
+In Model B in Table 5.5, Singer and Willett gave the results of a model with the boundary constraints on the $\sigma^2$ parameters removed. I am not going to attempt something like that with **brms**. If you're interested, you're on your own.
+
+But we will fit a version of their Model C where we've removed the $\sigma_1$ parameter. Notice that this results in our removal of the LKJ prior for $\rho_{01}$, too. Without a $\sigma_1$, there's no other parameter for our lonely $\sigma_0$ to correlate with.
+
+```{r fit7, cache = T, warning = F, message = F, results = "hide"}
+fit7 <-
+  brm(data = wages_small_pp, 
+      family = gaussian,
+      lnw ~ 0 + intercept + hgc_9 + exper + exper:black + (1 | id),
+      prior = c(prior(normal(1.335, 1), class = b, coef = "intercept"),
+                prior(normal(0, 0.5),   class = b),
+                prior(student_t(3, 0, 1), class = sd),
+                prior(student_t(3, 0, 1), class = sigma)),
+      iter = 2000, warmup = 1000, chains = 4, cores = 4,
+      seed = 5)
+```
+
+Here is the basic model summary.
+
+```{r}
+print(fit7)
+```
+
+No warning messages and our effective samples for $\sigma_0$ improved a bit. 
+
+```{r}
+fit6a <- add_criterion(fit6a, criterion = "waic")
+fit7 <- add_criterion(fit7, criterion = "waic")
+```
+
+```{r}
+loo_compare(fit6a, fit7, criterion = "waic") %>% 
+  print(simplify = F, digits = 3)
+```
+
+Yep. Those WAIC estimates are quite similar and when you compare them with formal $\text{elpd}$ difference scores, the standard error is larger than the difference itself.
+
+Though we’re stepping away from the text a bit, we should explore more alternatives for this issue. The **Stan** team has put together a [*Prior Choice Recommendations*](https://github.com/stan-dev/stan/wiki/Prior-Choice-Recommendations) wiki. In the [*Boundary-avoiding priors for modal estimation (posterior mode, MAP, marginal posterior mode, marginal maximum likelihood, MML)*](https://github.com/stan-dev/stan/wiki/Prior-Choice-Recommendations#boundary-avoiding-priors-for-modal-estimation-posterior-mode-map-marginal-posterior-mode-marginal-maximum-likelihood-mml) section, we read: 
+
+> * These are for parameters such as group-level scale parameters, group-level correlations, group-level covariance matrix
+> * What all these parameters have in common is that (a) they're defined on a space with a boundary, and (b) the likelihood, or marginal likelihood, can have a mode on the boundary. Most famous example is the group-level scale parameter tau for the 8-schools hierarchical model.
+> * With full Bayes the boundary shouldn't be a problem (as long as you have any proper prior).
+> * But with modal estimation, the estimate can be on the boundary, which can create problems in posterior predictions. For example, consider a varying-intercept varying-slope multilevel model which has an intercept and slope for each group. Suppose you fit marginal maximum likelihood and get a modal estimate of 1 for the group-level correlation. Then in your predictions the intercept and slope will be perfectly correlated, which in general will be unrealistic.
+> * For a one-dimensional parameter restricted to be positive (e.g., the scale parameter in a hierarchical model), we recommend Gamma(2,0) prior (that is, p(tau) proportional to tau) which will keep the mode away from 0 but still allows it to be arbitrarily close to the data if that is what the likelihood wants. For details see this paper by Chung et al.: http://www.stat.columbia.edu/~gelman/research/published/chung_etal_Pmetrika2013.pdf
+>     + Gamma(2,0) biases the estimate upward. When number of groups is small, try 
+>     + Gamma(2,1/A), where A is a scale parameter representing how high tau can be.
+
+It might be helpful to walk those $\gamma$ priors out, a bit. The paper by [Chung et al](http://www.stat.columbia.edu/~gelman/research/published/chung_etal_Pmetrika2013.pdf) is quite helpful. We'll first let them give us a little more background in the topic:
+
+> Zero group-level variance estimates can cause several problems. Zero variance can go against prior knowledge of researchers and results in underestimation of uncertainty in fixed coefficient estimates. Inferences for groups are often of interest to researchers, but when the group-level variance is estimated as zero, the resulting predictions of the group-level errors will all be zero, so one fails to find unexplained differences between groups. In addition, uncertainty in predictions for new and existing groups is also understated. (p. 686)
+
+They expounded further on page 687.
+
+> When a variance parameter is estimated as zero, there is typically a large amount of uncertainty about this variance. One possibility is to declare in such situations that not enough information is available to estimate a multilevel model. However, the available alternatives can be unappealing since, as noted in the introduction, discarding a variance component or setting the variance to zero understates the uncertainty. In particular, standard errors for coefficients of covariates that vary between groups will be too low as we will see in Section 2.2. The other extreme is to fit a regression with indicators for groups (a fixed-effects model), but this will  overcorrect for group effects (it is mathematically equivalent to a mixed-effects model with variance set to infinity), and also does not allow predictions for new groups.
+>
+> Degenerate variance estimates lead to complete shrinkage of predictions for new and existing groups and yield estimated prediction standard errors that understate uncertainty. This problem has been pointed out by [Li and Lahiri (2010)](https://www.sciencedirect.com/science/article/pii/S0047259X09002000) and [Morris and Tang (2011)](https://projecteuclid.org/download/pdfview_1/euclid.ss/1312204020) in small area estimation...
+>
+> If zero variance is not a null hypothesis of interest, a boundary estimate, and the corresponding zero likelihood ratio test statistic, should not necessarily lead us to accept the null hypothesis and to proceed as if the true variance is zero.
+
+In their paper, they covered both penalized maximum likelihood and full Bayesian estimation. We're just going to focus on the Bayes, but some of the quotes will contain ML talk.
+
+> We recommend a class of log-gamma penalties (or gamma priors) that in our default setting (the log-gamma(2, $\lambda$) penalty with $\lambda \rightarrow 0$) produce maximum penalized likelihood (MPL) esti- mates (or Bayes modal estimates) approximately one standard error away from zero when the maximum likelihood estimate is at zero. We consider these priors to be weakly informative in the sense that they supply some direction but still allow inference to be driven by the data. The penalty has little influence when the number of groups is large or when the data are informative about the variance, and the asymptotic mean squared error of the proposed estimator is the same as that of the maximum likelihood estimator. (p. 686)
+
+
+In the upper left panel of Figure 3, Chung et al give an example of what they mean by $\lambda \rightarrow 0$, $\lambda = 0.1$. Here's an example of what $\text{gamma} (2, 0.1)$ looks like across the parameter space of 0 to 100. 
+
+```{r, fig.width = 4, fig.height = 1.75}
+tibble(x = c(0, 100)) %>% 
+  
+  ggplot(aes(x = x)) +
+  stat_function(fun = dgamma, n = 1e2, args = list(shape = 2, rate = .1)) +
+  scale_y_continuous(NULL, breaks = NULL) +
+  theme(panel.grid = element_blank())
+```
+
+Given we're working with data on the log scale, that's a massively permissive prior. Let's zoom in and see what it means for the parameter space of possible values for our data.
+
+```{r, fig.width = 4, fig.height = 1.75}
+tibble(x = c(0, 2)) %>% 
+  
+  ggplot(aes(x = x)) +
+  stat_function(fun = dgamma, n = 1e2, args = list(shape = 2, rate = .1)) +
+  scale_y_continuous(NULL, breaks = NULL) +
+  theme(panel.grid = element_blank())
+```
+
+From the paper, we further read:
+
+>  In addition, with $\lambda \rightarrow 0$, the gamma density function has a positive constant derivative at zero, which allows the likelihood to dominate if it is strongly curved near zero. The positive constant derivative implies that the prior is linear at zero so that there is no dead zone near zero. The top-left panel of Figure 3 shows that the gamma(2,0.1) density increases linearly from zero with a gentle slope. The shape will be even flatter with a smaller rate parameter. (p. 691)
+
+In case you're not familiar with the gamma distribution, the rate parameter is what we've been calling $\lambda$. Let's test this baby out with our model. Here's how to specify it in **brms**.
+
+```{r fit6b, cache = T, warning = F, message = F, results = "hide"}
+fit6b <-
+  brm(data = wages_small_pp, 
+      family = gaussian,
+      lnw ~ 0 + intercept + hgc_9 + exper + exper:black + (1 + exper | id),
+      prior = c(prior(normal(1.335, 1), class = b, coef = "intercept"),
+                prior(normal(0, 0.5),   class = b),
+                prior(student_t(3, 0, 1), class = sd),
+                prior(gamma(2, .1), class = sd, group = "id", coef = "exper"),
+                prior(student_t(3, 0, 1), class = sigma),
+                prior(lkj(4), class = cor)),
+      iter = 2000, warmup = 1000, chains = 4, cores = 4,
+      seed = 5)
+```
+
+Notice that we didn't bother fooling around with `adapt_delta` and the model fit just fine. Here are the results.
+
+```{r}
+print(fit6b, digits = 3)
+```
+
+Our `sd(exper)` is still quite close to zero. But notice how not the lower level of the 95% interval is higher than zero. Here's what it looks like.
+
+```{r, fig.width = 8, fig.height = 2.5}
+posterior_samples(fit6b) %>%
+  transmute(sigma_1 = sd_id__exper) %>% 
+  mutate(sigma_2_1 = sigma_1^2) %>% 
+  set_names("sigma[1]", "sigma[1]^2") %>% 
+  gather() %>%
+  
+  ggplot(aes(x = value, y = key)) +
+  geom_halfeyeh(.width = .95, scale = "width") +
+  scale_y_discrete(labels = parse(text = c("sigma[1]", "sigma[1]^2"))) +
+  theme(panel.grid = element_blank())
+```
+
+Let's zoom in on the leftmost part of the plot.
+
+```{r, fig.width = 8, fig.height = 2.5}
+posterior_samples(fit6b) %>%
+  transmute(sigma_1 = sd_id__exper) %>% 
+  mutate(sigma_2_1 = sigma_1^2) %>% 
+  set_names("sigma[1]", "sigma[1]^2") %>% 
+  gather() %>%
+  
+  ggplot(aes(x = value, y = key)) +
+  geom_vline(xintercept = 0, color = "white") +
+  geom_halfeyeh(.width = .95, scale = "width") +
+  scale_y_discrete(labels = parse(text = c("sigma[1]", "sigma[1]^2"))) +
+  coord_cartesian(xlim = c(0, 0.01)) +
+  theme(panel.grid = element_blank())
+```
+
+Although we are still brushing up on the boundary with $\sigma_1^2$, the mode is no longer at zero. In the discussion, Chung et al point out "sometimes weak prior information is available about a variance parameter. When $\alpha = 2$, the gamma density has its mode at $1 / \lambda$, and so one can use the $\text{gamma} (\alpha, \lambda)$ prior with $1 / \lambda$ set to the prior estimate of $\sigma_\theta$" (p. 703). Let's say we only had our `wages_small_pp`, but the results of `wages_pp` were published by some prior researchers. In this case, we do have good prior data; we have the point estimate from the model of the `wages_pp` data! Here's what that was in terms of the median.
+
+```{r, fig.width = 8, fig.height = 2.5}
+posterior_samples(fit3) %>%
+  median_qi(sd_id__exper)
+```
+
+And here's what that value is when set as the divisor of 1.
+
+```{r}
+1 / 0.04127868
+```
+
+What does that distribution look like?
+
+```{r, fig.width = 4, fig.height = 1.75}
+tibble(x = c(0, 1)) %>% 
+  
+  ggplot(aes(x = x)) +
+  stat_function(fun = dgamma, n = 1e2, args = list(shape = 2, rate = 24.22558)) +
+  scale_y_continuous(NULL, breaks = NULL) +
+  theme(panel.grid = element_blank())
+```
+
+So this is much more informative than our default gamma(0, .1) prior. But given the magnitude of the estimate from `fit3`, it's still fairly liberal. Let's practice using it.
+
+```{r fit6c, cache = T, warning = F, message = F, results = "hide"}
+fit6c <-
+  brm(data = wages_small_pp, 
+      family = gaussian,
+      lnw ~ 0 + intercept + hgc_9 + exper + exper:black + (1 + exper | id),
+      prior = c(prior(normal(1.335, 1), class = b, coef = "intercept"),
+                prior(normal(0, 0.5),   class = b),
+                prior(student_t(3, 0, 1), class = sd),
+                prior(gamma(2, 24.22558), class = sd, group = "id", coef = "exper"),
+                prior(student_t(3, 0, 1), class = sigma),
+                prior(lkj(4), class = cor)),
+      iter = 2000, warmup = 1000, chains = 4, cores = 4,
+      seed = 5,
+      # 1 divergent transitions after warmup
+      control = list(adapt_delta = .9))
+```
+
+Check out the results.
+
+```{r}
+print(fit6c, digits = 3)
+```
+
+Here we compare the three ways to specify the $\sigma_1$ prior with the posterior from the original model fit with the full data set. For simplicity, we’ll just look at the results in the **brms**-like $\sigma$ metric. Hopefully by now you’ll know how to do the conversions to get the values into the $\sigma^2$ metric.
+
+```{r, fit.width = 8, fig.height = 4.5}
+tibble(`full data, student_t(3, 0, 1) prior`  = VarCorr(fit3,  summary = F)[[1]][[1]][, 2],
+       `small data, student_t(3, 0, 1) prior` = VarCorr(fit6a, summary = F)[[1]][[1]][, 2],
+       `small data, gamma(2, 0.1) prior`      = VarCorr(fit6b, summary = F)[[1]][[1]][, 2],
+       `small data, gamma(2, 24.22558) prior` = VarCorr(fit6c, summary = F)[[1]][[1]][, 2]) %>% 
+  gather() %>% 
+  mutate(key = factor(key, levels = c("full data, student_t(3, 0, 1) prior", 
+                                      "small data, student_t(3, 0, 1) prior", 
+                                      "small data, gamma(2, 0.1) prior", 
+                                      "small data, gamma(2, 24.22558) prior"))) %>% 
+  
+  ggplot(aes(x = value, y = 0, fill = key == "full data, student_t(3, 0, 1) prior")) +
+  geom_vline(xintercept = 0, color = "white") +
+  geom_halfeyeh(.width = .95) +
+  scale_y_continuous(NULL, breaks = NULL) +
+  scale_fill_manual(values = c("grey75", "darkgoldenrod2")) +
+  theme(panel.grid = element_blank(),
+        legend.position = "none") +
+  facet_wrap(~key, ncol = 1)
+```
+
+One thing to notice is that when you’re working with full Bayesian estimation with even a rather vague prior with a boundary on zero, the measure of central tendency in the posterior is away from zero. Things get more compact when you’re working in the $\sigma^2$ metric. But remember that when we’re fitting our models with **brms**, we’re in the $\sigma$ metric, anyway. And with either of these three options, you don’t have a compelling reason to set the $\sigma_\theta$ parameter to zero the way you would with ML. Even a rather vague prior will add enough information to the model that we can feel confident about keeping our theoretically-derived $\sigma_1$ parameter.
 
 
 ## Reference {-}
