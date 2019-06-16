@@ -283,6 +283,13 @@ Back to McElreath (2015):
 >
 > Yet a major advantage of the multilevel model for change is that it is easily fit to unbalanced data. (p. 146, *emphasis* in the original) 
 
+
+```{r, echo = F}
+# to free up memory, we'll drop these two
+rm(fit1, fit2)
+```
+
+
 ### Analyzing data sets in which the number of waves per person varies.
 
 Here we load the `wages_pp.csv` data.
@@ -1062,6 +1069,247 @@ tibble(`full data, student_t(3, 0, 1) prior`  = VarCorr(fit3,  summary = F)[[1]]
 ```
 
 One thing to notice is that when you’re working with full Bayesian estimation with even a rather vague prior with a boundary on zero, the measure of central tendency in the posterior is away from zero. Things get more compact when you’re working in the $\sigma^2$ metric. But remember that when we’re fitting our models with **brms**, we’re in the $\sigma$ metric, anyway. And with either of these three options, you don’t have a compelling reason to set the $\sigma_\theta$ parameter to zero the way you would with ML. Even a rather vague prior will add enough information to the model that we can feel confident about keeping our theoretically-derived $\sigma_1$ parameter.
+
+#### Nonconvergence [i.e., it's time to talk chains and such].
+
+As discussed in section 4.3, all multilevel modeling programs implement iterative numeric algorithms for model fitting. (p. 155). This is also true for our **Stan** propelled **brms** software. However, what’s doingon under the hood, here, is not what’s happeing with the frequentist packages discussed by Singer and Willett. Real we’re using Hamiltonian Monte Carlo (HMC) to draw from the posterior. To my eye, [Paul Bürkner](https://twitter.com/paulbuerkner) gave [in a preprint](https://arxiv.org/pdf/1905.09501.pdf) probably the clearest and most direct introduction to why we need fancy algorithms like HMC to fit Bayesian models. First, Bürkner warmed up by contrasting Bayes with conventional frequentist inference:
+
+> In frequentist statistics, parameter estimates are usually obtained by finding those parameter values that maximise the likelihood. In contrast, Bayesian statistics estimate the full (joint) posterior distribution of the parameters. This is not only fully consistent with probability theory, but also much more informative than a single point estimate (and an approximate measure of uncertainty commonly known as 'standard error').
+
+Those iterative algorithms Singer and Willett discussed in this section, that's what they're doing. They are maximizing the likelihood. But with Bayes, we have the more challenging goal of describing the entire posterior distribution, which is the product of the likelihood and the prior. As such,
+
+> Obtaining the posterior distribution analytically is only possible in certain cases of carefully chosen combinations of prior and likelihood, which may considerably limit modelling flexibilty but yield a computational advantage. However, with the increased power of today's computers, Markov-Chain Monte-Carlo (MCMC) sampling methods constitute a powerful and feasible alternative to obtaining posterior distributions for complex models in which the majority of modeling decisions is made based on theoretical and not computational grounds. Despite all the computing power, these sampling algorithms are computationally very intensive and thus fitting models using full Bayesian inference is usually much slower than in point estimation techniques. However, advantages of Bayesian inference--such as greater modeling flexibility, prior distributions, and more informative results--are often worth the increased computational cost (Gelman, Carlin, Stern, and Rubin 2014). (p. 8)
+
+The gritty details are well beyond the scope of this project. If you’d like a more thorough walk-through on why it's analytically and computationally challenging to get the posterior, I recommend working through the first several chapters in Kruschke’s (2014) [Doing Bayesian Data Analysis, Second Edition: A Tutorial with R, JAGS, and Stan](http://www.indiana.edu/~kruschke/DoingBayesianDataAnalysis/).
+
+But so anyways, our primary algorithm is HMC as implemented by **Stan**. You can find all kinds of technical details [here](https://mc-stan.org/users/documentation/). Because it’s rather difficult to describe our Bayesian multilevel models analytically, we use HMC to draw from the posterior instead. And we then summarize the marginal and joint distributions of those parameters with things like measures of central tendency (i.e., means, medians, modes) and spread (i.e., standard deviations, percentile-based intervals). And we often plot. 
+
+And somewhat like with the frequentist iterative algorithms, we need to make sure our sweet **Stan**-based HMC is working well, too. One way is with trace plots. 
+
+##### Trace plots.
+
+We can get the trace plots for a model by placing a `brm()` fit object into the `plot()` function. Here's an example with the full model, `fit4`.
+
+```{r, fig.width = 6, fig.height = 5.5}
+plot(fit4)
+```
+
+You’ll notice we get two plots for each of the major model parameters, the $\gamma$s, the $\sigma$s and the $\rho$s. The plots on the left are the density plots for each parameter. On the right, we have the actual trace plots. On the x-axis, we have an ordering of the posterior draws; on the y, we have the parameter space. Since we the default 4 HMC chains to draw from the posterior, those four chains are depicted by different colored lines. We generally like it when the lines for our chains all overlap with each other in a stable zig-zag sort of way. Traceplots are sometimes called caterpillar plots because, when things are going well, they often resemble nice multicolored fuzzy caterpillars. 
+
+If you’d like more control over your traceplot visuals, you might check out the [**bayesplot** package](https://github.com/stan-dev/bayesplot). 
+
+```{r, warning = F, message = F}
+library(bayesplot)
+```
+
+Our mai function will be `mcmc_trace()`. Unlike with the `brms::plot()` method, `bayesplog::mcmc_trace()` takes the posterior draws themselves as input. So we'll have to use `posterior_samples()` first. By default, `posterior_samples()` does not extract information about which chain a given draw is from. So we'll have to add the `add_chain = T` argument.
+
+```{r}
+post <- posterior_samples(fit4, add_chain = T)
+```
+
+We can use the `pars` argument to focus on particular parameters.
+
+```{r, fig.width = 4, fig.height = 1.5}
+mcmc_trace(post,
+           pars = "sigma")
+```
+
+If we use the `pars = vars(...)` format, we can use function helpers from **dplyr** to select subsets of parameters. For example, here's how we might single out the $\gamma$s.
+
+```{r, fig.width = 6, fig.height = 4}
+mcmc_trace(post,
+           pars = vars(starts_with("b_")),
+           facet_args = list(ncol = 2))
+```
+
+Also notice how we used the `facet_args` argument to adjust the number of columns in the output. We can also use familiar **ggplot2** functions to customize the plots further.
+
+```{r, fig.width = 8, fig.height = 2.25, message = F, warning = F}
+post %>% 
+  mutate(`sigma[0]`       = sd_id__Intercept,
+         `sigma[1]`       = sd_id__exper,
+         `sigma[epsilon]` = sigma) %>%
+
+mcmc_trace(pars = vars(starts_with("sigma[")),
+           facet_args = list(labeller = label_parsed)) +
+  scale_x_continuous(NULL, breaks = NULL) +
+  scale_color_viridis_d(option = "A") +
+  ggtitle("I can't wait to show these traceplots to my mom.") +
+  theme_grey() +
+  theme(panel.grid         = element_blank(),
+        panel.grid.major.y = element_line(color = "white", size = 1/4),
+        legend.position    = "bottom",
+        strip.text         = element_text(size = 12))
+```
+
+Traceplots are connected to other important concepts, like autocorrelation and effective sample size.
+
+##### Autocorrelation.
+
+When using Markov chain Monte Carlo methods, of which HMC is a special case, the notions of autocorrelation and effective sample size are closely connected. Both have to do with the question, How many post-warmup draws from the posterior do I need to take? If you take too few, you won’t have a good sense of the shape of the posterior. If you take more than necessary, you’re just wasting time and computer memory. Here’s how McElreath introduced the topic:
+
+> So how many samples do we need for accurate inference about the posterior distribution? It depends. First, what really matters is the *effective* number of samples, not the raw number. The effective number of samples is an estimate of the number of independent samples from the posterior distribution. Markov chains are typically *autocorrelated*, so that sequential samples are not entirely independent. Stan chains tend to be less autocorrelated than those produced by other engines [e.g., the Gibbs sampler], but there is always some autocorrelation. (p. 255, *emphasis* in the original)
+
+I'm not aware of a way to query the autocorrelations from a `brm()` fit using **brms** convenience functions. However, we can get those diagnostics from the `bayesplot::mcmc_acf()` function.
+
+```{r, fig.width = 8, fig.height = 4}
+mcmc_acf(post, pars = vars(starts_with("b_")), lags = 10)  +
+  theme_grey() +
+  theme(panel.grid = element_blank())
+```
+
+The `mcmc_acf()` gives a wealth of granular output. The columns among the plots are the specified parameters. The rows are the chains, one for each. In this particular case, the autocorrelations were quite low for all our $\gamma$ parameters by the second or third lag. That’s really quite good and not uncommon for HMC. Do note, however, that this won’t always be the case. For example, here are the plots for our variance parameters and $\rho_{01}$.
+
+```{r, fig.width = 6, fig.height = 4}
+mcmc_acf(post, pars = vars(starts_with("sd_"), "sigma", starts_with("cor")), lags = 10)  +
+  theme_grey() +
+  theme(panel.grid = element_blank(),
+        strip.text = element_text(size = 7))
+```
+
+On the whole, all of them are pretty okay. But notice how the autocorrelations for $\sigma_1$ and $\rho_{01}$ remained relatively high up until the 10^th^ lag. 
+
+The plots from `mcmc_act()` are quite handy for focused diagnostics. But if you want a more global perspective, they're too tedious. Fortunately for us, we have other diagnostic tools.
+
+##### Effective sample size.
+
+Above we quited McElreath as pointing out "what really matters is the *effective* number of samples, not the raw number." With **brms**, you typically get the effective number of samples in the `print()` or `summary()` output. Here it is again for `fit4`.
+
+```{r}
+summary(fit4)
+```
+
+See that `Eff.Sample` column on the right? That's our effective sample size. Like the autocorrelations, each parameter gets its own estimate. You might compare the numbers to the number of post-warmup iterations, 4000 in this case and by default. 
+
+You may wonder, how many effective samples do I need? Back to McElreath:
+
+> If all you want are posterior means, it doesn't take many samples at all to get very good estimates. Even a couple hundred samples will do. But if you care about the exact shape in the extreme tails of the posterior, the 99th percentile or so, then you'll need many many more. So there is no universally useful number of samples to aim for. In most typical regression applications, you can get a very good estimate of the posterior mean with as few as 200 effective samples. And if the posterior is approximately Gaussian, then all you need in addition is a good estimate of the variance, which can be had with one order of magnitude more, in most cases. For highly skewed posteriors, you'll have to think more about which region of the distribution interests you. (p. 255)
+
+In addition to `Eff.Sample` from **brms** summary output, you can also extract the ratio of `Eff.Sample` to post-warmup draws from the `bayesplot::neff_ration()` function. Let's practice with `fit4`.
+
+```{r}
+nr <- neff_ratio(fit4)
+
+str(nr)
+```
+
+Good old `str()` informed us we got a 1787 row named numeric vector.  We can display that output by plugging it into `mcmc_neff()`.
+
+```{r, fig.width = 6, fig.height = 4}
+mcmc_neff(nr)
+```
+
+Because we have so many parameters, it can be hard to understand what's going on. Let's try again, this time restricted to the first 50 parameters.
+
+```{r, fig.width = 6, fig.height = 4}
+mcmc_neff(nr[1:50])
+```
+
+Of those first parameters, `mcmc_neff()` rank ordered them from lowest $\frac{n_\test{eff}}{N}$ to highest. You can see by the legend that the **bayesplot** team has provided us with a heuristic categorization of those with values above 0.5, those equal to that or fewer, and those equal to 0.1 or fewer. The idea is we typically prefer higher ratios to lower ones.
+
+If all you wanted was to plot the effective sample sizes of our primary summary parameters, you can wrangle our `nr` object and make the plot yourself.
+
+```{r, fig.width = 6, fig.height = 2.5}
+nr <-
+  nr %>% 
+  data.frame() %>% 
+  rownames_to_column() %>% 
+  set_names("parameter", "ratio") %>% 
+  mutate(n_eff = ratio * 4000)
+
+nr %>% 
+  slice(1:10) %>% 
+  
+  ggplot(aes(x = reorder(parameter, n_eff))) +
+  geom_linerange(aes(ymin = 0, ymax = n_eff)) +
+  geom_point(aes(y = n_eff)) +
+  labs(y = "effective sample size",
+       x = NULL) +
+  coord_flip(ylim = 0:4000) +
+  theme(panel.grid  = element_blank(),
+        axis.text.y = element_text(hjust = 0))
+```
+
+You may have noticed that in the first `mcmc_neff()` plot, many of the parameters seemed to have $\frac{n_\test{eff}}{N}$ ratios above 1. What’s that about? As is turns out, the sampling in **Stan** is so good that sometimes the HMC chains for a parameter can be negatively autocorrelated. When this is the case, your effective sample size can be *larger* than your actual sample size. Madness, I know. This was the case for many of our residuals. Here's a look at the first 10.
+
+```{r}
+nr %>% 
+  slice(11:20)
+```
+
+Look at those sweet `ratio` and `n_eff` values! Let's take the first 6 and check their autocorrelation plots.
+
+```{r, fig.width = 8, fig.height = 4}
+mcmc_acf(post, pars = vars(`r_id[31,Intercept]`:`r_id[145,Intercept]`), lags = 5)  +
+  theme_grey() +
+  theme(panel.grid = element_blank(),
+        strip.text = element_text(size = 8))
+```
+
+See those dips below zero for the first lag in each? That's what a negative autocorrelation looks like. Beautiful. For more on negative autocorrelations within chains and how it influences the number of effective samples, check out [this thread on the Stan forums](https://discourse.mc-stan.org/t/n-eff-bda3-vs-stan/2608) where many members of the **Stan** team chime in.
+
+##### $\hat R$.
+
+Return again to the default `print()` output for a `brms::brm()` fit.
+
+```{r}
+print(fit4)
+```
+
+The last column for each parameter is `Rhat`. "`Rhat` is a complicated estimate of the convergence of the Markov chains to the target distribution. It should approach 1.00 from above, when all is well" (McElreath, 2016, p. 250). We can extract $\hat R$ directly with the `rhat()` function.
+
+```{r}
+rhat(fit4) %>% 
+  str()
+```
+
+For our `fit4`, the `brms::rhat()` function returned a named numeric vector, with one row for each of the 1787 parameters in the model. You can subset the `rhat()` output to focus on a few parameters.
+
+```{r}
+rhat(fit4)[1:10]
+```
+
+Or you might get a more global perspective with a plot.
+
+```{r, fig.width = 4, figh.eight = 3}
+rhat(fit4) %>% 
+  data.frame() %>% 
+  set_names("rhat") %>% 
+  
+  ggplot(aes(x = rhat)) +
+  geom_vline(xintercept = 1, color = "white") +
+  geom_histogram(binwidth = .0001) +
+  theme(panel.grid = element_blank())
+```
+
+The **bayesplot** package offers a convenience function for plotting `rhat()` output. Here we'll focus on the first 20 parameters.
+
+```{r, fig.width = 8, fig.height = 3}
+mcmc_rhat(rhat(fit4)[1:20]) +
+  yaxis_text(hjust = 0)
+```
+
+By default, `mcmc_rhat()` does not return text on the y-axis. But you can retrieve that text with the `yaxis_text()` function. For more on the $\hat R$, you might check out the *Rhat: potential scale reduction statistic* subsection of Gabry and Modrák's vignette, [*Visual MCMC diagnostics using the bayesplot package*](https://cran.r-project.org/web/packages/bayesplot/vignettes/visual-mcmc-diagnostics.html#rhat-potential-scale-reduction-statistic).
+
+We should also point out that the Stan team has found some deficiencies with the $\hat{R}$. They've made recommendations for improvement that will be implemented in the Stan ecosystem sometime soon. In the meantime, you can read all about it in their [preprint](https://arxiv.org/abs/1903.08008) and in Dan Simpson's guest blog, [*Maybe it's time to let the old ways die; or We broke R-hat so now we have to fix it.*](https://statmodeling.stat.columbia.edu/2019/03/19/maybe-its-time-to-let-the-old-ways-die-or-we-broke-r-hat-so-now-we-have-to-fix-it/). If you learn best by sassy twitter banter, [click through this interchange](https://twitter.com/betanalpha/status/1108185746870030336) among some of our Stan team all-stars.
+
+### 5.2.3. Distinguishing among different types of missingness.
+
+> Missingness, in and of itself, is not necessarily problematic. It all depends upon what statisticians call the type of missingness. In seminal work on this topic, Little ([1995](https://www.jstor.org/stable/pdf/2291350.pdf?casa_token=Ts4iGu8znj0AAAAA:oLHBuuTQhgh48v_7RwAMyuw6Qvc_H5JmPIP3R87k-fDyyZbHUHvFK5BvRBu8WRoBMojooLd8nUTtN5zclMJu4W8IdQQoKv6qNbvMwYqoqmb0ynj9yqTG)), refining earlier work with Rubin ([Little & Rubin, 1987](https://trove.nla.gov.au/work/19249375?q&sort=holdings+desc&_=1560698333380&versionId=207797429)), distinguished among three types of missingness: (1) *missing completely at random* (MCAR); (2) covariate-dependent dropout (CDD); and (3) *missing at random* (MAR) (see also [Schafer, 1997](https://www.crcpress.com/Analysis-of-Incomplete-Multivariate-Data/Schafer/p/book/9780412040610)).
+>
+> When we say that data are MCAR, we argue that the observed values are a random sample of all the values that could have been observed (according ot plan), had there been no missing data.
+>
+> ...Covariate dependent dropout (CDD) is a less restrictive assumption that permits associations between the probability of missingness and observed predictor values ("covariates"). Data can be CDD even if the probability of missingness is systematically related to either *TIME* or observed substantive predictors. 
+>
+> ...When data are MAR, the probability of missingness can depend upon *any* observed data, for either the predictors or any outcome values. It cannot, however, depend upon an *un*observed value of either any predictor or the outcome. (pp. 157--158, *emphasis* in the original)
+
+For some more current introductions to missing data methods, I recommend Enders' (2010) [*Applied Missing Data Analysis*](http://www.appliedmissingdata.com), for which you can find a free sample chapter [here](http://www.appliedmissingdata.com/sample-chapter.pdf), and Little and Rubin's (2019) [*Statistical Analysis with Missing Data, 3rd Edition*](https://www.wiley.com/en-us/Statistical+Analysis+with+Missing+Data%2C+3rd+Edition-p-9780470526798). You might also check out van Burren's great online text [*Flexible Imputation of Missing Data. Second Edition*](https://stefvanbuuren.name/fimd/).
+
+## 5.3 Time-varying predictors
+
+
+
 
 
 ## Reference {-}
