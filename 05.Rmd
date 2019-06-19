@@ -1308,7 +1308,909 @@ For some more current introductions to missing data methods, I recommend Enders'
 
 ## 5.3 Time-varying predictors
 
+> A time-varying predictor is a variable whose *values* may differ over time. Unlike their time-invariant cousins, which record an individual's static status, time-varying predictors record an individual's potentially differing status on each associated measurement occasion. Some time-varying predictors have values that change naturally; others have values that change by design. (pp. 159-160, *emphasis* in the original)
 
+### 5.3.1. Including the main effect of a time-varying predictor.
+
+You can fing [Ginexi and colleagues' (2000)](https://www.researchgate.net/profile/Elizabeth_Ginexi/publication/12406334_Depression_and_control_beliefs_in_relation_to_reemployment_What_are_the_directions_of_effect/links/553e47930cf20184050e15ed/Depression-and-control-beliefs-in-relation-to-reemployment-What-are-the-directions-of-effect.pdf) unemployment study data in the `reading_pp.csv` file.
+
+```{r, warning = F, message = F}
+library(tidyverse)
+unemployment_pp <- read_csv("data/unemployment_pp.csv")
+
+head(unemployment_pp)
+```
+
+We have 254 unique participants.
+
+```{r}
+unemployment_pp %>% 
+  distinct(id) %>% 
+  count()
+```
+
+Here's one way to compute the number of participants who were never employed during the study.
+
+```{r}
+unemployment_pp %>% 
+  filter(unemp == 0) %>% 
+  distinct(id) %>% 
+  count() %>% 
+  summarise(never_employed = 254 - n)
+```
+
+In case it wasn't clear, participants had up to 3 interviews. 
+
+> By recruiting 254 participants from local unemployment offices, the researchers were able to interview individuals soon after job loss (within the first 2 months). Follow-up interviews were conducted between 3 and 8 months and 10 and 16 months after job loss. (p. 161)
+
+Those times were encoded in the `months` variable. Here's what that looks like.
+
+```{r, fig.width = 3.5, fig.height = 2.5}
+unemployment_pp %>% 
+  ggplot(aes(x = months))  +
+  geom_vline(xintercept = c(3, 8), color = "white") +
+  geom_histogram(binwidth = .5) +
+  theme(panel.grid = element_blank())
+```
+
+To make some of our data questions easier, we can use those 3 and 8 `month` thresholds to make an `interview` variable to indicate the periods during which the interviews were conducted.
+
+```{r, fig.width = 3.5, fig.height = 2.5}
+unemployment_pp <- 
+  unemployment_pp %>% 
+  mutate(interview = ifelse(months < 3, 1,
+                            ifelse(months > 8, 3, 2))) 
+  
+unemployment_pp %>% 
+  ggplot(aes(x = interview))  +
+  geom_bar() +
+  theme(panel.grid = element_blank())
+```
+
+With a little wrangling, we can display all possible employment patterns along with counts on how many showed them.
+
+```{r}
+unemployment_pp %>% 
+  select(-months, -cesd) %>% 
+  mutate(interview = str_c("int_", interview)) %>% 
+  spread(key = interview, value = unemp) %>% 
+  group_by(int_1, int_2, int_3) %>% 
+  count() %>% 
+  arrange(desc(n))
+```
+
+Based on that, I'm not sure how Singer and Willett came to the conclusion "62 were always working after the first interview" (p. 161). Based on an analysis of those who had complete data, that corresponds to the pattern in the top row, [1, 0, 0], which we have counted as 55 (i.e., row 2). If you add to that the two rows with missingness on one of the critical values (i.e., [1, 0, NA] and [1, NA, 0]), that gets you $55 + 4 + 2 = 61$
+
+We can at least confirm that "41 were still unemployed at the second interview but working by the third" (p. 161). That's our pattern [1, 1, 0], shown in row 3. We can also confirm "19 were working by the second interview but unemployed at the third" (p. 161). That's shown in our pattern [1, 0, 1], shown in row 6.
+
+Before we configure our unconditional growth model, we might familiarize ourselves with our criterion variable, `cesd`. Singer and Willett informed us:
+
+> > Each time participants completed the Center for Epidemiologic Studies’ Depression (CES-D) scale ([Radloff, 1977](https://journals.sagepub.com/doi/pdf/10.1177/014662167700100306?casa_token=igspo7W_9SUAAAAA:hnRVqiDEM-b6nNh_-8VQ6tx1PukP8nsqyo4yd4m_inspjhH-3aeShEGodUxux8GuInG9AYbP1D2GLA)), which asks them to rate, on a four-point scale, the frequency with which they experience each of the 20 depressive symptoms. The CES-D scores can vary from a low or 0 for someone with no symptoms to a high of 80 for someone in serious distress. (p. 161)
+
+In addition to Radloff's original article, you can get a copy of the CES-D [here](http://www.chcr.brown.edu/pcoc/cesdscale.pdf). 
+
+To help us pick our priors, [Brown and Gary (1985)](https://scholarworks.wmich.edu/cgi/viewcontent.cgi?article=1721&amp=&context=jssw&amp=&sei-redir=1&referer=https%253A%252F%252Fscholar.google.com%252Fscholar%253Fq%253D%252522CES-D%252522%252Bunemployment%2526hl%253Den%2526as_sdt%253D0%25252C44%2526as_ylo%253D1977%2526as_yhi%253D2000#search=%22CES-D%20unemployment%22) listed the means and standard deviations of the CES-D scores for unemployed Black adults. They gave the summary statistics broken down by sex:
+
+* Males: 14.05 (8.86), $n = 37$
+* Females: 15.35 (9.39), $n = 72$
+
+Based the variables in the data set and the descriptions of it in the text, we don't have a sense of the demographic backgrounds of the participants. But with the information we have in hand, a reasonable empirically-based but nonetheless noncommittal prior for baseline CES-D might be something like `normal(14.5, 20)`. A weakly-regularizing prior on change over 1 month might be `normal(0, 10)`. If you'd like to argue about these priors, and it'd be fair id you did, we might write the statistical formula for the unconditional growth model as
+
+$$
+\begin{align*}
+\text{cesd}_{ij} & = \gamma_{00} + \gamma_{10} \text{months}_{ij} + \zeta_{0i} + \zeta_{1i} \text{months}_{ij} + \epsilon_{ij} \\
+\epsilon_{ij}    & \sim \text{Normal} (0, \sigma_\epsilon) \\
+
+\begin{bmatrix} 
+\zeta_{0i} \\ \zeta_{1i} 
+\end{bmatrix} & \sim \text{Normal} 
+\Bigg ( 
+\begin{bmatrix} 0 \\ 0 \end{bmatrix},
+\mathbf{D} \mathbf{\Omega} \mathbf{D}'
+\Bigg ), \text{where} \\
+
+\mathbf{D}       & = \begin{bmatrix} \sigma_0 & 0 \\ 0 & \sigma_1 \end{bmatrix} \text{and} \\ 
+
+\mathbf{\Omega}  & = \begin{bmatrix} 1 & \rho_{01} \\ \rho_{01} & 1 \end{bmatrix} \\
+
+\gamma_{00}     & \sim \text{Normal}(14.5, 20) \\
+\gamma_{10}     & \sim \text{Normal}(0, 10) \\
+\sigma_\epsilon & \sim \text{Student-t} (3, 0, 10) \\
+\sigma_0        & \sim \text{Student-t} (3, 0, 10) \\
+\sigma_1        & \sim \text{Student-t} (3, 0, 10) \\
+\rho_{01}       & \sim \text{LKJ} (4)
+
+\end{align*}
+$$
+
+Here's how we might fit that model.
+
+```{r fit8, cache = T, warning = F, message = F, results = "hide"}
+fit8 <-
+  brm(data = unemployment_pp, 
+      family = gaussian,
+      cesd ~ 0 + intercept + months + (1 + months | id),
+      prior = c(prior(normal(14.5, 20), class = b, coef = "intercept"),
+                prior(normal(0, 10),   class = b),
+                prior(student_t(3, 0, 10), class = sd),
+                prior(student_t(3, 0, 10), class = sigma),
+                prior(lkj(4), class = cor)),
+      iter = 2000, warmup = 1000, chains = 4, cores = 4,
+      seed = 5,
+      control = list(adapt_delta = .9))
+```
+
+Here are the results.
+
+```{r}
+print(fit8, digits = 3)
+```
+
+Here are the posteriors for the CES-D at the first day of job loss (i.e., $\gamma_{00}$) and the expected rate of change over one month (i.e., $\gamma_{10}$).
+
+```{r, fig.width = 6, fig.height = 2.25}
+posterior_samples(fit8) %>% 
+  transmute(`first day of job loss` = b_intercept,
+            `linear decline by month` = b_months) %>% 
+  gather() %>% 
+  
+  ggplot(aes(x = value, y = 0)) +
+  geom_halfeyeh(.width = .95) +
+  scale_y_continuous(NULL, breaks = NULL) +
+  xlab("CES-D composite score") +
+  theme(panel.grid = element_blank()) +
+  facet_wrap(~key, scales = "free")
+```
+
+We might use `marginal_effects()` to get a quick view on what that might looks like.
+
+```{r, fig.width = 4, fig.height = 2.5}
+plot(marginal_effects(fit8),
+       plot = FALSE)[[1]] +
+  geom_hline(yintercept = 14.5, color = "grey50", linetype = 2) +
+  coord_cartesian(ylim = 0:20) +
+  theme(panel.grid = element_blank())
+```
+
+For reference, the dashed grey line is the value we centered our prior for initial status on.
+
+#### Using a composite specification.
+
+We might specify Model B, our first model with a time-varying covariate, like this:
+
+$$
+\begin{align*}
+\text{cesd}_{ij} & = \big [ \gamma_{00} + \gamma_{10} \text{months}_{ij} + \gamma_{20} \text{unemp}_{ij} \big ] + \big [  \zeta_{0i} + \zeta_{1i} \text{months}_{ij} + \epsilon_{ij} \big ]\epsilon_{ij}    & \sim \text{Normal} (0, \sigma_\epsilon) \\
+
+\begin{bmatrix} 
+\zeta_{0i} \\ \zeta_{1i} 
+\end{bmatrix} & \sim \text{Normal} 
+\Bigg ( 
+\begin{bmatrix} 0 \\ 0 \end{bmatrix},
+\mathbf{D} \mathbf{\Omega} \mathbf{D}'
+\Bigg ), \text{where} \\
+
+\mathbf{D}       & = \begin{bmatrix} \sigma_0 & 0 \\ 0 & \sigma_1 \end{bmatrix} \text{and} \\ 
+
+\mathbf{\Omega}  & = \begin{bmatrix} 1 & \rho_{01} \\ \rho_{01} & 1 \end{bmatrix} \\
+
+\gamma_{00}     & \sim \text{Normal}(14.5, 20) \\
+\gamma_{10}     & \sim \text{Normal}(0, 10) \\
+\gamma_{20}     & \sim \text{Normal}(0, 10) \\
+\sigma_\epsilon & \sim \text{Student-t} (3, 0, 10) \\
+\sigma_0        & \sim \text{Student-t} (3, 0, 10) \\
+\sigma_1        & \sim \text{Student-t} (3, 0, 10) \\
+\rho_{01}       & \sim \text{LKJ} (4)
+
+\end{align*}
+$$
+
+Note a few things about the priors. First, we haven’t changed any of the priors from the previous model. All we did was add $\gamma_{20} \sim \text{Normal}(0, 10)$ for our new parameter. Given how weakly-informative our other priors have been for these data, this isn’t an unreasonable approach. However, the meaning for our intercept, $\gamma_{01}$, has changed. Now it’s the initial status for someone who is *employed* at baseline. But remember that for Model A, we set that prior with unemployed people in mind. A careful researcher might want to dive back into the literature to see if some lower value than 14.5 would be more reasonable to set for the mean of that prior. However, since the standard deviations for our intercepts priors and the covariate priors are all rather wide and permissive, this just won’t be much of a problem, for us. Buy anyway, second, note that we’ve centered our prior for $\gamma_{20}$ on zero. This is a weakly-regularizing prior, slightly favoring smaller effects over larger ones. One could easily argue for different priors. 
+
+Here's how to fit the model in **brms**.
+
+```{r fit9, cache = T, warning = F, message = F, results = "hide"}
+fit9 <-
+  brm(data = unemployment_pp, 
+      family = gaussian,
+      cesd ~ 0 + intercept + months + unemp + (1 + months | id),
+      prior = c(prior(normal(14.5, 20), class = b, coef = "intercept"),
+                prior(normal(0, 10),   class = b),
+                prior(student_t(3, 0, 10), class = sd),
+                prior(student_t(3, 0, 10), class = sigma),
+                prior(lkj(4), class = cor)),
+      iter = 2000, warmup = 1000, chains = 4, cores = 4,
+      seed = 5)
+```
+
+If you compare our results to those in Table 5.7, you'll see they're quite similar.
+
+```{r}
+print(fit9)
+```
+
+Before we make our versions of Figure 5.3, let's first compare $\gamma_{01}$ posteriors by model. On page 166 of the text, Singer and Willett reported the monthly rate of decline "had been cut in half (to 0.20 from 0.42 in Model A)". 
+
+```{r}
+fixef(fit8)["months", ]
+fixef(fit9)["months", ]
+```
+
+You might be wondering why the quote from Singer and Willett used positive numbers while our parameter estimates have negative ones. No, there's no mistake, there. Negative parameter estimates for monthly trajectories are then same thing as expressing a rate of decline with a positive number. But anyways, you see our estimates are on par with theirs. But with our Bayesian paradigm, it's also easy to get a formal difference distribution
+
+```{r, fig.width = 3, fig.height = 2.25}
+post <-
+  bind_cols(
+  posterior_samples(fit8) %>% select("b_months"),
+  posterior_samples(fit9) %>% select("b_months")
+  ) %>% 
+  set_names("fit8", "fit9") %>% 
+  mutate(dif = fit9 - fit8) 
+
+post %>% 
+  ggplot(aes(x = dif, y = 0)) +
+  geom_halfeyeh(.width = .95) +
+  scale_y_continuous(NULL, breaks = NULL) +
+  xlab(expression(paste("Difference in ", gamma[1][0]))) +
+  theme(panel.grid = element_blank())
+```
+
+Here's our posterior for $\gamma_{20}$, `b_unemp`.
+
+```{r, fig.width = 3, fig.height = 2.25}
+posterior_samples(fit9) %>% 
+  
+  ggplot(aes(x = b_unemp, y = 0)) +
+  geom_halfeyeh(.width = .95) +
+  scale_y_continuous(NULL, breaks = NULL) +
+  theme(panel.grid = element_blank())
+```
+
+Let's compute our WAIC estimates for `fit8` and `fit9`.
+
+```{r}
+fit8 <- add_criterion(fit8, criterion = "waic")
+fit9 <- add_criterion(fit9, criterion = "waic")
+```
+
+Now we'll compare the models by both their WAIC differences and their WAIC weights.
+
+```{r}
+loo_compare(fit8, fit9, criterion = "waic") %>% 
+  print(simplify = F)
+
+model_weights(fit8, fit9, weights = "waic") %>% 
+  round(digits = 3)
+```
+
+By both metrics, `fit9` came out as the clear favorite.
+
+```{r, fig.width = 3, fig.height = 4}
+nd <-
+  tibble(unemp = 1,
+         months = seq(from = 0, to = 14, by = .5))
+
+f <-
+  fitted(fit9,
+         newdata = nd,
+         re_formula = NA) %>% 
+  data.frame() %>% 
+  bind_cols(nd)
+
+f %>% 
+  ggplot(aes(x = months)) +
+  geom_ribbon(aes(ymin = Q2.5, ymax = Q97.5),
+              fill = "grey67", alpha = 1/2) +
+  geom_line(aes(y = Estimate)) +
+  scale_x_continuous("Months since job loss", breaks = seq(from = 0, to = 14, by = 2)) +
+  scale_y_continuous("CES-D", limits = c(5, 20)) +
+  labs(subtitle = "Remain unemployed") +
+  theme(panel.grid = element_blank())
+```
+
+
+```{r}
+2 * (5 - 0) + 1
+2 * (14 - 5) + 1
+```
+
+
+```{r, fig.width = 3, fig.height = 4}
+nd <-
+  tibble(unemp = rep(1:0, times = c(11, 19)),
+         months = c(seq(from = 0, to = 5, by = .5),
+                    seq(from = 5, to = 14, by = .5)))
+
+f <-
+  fitted(fit9,
+         newdata = nd,
+         re_formula = NA) %>% 
+  data.frame() %>% 
+  bind_cols(nd)
+
+f %>% 
+  ggplot(aes(x = months, group = unemp)) +
+  geom_ribbon(aes(ymin = Q2.5, ymax = Q97.5),
+              fill = "grey67", alpha = 1/2) +
+  geom_line(aes(y = Estimate)) +
+  geom_segment(x = 5, xend = 5,
+               y    = fixef(fit9)[1, 1] + fixef(fit9)[2, 1] * 5,
+               yend = fixef(fit9)[1, 1] + fixef(fit9)[2, 1] * 5 + fixef(fit9)[3, 1],
+               size = 1/3, linetype = 2) +
+  annotate(geom = "text",
+           x = 8, y = 14.5,
+           label = "gamma[2][0]",
+           parse = T) +
+  geom_segment(x = 7, xend = 5.5,
+               y = 14.5, yend = 14.5,
+               arrow = arrow(length = unit(0.05, "inches"))) +
+  scale_x_continuous("Months since job loss", breaks = seq(from = 0, to = 14, by = 2)) +
+  scale_y_continuous("CES-D", limits = c(5, 20)) +
+  labs(subtitle = "Reemployed at 5 months") +
+  theme(panel.grid = element_blank())
+```
+
+```{r}
+2 * (10 - 0) + 1
+2 * (14 - 10) + 1
+```
+
+
+```{r, fig.width = 3, fig.height = 4}
+nd <-
+  tibble(unemp = rep(1:0, times = c(21, 9)),
+         months = c(seq(from = 0, to = 10, by = .5),
+                    seq(from = 10, to = 14, by = .5)))
+
+f <-
+  fitted(fit9,
+         newdata = nd,
+         re_formula = NA) %>% 
+  data.frame() %>% 
+  bind_cols(nd)
+
+f %>% 
+  ggplot(aes(x = months, group = unemp)) +
+  geom_ribbon(aes(ymin = Q2.5, ymax = Q97.5),
+              fill = "grey67", alpha = 1/2) +
+  geom_line(aes(y = Estimate)) +
+  geom_segment(x = 10, xend = 10,
+               y    = fixef(fit9)[1, 1] + fixef(fit9)[2, 1] * 10,
+               yend = fixef(fit9)[1, 1] + fixef(fit9)[2, 1] * 10 + fixef(fit9)[3, 1],
+               size = 1/3, linetype = 2) +
+  annotate(geom = "text",
+           x = 7, y = 13.5,
+           label = "gamma[2][0]",
+           parse = T) +
+  geom_segment(x = 8, xend = 9.5,
+               y = 13.5, yend = 13.5,
+               arrow = arrow(length = unit(0.05, "inches"))) +
+  scale_x_continuous("Months since job loss", breaks = seq(from = 0, to = 14, by = 2)) +
+  scale_y_continuous("CES-D", limits = c(5, 20)) +
+  labs(subtitle = "Reemployed at 10 months") +
+  theme(panel.grid = element_blank())
+```
+
+
+```{r}
+2 * (5 - 0) + 1
+2 * (10 - 5) + 1
+2 * (14 - 10) + 1
+```
+
+
+```{r, fig.width = 3, fig.height = 4}
+nd <-
+  tibble(unemp = rep(c(1, 0, 1), times = c(11, 11, 9)),
+         months = c(seq(from = 0, to = 5, by = .5),
+                    seq(from = 5, to = 10, by = .5),
+                    seq(from = 10, to = 14, by = .5)),
+         group = rep(letters[1:3], times = c(11, 11, 9)))
+
+f <-
+  fitted(fit9,
+         newdata = nd,
+         re_formula = NA) %>% 
+  data.frame() %>% 
+  bind_cols(nd)
+
+lines <-
+  tibble(group = letters[1:2],
+         x     = c(5, 10)) %>% 
+  mutate(xend  = x,
+         y     = fixef(fit9)[1, 1] + fixef(fit9)[2, 1] * x,
+         yend  = fixef(fit9)[1, 1] + fixef(fit9)[2, 1] * x + fixef(fit9)[3, 1])
+
+arrow <-
+  tibble(x = c(6.75, 8.25),
+         xend = c(5.5, 9.5),
+         y = 14,
+         yend = c(14.5, 13.5))
+f %>% 
+  ggplot(aes(x = months)) +
+  geom_ribbon(aes(ymin = Q2.5, ymax = Q97.5, group = group),
+              fill = "grey67", alpha = 1/2) +
+  geom_line(aes(y = Estimate, group = group)) +
+  geom_segment(data = lines,
+               aes(x = x, xend = xend,
+                   y = y, yend = yend, 
+                   group = group),
+               size = 1/3, linetype = 2) +
+  annotate(geom = "text",
+           x = 7.5, y = 14,
+           label = "gamma[2][0]",
+           parse = T) +
+  geom_segment(data = arrow,
+               aes(x = x, xend = xend,
+                   y = y, yend = yend),
+               arrow = arrow(length = unit(0.05, "inches"))) +
+  scale_x_continuous("Months since job loss", breaks = seq(from = 0, to = 14, by = 2)) +
+  scale_y_continuous("CES-D", limits = c(5, 20)) +
+  labs(subtitle = "Reemployed at 5 months\nunemployed again at 10") +
+  theme(panel.grid = element_blank())
+```
+
+
+```{r}
+2 * (14 - 0) + 1
+2 * (3.5 - 0) + 1
+2 * (14 - 3.5) + 1
+```
+
+
+```{r, fig.width = 3.65, fig.height = 4}
+nd <-
+  tibble(unemp = rep(1:0, times = c(29, 22)),
+         months = c(seq(from = 0, to = 14, by = .5),
+                    seq(from = 3.5, to = 14, by = .5)))
+
+f <-
+  fitted(fit9,
+         newdata = nd,
+         re_formula = NA) %>% 
+  data.frame() %>% 
+  bind_cols(nd) %>% 
+  mutate(label = str_c("unemp = ", unemp))
+
+f %>% 
+  ggplot(aes(x = months, group = unemp)) +
+  geom_abline(intercept = fixef(fit9)[1, 1],
+              slope = fixef(fit9)[2, 1],
+              color = "grey80", linetype = 2) +
+  geom_ribbon(aes(ymin = Q2.5, ymax = Q97.5),
+              fill = "grey67", alpha = 1/2) +
+  geom_line(aes(y = Estimate)) +
+  geom_text(data = f %>% filter(months == 14), 
+            aes(label = label, y = Estimate), hjust = -.05) +
+  scale_x_continuous("Months since job loss", breaks = seq(from = 0, to = 14, by = 2)) +
+  scale_y_continuous("CES-D", limits = c(5, 20)) +
+  labs(subtitle = "Main effects of unemp and time") +
+  coord_cartesian(clip = "off") +
+  theme(panel.grid = element_blank(),
+        plot.margin = margin(6, 55, 6, 6))
+```
+
+
+#### Using a level-1/level-2 specification.
+
+If we wanted to reexpress our composite equation for `fit9` using the level-1/level-2 form, the level-1 model would be
+
+$$
+\text{cesd}_{ij} =  \pi_{0i} + \pi_{1i} \text{months}_{ij} + \pi_{2i} \text{unemp}_{ij} + \epsilon_{ij}.
+$$
+
+Here's the corresponding level-2 model:
+
+$$
+\begin{align*}
+\pi_{0i} & = \gamma_{00} + \zeta_{0i} \\
+\pi_{1i} & = \gamma_{10} + \zeta_{1i} \\
+\pi_{2i} & = \gamma_{20}.\\
+\end{align*}
+$$
+
+If we wanted the effects of the time-varying covariate `unemp` to vary across individuals, then we'd expand the definition of $\pi_{2i}$ to be
+
+$$
+\pi_{2i} = \gamma_{20} + \zeta_{2i}.
+$$
+
+Although this doesn't change the way we model $\epsilon_{ij}$, which remains
+
+$$
+\epsilon_{ij} \sim \text{Normal} (0, \sigma_\epsilon),
+$$
+
+it does change the model for the $\zeta$s. Within our **Stan/brms** paradigm, that would now be
+
+$$
+\begin{align*}
+\begin{bmatrix} 
+\zeta_{0i} \\ \zeta_{1i} \\ \zeta_{2i}
+\end{bmatrix} & \sim \text{Normal} 
+\Bigg ( 
+\begin{bmatrix} 0 \\ 0 \\ 0 \end{bmatrix},
+\mathbf{D} \mathbf{\Omega} \mathbf{D}'
+\Bigg ), \text{where} \\
+
+\mathbf{D}    & = \begin{bmatrix} \sigma_0 & 0 & 0 \\ 0 & \sigma_1 & 0 \\ 0 & 0 & \sigma_2 \end{bmatrix} \text{and} \\
+
+\mathbf{\Omega}  & = \begin{bmatrix} 1 & \rho_{01} & \rho_{02} \\ \rho_{01} & 1 & \rho_{12} \\ \rho_{02} & \rho_{12} & 1 \end{bmatrix}.
+
+\end{align*}
+$$
+
+Reworded slightly from the text (p. 169), by adding one residual parameter, $\zeta_{2i}$, we got an additional corresponding standard deviation parameter, $\sigma_2$, and two more correlation parameters, $\rho_{02}$ and $\rho_{12}$. Staying with our weakly-regularizing prior approach, the priors for the updated model might look like
+
+$$
+\begin{align*}
+\gamma_{00}     & \sim \text{Normal}(14.5, 20) \\
+\gamma_{10}     & \sim \text{Normal}(0, 10) \\
+\gamma_{20}     & \sim \text{Normal}(0, 10) \\
+\sigma_\epsilon & \sim \text{Student-t} (3, 0, 10) \\
+\sigma_0        & \sim \text{Student-t} (3, 0, 10) \\
+\sigma_1        & \sim \text{Student-t} (3, 0, 10) \\
+\sigma_2        & \sim \text{Student-t} (3, 0, 10) \\
+\Omega          & \sim \text{LKJ} (4).
+\end{align*}
+$$
+
+Singer and Willett then caution readers about hastily adding $\zeta$ parameters to their models, particularly in cases where you're likely to run into estimation issues, such as boundary constraints. Within our **Stan/brms** paradigm, we still have to be aware of these difficulties. However, with carefully chosen priors, I think you'll find we can fit more ambitious models than would typically be possible with frequentist estimators. But do beware that as you stretch your data further and further, your choices in likelihoods and priors more heavily influence the results. For more on the topic, check out [Michael Frank](https://twitter.com/mcxfrank?lang=en)'s blog on the topic, [*Mixed effects models: Is it time to go Bayesian by default?*](http://babieslearninglanguage.blogspot.com/2018/02/mixed-effects-models-is-it-time-to-go.html). Don't miss the action in the comments section.
+
+#### Time-varying predictors and variance components.
+
+When you add a time-varying predictor, it's not uncommon to see a reduction in $\sigma_\epsilon^2$. Here we compare `fit8` and `fit9`.
+
+```{r, fig.width = 8, fig.height = 2.5}
+v <-
+  cbind(VarCorr(fit8, summary = F)[[2]][[1]],
+        VarCorr(fit9, summary = F)[[2]][[1]]) %>% 
+  data.frame() %>% 
+  set_names(str_c("fit", 8:9)) %>% 
+  transmute(fit8 = fit8^2,
+            fit9 = fit9^2) %>% 
+  mutate(`fit8 - fit9` = fit8 - fit9)
+
+v %>% 
+  gather() %>% 
+  mutate(key = factor(key, levels = c("fit8", "fit9", "fit8 - fit9"))) %>% 
+  
+  ggplot(aes(x = value, y = 0)) +
+  geom_halfeyeh(.width = .95) +
+  scale_y_continuous(NULL, breaks = NULL) +
+  xlab(expression(sigma[epsilon]^2)) +
+  theme(panel.grid = element_blank()) +
+  facet_wrap(~key, scales = "free")
+```
+
+Using the full posterior for both models, here is the percent variance in CES-D explained by `unemp`.
+
+```{r}
+v %>% 
+  transmute(percent = (fit8 - fit9) / fit8) %>% 
+  median_qi() %>% 
+  mutate_if(is.double, round, digits = 3)
+```
+
+When you go beyond point estimates and factor in full posterior uncertainty, it becomes clear how fragile ad hoc statistics like this can be. Interpret then with caution.
+
+### 5.3.2. Allowing the effect of a time-varying predictor to vary over time.
+
+"Might unemployment status also affect the trajectory’s slope" (p. 171)? Here's the statistical model:
+
+$$
+\begin{align*}
+\text{cesd}_{ij} & = \big [ \gamma_{00} + \gamma_{10} \text{months}_{ij} + \gamma_{20} \text{unemp}_{ij} + \gamma_{30} \text{months}_{ij} \times \text{unemp}_{ij} \big ] + \big [  \zeta_{0i} + \zeta_{1i} \text{months}_{ij} + \epsilon_{ij} \big ] \\
+
+\epsilon_{ij}    & \sim \text{Normal} (0, \sigma_\epsilon) \\
+
+\begin{bmatrix} 
+\zeta_{0i} \\ \zeta_{1i} 
+\end{bmatrix} & \sim \text{Normal} 
+\Bigg ( 
+\begin{bmatrix} 0 \\ 0 \end{bmatrix},
+\mathbf{D} \mathbf{\Omega} \mathbf{D}'
+\Bigg ), \text{where} \\
+
+\mathbf{D}       & = \begin{bmatrix} \sigma_0 & 0 \\ 0 & \sigma_1 \end{bmatrix} \text{and} \\ 
+
+\mathbf{\Omega}  & = \begin{bmatrix} 1 & \rho_{01} \\ \rho_{01} & 1 \end{bmatrix} \\
+
+\gamma_{00}     & \sim \text{Normal}(14.5, 20) \\
+\gamma_{10}     & \sim \text{Normal}(0, 10) \\
+\gamma_{20}     & \sim \text{Normal}(0, 10) \\
+\gamma_{30}     & \sim \text{Normal}(0, 10) \\
+\sigma_\epsilon & \sim \text{Student-t} (3, 0, 10) \\
+\sigma_0        & \sim \text{Student-t} (3, 0, 10) \\
+\sigma_1        & \sim \text{Student-t} (3, 0, 10) \\
+\rho_{01}       & \sim \text{LKJ} (4)
+
+\end{align*}
+$$
+
+Since $\gamma_{30}$ is an interaction term, it might make sense to give it an ever tighter prior, something like $\text{Normal}(0, 5)$. Here we'll just stay wide and loose.
+
+```{r fit10, cache = T, warning = F, message = F, results = "hide"}
+fit10 <-
+  brm(data = unemployment_pp, 
+      family = gaussian,
+      cesd ~ 0 + intercept + months + unemp + months:unemp + (1 + months | id),
+      prior = c(prior(normal(14.5, 20), class = b, coef = "intercept"),
+                prior(normal(0, 10),   class = b),
+                prior(student_t(3, 0, 10), class = sd),
+                prior(student_t(3, 0, 10), class = sigma),
+                prior(lkj(4), class = cor)),
+      iter = 2000, warmup = 1000, chains = 4, cores = 4,
+      seed = 5)
+```
+
+Here are the results.
+
+```{r}
+print(fit10)
+```
+
+Here's how we might make our version of the middle panel of Figure 5.4.
+
+```{r, fig.width = 3.65, fig.height = 4}
+nd <-
+  tibble(unemp = rep(1:0, times = c(29, 22)),
+         months = c(seq(from = 0, to = 14, by = .5),
+                    seq(from = 3.5, to = 14, by = .5)))
+
+f <-
+  fitted(fit10,
+         newdata = nd,
+         re_formula = NA) %>% 
+  data.frame() %>% 
+  bind_cols(nd) %>% 
+  mutate(label = str_c("unemp = ", unemp))
+
+f %>% 
+  ggplot(aes(x = months, group = unemp)) +
+  geom_abline(intercept = fixef(fit10)[1, 1],
+              slope = fixef(fit10)[2, 1],
+              color = "grey80", linetype = 2) +
+  geom_ribbon(aes(ymin = Q2.5, ymax = Q97.5),
+              fill = "grey67", alpha = 1/2) +
+  geom_line(aes(y = Estimate)) +
+  geom_text(data = f %>% filter(months == 14), 
+            aes(label = label, y = Estimate), hjust = -.05) +
+  scale_x_continuous("Months since job loss", breaks = seq(from = 0, to = 14, by = 2)) +
+  scale_y_continuous("CES-D", limits = c(5, 20)) +
+  labs(subtitle = "Main effects of unemp and time") +
+  coord_cartesian(clip = "off") +
+  theme(panel.grid = element_blank(),
+        plot.margin = margin(6, 55, 6, 6))
+```
+
+Here’s the posterior for $\gamma_{10}$
+
+```{r, fig.width = 3, fig.height = 2.25}
+posterior_samples(fit10) %>% 
+  ggplot(aes(x = b_months, y = 0)) +
+  geom_halfeyeh(.width = .95) +
+  scale_y_continuous(NULL, breaks = NULL) +
+  xlab(expression(paste(gamma[1][0], ", the main effect for time"))) +
+  theme(panel.grid = element_blank())
+```
+
+It's quite uncertain and almost symmetrically straddles the parameter space between -0.5 and 0.5.
+
+The next model follows the form
+
+$$
+\begin{align*}
+\text{cesd}_{ij} & = \big [ \gamma_{00} + \gamma_{20} \text{unemp}_{ij} + \gamma_{30} \text{unemp}_{ij} \times \text{months}_{ij} \big ] + \big [  \zeta_{0i} + \zeta_{3i} \text{unemp}_{ij} \times \text{months}_{ij} + \epsilon_{ij} \big ] \\
+
+\epsilon_{ij}    & \sim \text{Normal} (0, \sigma_\epsilon) \\
+
+\begin{bmatrix} 
+\zeta_{0i} \\ \zeta_{3i} 
+\end{bmatrix} & \sim \text{Normal} 
+\Bigg ( 
+\begin{bmatrix} 0 \\ 0 \end{bmatrix},
+\mathbf{D} \mathbf{\Omega} \mathbf{D}'
+\Bigg ), \text{where} \\
+
+\mathbf{D}       & = \begin{bmatrix} \sigma_0 & 0 \\ 0 & \sigma_3 \end{bmatrix} \text{and} \\ 
+
+\mathbf{\Omega}  & = \begin{bmatrix} 1 & \rho_{03} \\ \rho_{03} & 1 \end{bmatrix} \\
+
+\gamma_{00}     & \sim \text{Normal}(14.5, 20) \\
+\gamma_{20}     & \sim \text{Normal}(0, 10) \\
+\gamma_{30}     & \sim \text{Normal}(0, 10) \\
+\sigma_\epsilon & \sim \text{Student-t} (3, 0, 10) \\
+\sigma_0        & \sim \text{Student-t} (3, 0, 10) \\
+\sigma_3        & \sim \text{Student-t} (3, 0, 10) \\
+\rho_{03}       & \sim \text{LKJ} (4).
+
+\end{align*}
+$$
+
+Here's how to fit it with `brms::brm()`.
+
+```{r fit11, cache = T, warning = F, message = F, results = "hide"}
+fit11 <-
+  brm(data = unemployment_pp, 
+      family = gaussian,
+      cesd ~ 0 + intercept + unemp + months:unemp + (1 + months:unemp | id),
+      prior = c(prior(normal(14.5, 20), class = b, coef = "intercept"),
+                prior(normal(0, 10),   class = b),
+                prior(student_t(3, 0, 10), class = sd),
+                prior(student_t(3, 0, 10), class = sigma),
+                prior(lkj(4), class = cor)),
+      iter = 2000, warmup = 1000, chains = 4, cores = 4,
+      seed = 5,
+      control = list(adapt_delta = .99))
+```
+
+It's easy to miss this if you're not following along quite carefully with the text, but this model, which corresponds to Equation 5.9 in the text, is NOT Model D. Rather, it's an intermediary model between Model C and Model D. All this means we can't compare our results with those in Table 5.7. But here they are, anyway.
+
+```{r}
+print(fit11)
+```
+
+We've already computed the WAIC for `fit8` and `fit9`. Here we do so for `fit10` and `fit11`.
+
+```{r}
+fit10 <- add_criterion(fit10, "waic")
+fit11 <- add_criterion(fit11, "waic")
+```
+
+```{r}
+loo_compare(fit8, fit9, fit10, fit11, criterion = "waic") %>% 
+  print(simplify = F)
+
+model_weights(fit8, fit9, fit10, fit11, weights = "waic") %>% 
+  round(digits = 3)
+```
+
+Yep, it appears `fit11` is not an improvement on `fit10` (i.e., our analogue to Model C in the text). Here's our version of Model D:
+
+$$
+\begin{align*}
+\text{cesd}_{ij} & = \big [ \gamma_{00} + \gamma_{20} \text{unemp}_{ij} + \gamma_{30} \text{unemp}_{ij} \times \text{months}_{ij} \big ] + \big [  \zeta_{0i} + \zeta_{3i} \text{unemp}_{ij} \times \text{months}_{ij} + \epsilon_{ij} \big ] \\
+
+\epsilon_{ij}    & \sim \text{Normal} (0, \sigma_\epsilon) \\
+
+\begin{bmatrix} 
+\zeta_{0i} \\ \zeta_{2i} \\ \zeta_{3i}
+\end{bmatrix} & \sim \text{Normal} 
+\Bigg ( 
+\begin{bmatrix} 0 \\ 0 \\ 0 \end{bmatrix},
+\mathbf{D} \mathbf{\Omega} \mathbf{D}'
+\Bigg ) \\
+
+\mathbf{D}    & = \begin{bmatrix} \sigma_0 & 0 & 0 \\ 0 & \sigma_2 & 0 \\ 0 & 0 & \sigma_3 \end{bmatrix} \\
+
+\mathbf{\Omega}  & = \begin{bmatrix} 1 & \rho_{02} & \rho_{03} \\ \rho_{02} & 1 & \rho_{23} \\ \rho_{03} & \rho_{23} & 1 \end{bmatrix} \\
+
+\gamma_{00}     & \sim \text{Normal}(14.5, 20) \\
+\gamma_{20}     & \sim \text{Normal}(0, 10) \\
+\gamma_{30}     & \sim \text{Normal}(0, 10) \\
+\sigma_\epsilon & \sim \text{Student-t} (3, 0, 10) \\
+\sigma_0        & \sim \text{Student-t} (3, 0, 10) \\
+\sigma_2        & \sim \text{Student-t} (3, 0, 10) \\
+\sigma_3        & \sim \text{Student-t} (3, 0, 10) \\
+\mathbf\Omega       & \sim \text{LKJ} (4).
+
+\end{align*}
+$$
+
+We'll call it `fit12`. Here's the `brm()` code.
+
+```{r fit12, cache = T, warning = F, message = F, results = "hide"}
+fit12 <-
+  brm(data = unemployment_pp, 
+      family = gaussian,
+      cesd ~ 0 + intercept + unemp + months:unemp + (1 + unemp + months:unemp | id),
+      prior = c(prior(normal(14.5, 20), class = b, coef = "intercept"),
+                prior(normal(0, 10),   class = b),
+                prior(student_t(3, 0, 10), class = sd),
+                prior(student_t(3, 0, 10), class = sigma),
+                prior(lkj(4), class = cor)),
+      iter = 2000, warmup = 1000, chains = 4, cores = 4,
+      seed = 5)
+```
+
+```{r}
+print(fit12)
+```
+
+Now we can finally make our version of the right panel of Figure 5.4.
+
+```{r, fig.width = 3.65, fig.height = 4}
+f <-
+  fitted(fit12,
+         newdata = nd,
+         re_formula = NA) %>% 
+  data.frame() %>% 
+  bind_cols(nd) %>% 
+  mutate(label = str_c("unemp = ", unemp))
+
+f %>% 
+  ggplot(aes(x = months, group = unemp)) +
+  geom_abline(intercept = fixef(fit12)[1, 1],
+              slope = 0,
+              color = "grey80", linetype = 2) +
+  geom_ribbon(aes(ymin = Q2.5, ymax = Q97.5),
+              fill = "grey67", alpha = 1/2) +
+  geom_line(aes(y = Estimate)) +
+  geom_text(data = f %>% filter(months == 14), 
+            aes(label = label, y = Estimate), hjust = -.05) +
+  scale_x_continuous("Months since job loss", breaks = seq(from = 0, to = 14, by = 2)) +
+  scale_y_continuous("CES-D", limits = c(5, 20)) +
+  labs(subtitle = "Constraining the effects time\namong the re-employed") +
+  coord_cartesian(clip = "off") +
+  theme(panel.grid = element_blank(),
+        plot.margin = margin(6, 55, 6, 6))
+```
+
+By carefully using `filter()`, we can extract the posterior for summary the expected CES-D value for "the average unemployed person in the population", "immediately upon layoff" (p. 173).
+
+```{r}
+f %>% 
+  filter(unemp == 1 & months == 0)
+```
+
+To get the decline rate per month, just use `fixef()` and subset.
+
+```{r}
+fixef(fit12)["unemp:months", ]
+```
+
+How much lower, on average, are "CES-D scores among those who find a job" right after layoff (p. 173)? Again, just use `fixef()`.
+
+```{r}
+fixef(fit12)["unemp", ]
+```
+
+But if we'd like to get the posterior for the difference at 12 months later, we'll need to go back to `fitted()`.
+
+```{r}
+nd <-
+  tibble(unemp  = 1:0,
+         months = 12)
+
+fitted(fit12,
+         newdata = nd,
+         re_formula = NA,
+         summary = F) %>% 
+  data.frame() %>% 
+  set_names(str_c(c("un", ""), "employed_cesd_at_12")) %>% 
+  transmute(difference = unemployed_cesd_at_12 - employed_cesd_at_12) %>% 
+
+  median_qi() %>% 
+  mutate_if(is.double, round, digits = 3)
+```
+
+There's more posterior uncertainty, there, that you might expect from simply using the point estimates. Always beware the posterior uncertainty. We may as well finish off with a little WAIC.
+
+```{r}
+fit12 <- add_criterion(fit12, "waic")
+
+loo_compare(fit8, fit9, fit10, fit11, fit12, criterion = "waic") %>% 
+  print(simplify = F)
+
+model_weights(fit8, fit9, fit10, fit11, fit12, weights = "waic") %>% 
+  round(digits = 3)
+```
+
+It's a toss-up between `fit12` and `fit10`.
+
+### 5.3.3. Recentering time-varying predictors.
+
+
+
+
+
+```{r}
+library(tidyverse)
+library(brms)
+library(tidybayes)
+library(bayesplot)
+```
 
 
 
