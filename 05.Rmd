@@ -117,15 +117,15 @@ reading_pp <-
 head(reading_pp)
 ```
 
-In the last chapter, we began familiarizing ourselves with `brms::brm()` default priors. It's time to level up. Another approach is to use domain knowledge to set weakly-informative priors. Let's start with the PIAT. The Peabody Individual Achievement Test is a standardized individual test of scholastic achievement. It has yields several subtest scores. The reading subtest is the one we're focusing on, here. As is typical for such test, the PIAT scores are normed to yield a population mean of 100 and a standard deviation of 15.
+In the last chapter, we began familiarizing ourselves with `brms::brm()` default priors. It's time to level up. Another approach is to use domain knowledge to set weakly-informative priors. Let's start with the PIAT. The Peabody Individual Achievement Test is a standardized individual test of scholastic achievement. It yields several subtest scores. The reading subtest is the one we're focusing on, here. As is typical for such tests, the PIAT scores are normed to yield a population mean of 100 and a standard deviation of 15.
 
 With that information alone, even a PIAT novice should have an idea about how to specify the priors. Since our sole predictor variables are versions of age centered at 6.5, we know that the model intercept is interpreted as the expected value on the PIAT when the children are 6.5 years old. If you knew nothing else, you'd guess the mean score would be 100 with a standard deviation around 15. One way to use a weakly-informative prior on the intercept would be to multiply that $SD$ by a number like 2.
 
-Next we need a prior for the time variables, `age_c` and agegrp_c`. A one-unit increase in either of these is the expected increase in the PIAT with one year’s passage of age. Bringing in a little domain knowledge, IQ and achievement tests tend to be rather stable over time. However, we also expect children to get better as they age and we also don’t know exactly how these data have been adjusted for the children’s ages. It's also important to know that it's typical within the Bayesian world to place Normal priors on $\beta$ parameters. So one approach would be to center the Normal prior on 0 and put something like twice the PIAT's standard deviation on the prior’s &\sigma&. If we were PIAT researchers, we could do much better. But with minimal knowledge of the test, this approach is certainly better than mindless defaults.
+Next we need a prior for the time variables, `age_c` and `agegrp_c`. A one-unit increase in either of these is the expected increase in the PIAT with one year’s passage of age. Bringing in a little domain knowledge, IQ and achievement tests tend to be rather stable over time. However, we also expect children to get better as they age and we also don’t know exactly how these data have been adjusted for the children’s ages. It's also important to know that it's typical within the Bayesian world to place Normal priors on $\beta$ parameters. So one approach would be to center the Normal prior on 0 and put something like twice the PIAT's standard deviation on the prior’s $\sigma$. If we were PIAT researchers, we could do much better. But with minimal knowledge of the test, this approach is certainly beats mindless defaults.
 
-Next we have the variance parameters. Recall that `brms::brm()` defaults are Student’s $t$-distributions with $\nu = 3$ and $\mu = 0$. Let's start there. Now we just need to put values on $\sigma$. Since the PIAT has a standard deviation of 15 in the population, why not just use 15? If you felt insecure about this, multiply if by a factor of 2 or so. Also recall that when Student's $t$-distributions has a $\nu = 3$, it's tails are quite fat. Within the context of Bayesian priors, those fat tails make it easy for the likelihood to dominate the prior even when it’s a good way into the tail.
+Next we have the variance parameters. Recall that `brms::brm()` defaults are Student’s $t$-distributions with $\nu = 3$ and $\mu = 0$. Let's start there. Now we just need to put values on $\sigma$. Since the PIAT has a standard deviation of 15 in the population, why not just use 15? If you felt insecure about this, multiply if by a factor of 2 or so. Also recall that when Student's $t$-distributions has a $\nu = 3$, the tails are quite fat. Within the context of Bayesian priors, those fat tails make it easy for the likelihood to dominate the prior even when it’s a good way into the tail.
 
-Finally we have the correlation among the group-level variance parameters, $\sigma_0$ and $\sigma_1$. Recall that last chapter we learned the `brms::brm()` default was `lkj(1)`. To get a sense of what the LKJ does, it might make sense to simulate from it. McElreath's **rethinking** package contains a handy `rlkjcorr()` function, which will allow us to simulate `n` draws from a `K` by `K` correlation matrix for which $\eta$ is defined by `eta`. Let's take `n <- 1e6` draws from two LKJ prior distributions, one with $\eta = 1$ and the other with $\eta = 4$.
+Finally we have the correlation among the group-level variance parameters, $\sigma_0$ and $\sigma_1$. Recall that last chapter we learned the `brms::brm()` default was `lkj(1)`. To get a sense of what the LKJ does, we'll simulate from it. McElreath's **rethinking** package contains a handy `rlkjcorr()` function, which will allow us to simulate `n` draws from a `K` by `K` correlation matrix for which $\eta$ is defined by `eta`. Let's take `n <- 1e6` draws from two LKJ prior distributions, one with $\eta = 1$ and the other with $\eta = 4$.
 
 ```{r, warning = F, message = F}
 library(rethinking)
@@ -138,7 +138,7 @@ lkj <-
   mutate(draws = purrr::map(eta, ~rlkjcorr(n, K = 2, eta = .)[, 2, 1])) %>% 
   unnest()
 
-head(lkj)
+glimpse(lkj)
 ```
 
 Now let's plot.
@@ -212,7 +212,7 @@ Here's the `age_c` model.
 print(fit2, digits = 3)
 ```
 
-For a more focused look, we can use `fixef()` compare our $gamma$s to each other and those in the text.
+For a more focused look, we can use `fixef()` compare our $\gamma$s to each other and those in the text.
 
 ```{r}
 fixef(fit1) %>% round(digits = 3)
@@ -249,7 +249,7 @@ loo_compare(fit1, fit2, criterion = "loo") %>%
   print(simplify = F)
 ```
 
-The uncertainty in our WAIC and LOO estimates provide information on their comparison that was not available for the AIC and the BIC comparisons in the text. We can also compare the WAIC and the LOO with model weights. Given the WAIC, from McElreath (2015) we learn
+The uncertainty in our WAIC and LOO estimates provide information on their comparison that was not available for the AIC and the BIC comparisons in the text. We can also compare the WAIC and the LOO with model weights. Given the WAIC, from McElreath (2016) we learn
 
 > A total weight of 1 is partitioned among the considered models, making it easier to compare their relative predictive accuracy. The weight for a model $i$ in a set of $m$ models is given by:
 >
@@ -257,7 +257,7 @@ The uncertainty in our WAIC and LOO estimates provide information on their compa
 >
 > where dWAIC is the `dWAIC` in the `compare` table output. This example uses WAIC but the formula is the same for any other information criterion, since they are all on the deviance scale. (p. 199) 
 
-The `compare()` function McElreath referenced is from his [**rethinking** package](https://github.com/rmcelreath/rethinking), which is meant to accompany his [text](https://xcelab.net/rm/statistical-rethinking/). We don't have that. Our analogue to the `rethinking::compare()` function is `loo_compare()`. We don't quite have a `dWAIC` column from `loo_compare()`. Remember how last chapter we discussed how Aki Vehtari isn't a fan of converting information criteria to the $\chi^2$ difference metric with that last $-2 \times ...$ step? That's why we have an `elpd_diff` instead of a `dWAIC`. But to get the corresponding value, you just multiply those values by -2. And yet if you look closely at the formula for $w_i$, you'll see that each time the dWAIC term appears, it's multiplied by $-\frac{1}{2}$. So we don't really need that `dWAIC` value anyway. As it turns out, we're good to go with our `elpd_diff`. Thus the above equation simplifies to
+The `compare()` function McElreath referenced is from his [**rethinking** package](https://github.com/rmcelreath/rethinking), which is meant to accompany his [text](https://xcelab.net/rm/statistical-rethinking/). We don't have that within our **brms** paradigm. Our analogue to the `rethinking::compare()` function is `loo_compare()`. We don't quite have a `dWAIC` column from `loo_compare()`. Remember how last chapter we discussed how Aki Vehtari isn't a fan of converting information criteria to the $\chi^2$ difference metric with that last $-2 \times ...$ step? That's why we have an `elpd_diff` instead of a `dWAIC`. But to get the corresponding value, you just multiply those values by -2. And yet if you look closely at the formula for $w_i$, you'll see that each time the dWAIC term appears, it's multiplied by $-\frac{1}{2}$. So we don't really need that `dWAIC` value anyway. As it turns out, we're good to go with our `elpd_diff`. Thus the above equation simplifies to
 
 $$
 w_i = \frac{\text{exp}(\text{elpd_diff}_i)}{\sum_{j = 1}^m \text{exp}(\text{elpd_diff}_i)}
@@ -269,9 +269,9 @@ model_weights(fit1, fit2, weights = "waic") %>% round(digits = 3)
 model_weights(fit1, fit2, weights = "loo") %>% round(digits = 3)
 ```
 
-Back to McElreath (2015):
+Back to McElreath (2016):
 
-> But what do these weights mean? There actually isn't a consensus about htat. But here's Akaike’s interpretation, which is [common](https://www.springer.com/us/book/9780387953649). 
+> But what do these weights mean? There actually isn't a consensus about that. But here's Akaike’s interpretation, which is [common](https://www.springer.com/us/book/9780387953649). 
 >
 >> *A model’s weight is an estimate of the probability that the model will make the best predictions on new data, conditional on the set of models considered*.
 >
@@ -279,7 +279,9 @@ Back to McElreath (2015):
 
 ## 5.2 Varying numbers of measurement occasions
 
-> Once you allow the spacing of waves to vary across individuals, it is a small leap to allow their *number* to vary as well. Statisticians say that such data sets are *unbalanced.* As you would expect, balance facilitates analysis: models can be parameterized ore easily, random effects can be estimated more precisely, and computer algorithms will converge more rapidly.
+As Singer and Willett pointed out,
+
+> once you allow the spacing of waves to vary across individuals, it is a small leap to allow their *number* to vary as well. Statisticians say that such data sets are *unbalanced.* As you would expect, balance facilitates analysis: models can be parameterized more easily, random effects can be estimated more precisely, and computer algorithms will converge more rapidly.
 >
 > Yet a major advantage of the multilevel model for change is that it is easily fit to unbalanced data. (p. 146, *emphasis* in the original) 
 
@@ -288,7 +290,6 @@ Back to McElreath (2015):
 # to free up memory, we'll drop these two
 rm(fit1, fit2)
 ```
-
 
 ### Analyzing data sets in which the number of waves per person varies.
 
@@ -340,7 +341,7 @@ wages_pp %>%
 
 Uneven for dayz.
 
-Here's the **brms** version of the composite formula for Model A, the uncondiitonal growth model for `lnw`.
+Here's the **brms** version of the composite formula for Model A, the unconditional growth model for `lnw`.
 
 $$
 \begin{align*}
@@ -391,7 +392,7 @@ So perhaps this is a better figure to center our prior for the model intercept o
 
 Next we need a prior for the expected increase over a single year’s employment. A conservative default might be to center it on zero—no change from year to year. Since as we’ve established a 1 on the log scale is more than the difference between the minimum and average hourly wages in 1990 dollars, we might just use `normal(0, 0.5)` as a starting point.
 
-So then what about our variance parameters. Given these are all entry-level workers and given how little we’d expect them to increase from year to year, a `student_t(3, 0, 1)` on the log scale would seem pretty permissive.
+So then what about our variance parameters? Given these are all entry-level workers and given how little we’d expect them to increase from year to year, a `student_t(3, 0, 1)` on the log scale would seem pretty permissive.
 
 So then here's how we might formally specify our model priors:
 
@@ -414,11 +415,17 @@ get_prior(data = wages_pp,
           lnw ~ 0 + intercept + exper + (1 + exper | id))
 ```
 
-Even though our priors are still quite permissive on the scale of the data, they're much more informative than the defaults. And clearly, if we had formal backgrounds in the entry-level economy of the US in the early 1900s, we'd be able to specify much better priors. But hopefully this walk-through gives a sense of how to start thinking about model prior. 
+Even though our priors are still quite permissive on the scale of the data, they're much more informative than the defaults. And clearly, if we had formal backgrounds in the entry-level economy of the US in the early 1900s, we'd be able to specify much better priors. But hopefully this walk-through gives a sense of how to start thinking about model priors. 
 
 Let's fit the model.
 
-```{r fit3, cache = T, warning = F, message = F, results = "hide"}
+```{r, echo = F}
+# This fit is too large to cache and upload to Github
+# save(fit3, file = "fits/fit3.rda")
+load("fits/fit3.rda")
+```
+
+```{r fit3, eval = F}
 fit3 <-
   brm(data = wages_pp, 
       family = gaussian,
@@ -527,13 +534,19 @@ $$
 \sigma_\epsilon & \sim \text{Student-t} (3, 0, 1) \\
 \sigma_0        & \sim \text{Student-t} (3, 0, 1) \\
 \sigma_1        & \sim \text{Student-t} (3, 0, 1) \\
-\rho_{01}       & \sim \text{LKJ} (4)
+\rho_{01}       & \sim \text{LKJ} (4).
 \end{align*}
 $$
 
 The top portion up through the $\mathbf{\Omega}$ line is the likelihood. Starting with $\gamma_{00} \sim \text{Normal}(1.335, 1)$ on down, we've listed our priors. Here's how to fit the model with **brms**.
 
-```{r fit4, cache = T, warning = F, message = F, results = "hide"}
+```{r, echo = F}
+# This fit is too large to cache and upload to Github
+# save(fit4, file = "fits/fit4.rda")
+load("fits/fit4.rda")
+```
+
+```{r fit4, eval = F}
 fit4 <-
   brm(data = wages_pp, 
       family = gaussian,
@@ -555,7 +568,7 @@ print(fit4, digits = 3)
 
 The $\gamma$s are on par with those in the text. When we convert the $\sigma$ parameters to the $\sigma^2$ metric, here's what they look like.
 
-```{r, fig.width = 8, fig.height = 2.5}
+```{r, fig.width = 8, fig.height = 2.25}
 post <- posterior_samples(fit4) 
 
 post %>% 
@@ -576,17 +589,24 @@ We might plot our $\gamma$s, too. Here we'll use `tidybayes::stat_pointintervalh
 post %>% 
   select(b_intercept:`b_black:exper`) %>% 
   set_names(str_c(rep(0:1, each = 3), rep(0:2, times = 2))) %>% 
-  gather(gamma, value) %>% 
+  gather() %>% 
   
   ggplot(aes(x = value, y = key)) +
   geom_vline(xintercept = 0, color = "white") +
   stat_pointintervalh(.width = .95, size = 1/2) +
+  ylab(expression(gamma["[ _ _ ]"])) +
   theme(panel.grid = element_blank())
 ```
 
 As in the text, our $\gamma_{02}$ and $\gamma_{11}$ parameters hovered around zero. For our next model, Model C in Table 5.4, we’ll drop those parameters.
 
-```{r fit5, cache = T, warning = F, message = F, results = "hide"}
+```{r, echo = F}
+# This fit is too large to cache and upload to Github
+# save(fit5, file = "fits/fit5.rda")
+load("fits/fit5.rda")
+```
+
+```{r fit5, eval = F}
 fit5 <-
   brm(data = wages_pp, 
       family = gaussian,
@@ -707,7 +727,7 @@ f %>%
   facet_wrap(~id)
 ```
 
-Although each participant got their own intercept and slope, the estimates all fall in straight lines. Since we're only working with time-invariant covariates, I’m afraid that's about the best we can do. Though our models can express gross trends over time, they're unable to speak to variation from occasion to occasion. As we go on in the project, we'll learn how to do better.
+Although each participant got their own intercept and slope, the estimates all fall in straight lines. Since we're only working with time-invariant covariates, I’m afraid that's about the best we can do. Though our models can express gross trends over time, they're unable to speak to variation from occasion to occasion. Just a little later on in this chapter and we'll learn how to do better.
 
 ### Practical problems that may arise when analyzing unbalanced data sets. 
 
@@ -719,16 +739,13 @@ The big difference is that as Bayesians, our priors add additional information t
 
 #### Boundary constraints.
 
-Unlike with the frequentist multilevel software discussed in the text, **brms** will not yield negative values on the $\sigma$ parameters. This is because the **brms** default is to set a lower limit of zero on those parameters. For example, see what happens when we execute `fit1$model`. 
+Unlike with the frequentist multilevel software discussed in the text, **brms** will not yield negative values on the $\sigma$ parameters. This is because the **brms** default is to set a lower limit of zero on those parameters. For example, see what happens when we execute `fit3$model`. 
 
 ```{r}
-fit1$model
+fit3$model
 ```
 
 That produced the **Stan** code corresponding to our `brms::brm()` code, above. Notice the second and third lines in the `parameters` block. Both contained `<lower=0>`, which indicated the lower bounds for those parameters was zero. See? **Stan** has you covered.
-
-
-
 
 Let's load the `wages_small_pp.csv` data.
 
@@ -815,7 +832,7 @@ v %>%
   mutate_if(is.double, round, digits = 4)
 ```
 
-But it really does start to shoot to zero if we attempt to summarize the central tendency with the mode.
+But it really does start to shoot to zero if we attempt to summarize the central tendency with the mode, as within the maximum likelihood paradigm.
 
 ```{r}
 v %>% 
@@ -847,9 +864,9 @@ Now look at the summary.
 print(fit6a)
 ```
 
-Our estimates were pretty much the same as before, but without any warning signs. 
+Our estimates were pretty much the same as before, but without any warning signs. It won't always be that way. So do take `adapt_delta` warnings seriously.
 
-Now do note that for both `fit6` and `fit6a`, our effective sample sizes for $\sigma_0$ and $\sigma_1$ aren’t terribly large relative to the total number of post-warmup draws, 4000. So if it was really important you had high-quality summary statistics for these parameters, you might need to refit the model with something like `iter = 20000, warmup = 2000`.
+Now do note that for both `fit6` and `fit6a`, our effective sample sizes for $\sigma_0$ and $\sigma_1$ aren’t terribly large relative to the total number of post-warmup draws, 4000. So if it was really important that you had high-quality summary statistics for these parameters, you might need to refit the model with something like `iter = 20000, warmup = 2000`.
 
 In Model B in Table 5.5, Singer and Willett gave the results of a model with the boundary constraints on the $\sigma^2$ parameters removed. I am not going to attempt something like that with **brms**. If you're interested, you're on your own.
 
@@ -878,7 +895,7 @@ No warning messages and our effective samples for $\sigma_0$ improved a bit.
 
 ```{r}
 fit6a <- add_criterion(fit6a, criterion = "waic")
-fit7 <- add_criterion(fit7, criterion = "waic")
+fit7  <- add_criterion(fit7, criterion = "waic")
 ```
 
 ```{r}
@@ -888,7 +905,7 @@ loo_compare(fit6a, fit7, criterion = "waic") %>%
 
 Yep. Those WAIC estimates are quite similar and when you compare them with formal $\text{elpd}$ difference scores, the standard error is larger than the difference itself.
 
-Though we’re stepping away from the text a bit, we should explore more alternatives for this issue. The **Stan** team has put together a [*Prior Choice Recommendations*](https://github.com/stan-dev/stan/wiki/Prior-Choice-Recommendations) wiki. In the [*Boundary-avoiding priors for modal estimation (posterior mode, MAP, marginal posterior mode, marginal maximum likelihood, MML)*](https://github.com/stan-dev/stan/wiki/Prior-Choice-Recommendations#boundary-avoiding-priors-for-modal-estimation-posterior-mode-map-marginal-posterior-mode-marginal-maximum-likelihood-mml) section, we read: 
+Though we’re stepping away from the text a bit, we should explore more alternatives for this boundary issue. The **Stan** team has put together a [*Prior Choice Recommendations*](https://github.com/stan-dev/stan/wiki/Prior-Choice-Recommendations) wiki. In the [*Boundary-avoiding priors for modal estimation (posterior mode, MAP, marginal posterior mode, marginal maximum likelihood, MML)*](https://github.com/stan-dev/stan/wiki/Prior-Choice-Recommendations#boundary-avoiding-priors-for-modal-estimation-posterior-mode-map-marginal-posterior-mode-marginal-maximum-likelihood-mml) section, we read: 
 
 > * These are for parameters such as group-level scale parameters, group-level correlations, group-level covariance matrix
 > * What all these parameters have in common is that (a) they're defined on a space with a boundary, and (b) the likelihood, or marginal likelihood, can have a mode on the boundary. Most famous example is the group-level scale parameter tau for the 8-schools hierarchical model.
@@ -898,7 +915,7 @@ Though we’re stepping away from the text a bit, we should explore more alterna
 >     + Gamma(2,0) biases the estimate upward. When number of groups is small, try 
 >     + Gamma(2,1/A), where A is a scale parameter representing how high tau can be.
 
-It might be helpful to walk those $\gamma$ priors out, a bit. The paper by [Chung et al](http://www.stat.columbia.edu/~gelman/research/published/chung_etal_Pmetrika2013.pdf) is quite helpful. We'll first let them give us a little more background in the topic:
+We should walk those Gamma priors out, a bit. The paper by [Chung et al](http://www.stat.columbia.edu/~gelman/research/published/chung_etal_Pmetrika2013.pdf) is quite helpful. We'll first let them give us a little more background in the topic:
 
 > Zero group-level variance estimates can cause several problems. Zero variance can go against prior knowledge of researchers and results in underestimation of uncertainty in fixed coefficient estimates. Inferences for groups are often of interest to researchers, but when the group-level variance is estimated as zero, the resulting predictions of the group-level errors will all be zero, so one fails to find unexplained differences between groups. In addition, uncertainty in predictions for new and existing groups is also understated. (p. 686)
 
@@ -910,12 +927,12 @@ They expounded further on page 687.
 >
 > If zero variance is not a null hypothesis of interest, a boundary estimate, and the corresponding zero likelihood ratio test statistic, should not necessarily lead us to accept the null hypothesis and to proceed as if the true variance is zero.
 
-In their paper, they covered both penalized maximum likelihood and full Bayesian estimation. We're just going to focus on the Bayes, but some of the quotes will contain ML talk.
+In their paper, they covered both penalized maximum likelihood and full Bayesian estimation. We're just going to focus on Bayes, but some of the quotes will contain ML talk. Further, we read:
 
-> We recommend a class of log-gamma penalties (or gamma priors) that in our default setting (the log-gamma(2, $\lambda$) penalty with $\lambda \rightarrow 0$) produce maximum penalized likelihood (MPL) esti- mates (or Bayes modal estimates) approximately one standard error away from zero when the maximum likelihood estimate is at zero. We consider these priors to be weakly informative in the sense that they supply some direction but still allow inference to be driven by the data. The penalty has little influence when the number of groups is large or when the data are informative about the variance, and the asymptotic mean squared error of the proposed estimator is the same as that of the maximum likelihood estimator. (p. 686)
+> We recommend a class of log-gamma penalties (or gamma priors) that in our default setting (the log-gamma(2, $\lambda$) penalty with $\lambda \rightarrow 0$) produce maximum penalized likelihood (MPL) estimates (or Bayes modal estimates) approximately one standard error away from zero when the maximum likelihood estimate is at zero. We consider these priors to be weakly informative in the sense that they supply some direction but still allow inference to be driven by the data. The penalty has little influence when the number of groups is large or when the data are informative about the variance, and the asymptotic mean squared error of the proposed estimator is the same as that of the maximum likelihood estimator. (p. 686)
 
 
-In the upper left panel of Figure 3, Chung et al give an example of what they mean by $\lambda \rightarrow 0$, $\lambda = 0.1$. Here's an example of what $\text{gamma} (2, 0.1)$ looks like across the parameter space of 0 to 100. 
+In the upper left panel of Figure 3, Chung et al give an example of what they mean by $\lambda \rightarrow 0$: $\lambda = 0.1$. Here's an example of what $\text{Gamma} (2, 0.1)$ looks like across the parameter space of 0 to 100. 
 
 ```{r, fig.width = 4, fig.height = 1.75}
 tibble(x = c(0, 100)) %>% 
@@ -937,7 +954,7 @@ tibble(x = c(0, 2)) %>%
   theme(panel.grid = element_blank())
 ```
 
-From the paper, we further read:
+Now keep that picture in mind as we read further along in the paper:
 
 >  In addition, with $\lambda \rightarrow 0$, the gamma density function has a positive constant derivative at zero, which allows the likelihood to dominate if it is strongly curved near zero. The positive constant derivative implies that the prior is linear at zero so that there is no dead zone near zero. The top-left panel of Figure 3 shows that the gamma(2,0.1) density increases linearly from zero with a gentle slope. The shape will be even flatter with a smaller rate parameter. (p. 691)
 
@@ -964,7 +981,7 @@ Notice that we didn't bother fooling around with `adapt_delta` and the model fit
 print(fit6b, digits = 3)
 ```
 
-Our `sd(exper)` is still quite close to zero. But notice how not the lower level of the 95% interval is higher than zero. Here's what it looks like.
+Our `sd(exper)` is still quite close to zero. But notice how not the lower level of the 95% interval is higher than zero. Here's what it looks like in both $\sigma$ and $\sigma^2$ metrics.
 
 ```{r, fig.width = 8, fig.height = 2.5}
 posterior_samples(fit6b) %>%
@@ -996,7 +1013,7 @@ posterior_samples(fit6b) %>%
   theme(panel.grid = element_blank())
 ```
 
-Although we are still brushing up on the boundary with $\sigma_1^2$, the mode is no longer at zero. In the discussion, Chung et al point out "sometimes weak prior information is available about a variance parameter. When $\alpha = 2$, the gamma density has its mode at $1 / \lambda$, and so one can use the $\text{gamma} (\alpha, \lambda)$ prior with $1 / \lambda$ set to the prior estimate of $\sigma_\theta$" (p. 703). Let's say we only had our `wages_small_pp`, but the results of `wages_pp` were published by some prior researchers. In this case, we do have good prior data; we have the point estimate from the model of the `wages_pp` data! Here's what that was in terms of the median.
+Although we are still brushing up on the boundary with $\sigma_1^2$, the mode is no longer at zero. In the discussion, Chung et al pointed out "sometimes weak prior information is available about a variance parameter. When $\alpha = 2$, the gamma density has its mode at $1 / \lambda$, and so one can use the $\text{gamma} (\alpha, \lambda)$ prior with $1 / \lambda$ set to the prior estimate of $\sigma_\theta$" (p. 703). Let's say we only had our `wages_small_pp`, but the results of something like the `wages_pp` data were published by some earlier group of researchers. In this case, we do have good prior data; we have the point estimate from the model of the `wages_pp` data! Here's what that was in terms of the median.
 
 ```{r, fig.width = 8, fig.height = 2.5}
 posterior_samples(fit3) %>%
@@ -1020,7 +1037,7 @@ tibble(x = c(0, 1)) %>%
   theme(panel.grid = element_blank())
 ```
 
-So this is much more informative than our default gamma(0, .1) prior. But given the magnitude of the estimate from `fit3`, it's still fairly liberal. Let's practice using it.
+So this is much more informative than our `gamma(2, .1)` prior from before. But given the magnitude of the estimate from `fit3`, it's still fairly liberal. Let's practice using it.
 
 ```{r fit6c, cache = T, warning = F, message = F, results = "hide"}
 fit6c <-
@@ -1072,7 +1089,7 @@ One thing to notice is that when you’re working with full Bayesian estimation 
 
 #### Nonconvergence [i.e., it's time to talk chains and such].
 
-As discussed in section 4.3, all multilevel modeling programs implement iterative numeric algorithms for model fitting. (p. 155). This is also true for our **Stan** propelled **brms** software. However, what’s doingon under the hood, here, is not what’s happeing with the frequentist packages discussed by Singer and Willett. Real we’re using Hamiltonian Monte Carlo (HMC) to draw from the posterior. To my eye, [Paul Bürkner](https://twitter.com/paulbuerkner) gave [in a preprint](https://arxiv.org/pdf/1905.09501.pdf) probably the clearest and most direct introduction to why we need fancy algorithms like HMC to fit Bayesian models. First, Bürkner warmed up by contrasting Bayes with conventional frequentist inference:
+As discussed in section 4.3, all multilevel modeling programs implement iterative numeric algorithms for model fitting. (p. 155). This is also true for our **Stan**-propelled **brms** software. However, what's going on under the hood, here, is not what's happening with the frequentist packages discussed by Singer and Willett. We're using Hamiltonian Monte Carlo (HMC) to draw from the posterior. To my eye, [Paul Bürkner](https://twitter.com/paulbuerkner) gave [in a preprint](https://arxiv.org/pdf/1905.09501.pdf) probably the clearest and most direct introduction to why we need fancy algorithms like HMC to fit Bayesian models. First, Bürkner warmed up by contrasting Bayes with conventional frequentist inference:
 
 > In frequentist statistics, parameter estimates are usually obtained by finding those parameter values that maximise the likelihood. In contrast, Bayesian statistics estimate the full (joint) posterior distribution of the parameters. This is not only fully consistent with probability theory, but also much more informative than a single point estimate (and an approximate measure of uncertainty commonly known as 'standard error').
 
@@ -1080,7 +1097,7 @@ Those iterative algorithms Singer and Willett discussed in this section, that's 
 
 > Obtaining the posterior distribution analytically is only possible in certain cases of carefully chosen combinations of prior and likelihood, which may considerably limit modelling flexibilty but yield a computational advantage. However, with the increased power of today's computers, Markov-Chain Monte-Carlo (MCMC) sampling methods constitute a powerful and feasible alternative to obtaining posterior distributions for complex models in which the majority of modeling decisions is made based on theoretical and not computational grounds. Despite all the computing power, these sampling algorithms are computationally very intensive and thus fitting models using full Bayesian inference is usually much slower than in point estimation techniques. However, advantages of Bayesian inference--such as greater modeling flexibility, prior distributions, and more informative results--are often worth the increased computational cost (Gelman, Carlin, Stern, and Rubin 2014). (p. 8)
 
-The gritty details are well beyond the scope of this project. If you’d like a more thorough walk-through on why it's analytically and computationally challenging to get the posterior, I recommend working through the first several chapters in Kruschke’s (2014) [Doing Bayesian Data Analysis, Second Edition: A Tutorial with R, JAGS, and Stan](http://www.indiana.edu/~kruschke/DoingBayesianDataAnalysis/).
+The gritty details are well beyond the scope of this project. If you’d like a more thorough walk-through on why it's analytically and computationally challenging to get the posterior, I recommend working through the first several chapters in Kruschke’s (2014) [*Doing Bayesian Data Analysis, Second Edition: A Tutorial with R, JAGS, and Stan*](http://www.indiana.edu/~kruschke/DoingBayesianDataAnalysis/).
 
 But so anyways, our primary algorithm is HMC as implemented by **Stan**. You can find all kinds of technical details [here](https://mc-stan.org/users/documentation/). Because it’s rather difficult to describe our Bayesian multilevel models analytically, we use HMC to draw from the posterior instead. And we then summarize the marginal and joint distributions of those parameters with things like measures of central tendency (i.e., means, medians, modes) and spread (i.e., standard deviations, percentile-based intervals). And we often plot. 
 
@@ -1094,15 +1111,15 @@ We can get the trace plots for a model by placing a `brm()` fit object into the 
 plot(fit4)
 ```
 
-You’ll notice we get two plots for each of the major model parameters, the $\gamma$s, the $\sigma$s and the $\rho$s. The plots on the left are the density plots for each parameter. On the right, we have the actual trace plots. On the x-axis, we have an ordering of the posterior draws; on the y, we have the parameter space. Since we the default 4 HMC chains to draw from the posterior, those four chains are depicted by different colored lines. We generally like it when the lines for our chains all overlap with each other in a stable zig-zag sort of way. Traceplots are sometimes called caterpillar plots because, when things are going well, they often resemble nice multicolored fuzzy caterpillars. 
+You’ll notice we get two plots for each of the major model parameters, the $\gamma$s, the $\sigma$s and the $\rho$s. The plots on the left are the density plots for each parameter. On the right, we have the actual trace plots. On the x-axis, we have an ordering of the posterior draws; on the y, we have the parameter space. Since we the default 4 HMC chains to draw from the posterior, those four chains are depicted by different colored lines. We generally like it when the lines for our chains all overlap with each other in a stable zig-zag sort of way. Trac eplots are sometimes called caterpillar plots because, when things are going well, they often resemble nice multicolored fuzzy caterpillars. 
 
-If you’d like more control over your traceplot visuals, you might check out the [**bayesplot** package](https://github.com/stan-dev/bayesplot). 
+If you’d like more control over your trace plot visuals, you might check out the [**bayesplot** package](https://github.com/stan-dev/bayesplot). 
 
 ```{r, warning = F, message = F}
 library(bayesplot)
 ```
 
-Our mai function will be `mcmc_trace()`. Unlike with the `brms::plot()` method, `bayesplog::mcmc_trace()` takes the posterior draws themselves as input. So we'll have to use `posterior_samples()` first. By default, `posterior_samples()` does not extract information about which chain a given draw is from. So we'll have to add the `add_chain = T` argument.
+Our main function will be `mcmc_trace()`. Unlike with the `brms::plot()` method, `bayesplog::mcmc_trace()` takes the posterior draws themselves as input. So we'll have to use `posterior_samples()` first. By default, `posterior_samples()` does not extract information about which chain a given draw is from. So we'll have to add the `add_chain = T` argument.
 
 ```{r}
 post <- posterior_samples(fit4, add_chain = T)
@@ -1143,11 +1160,11 @@ mcmc_trace(pars = vars(starts_with("sigma[")),
         strip.text         = element_text(size = 12))
 ```
 
-Traceplots are connected to other important concepts, like autocorrelation and effective sample size.
+Trace plots are connected to other important concepts, like autocorrelation and effective sample size.
 
 ##### Autocorrelation.
 
-When using Markov chain Monte Carlo methods, of which HMC is a special case, the notions of autocorrelation and effective sample size are closely connected. Both have to do with the question, How many post-warmup draws from the posterior do I need to take? If you take too few, you won’t have a good sense of the shape of the posterior. If you take more than necessary, you’re just wasting time and computer memory. Here’s how McElreath introduced the topic:
+When using Markov chain Monte Carlo methods, of which HMC is a special case, the notions of autocorrelation and effective sample size are closely connected. Both have to do with the question, How many post-warmup draws from the posterior do I need to take? If you take too few, you won’t have a good sense of the shape of the posterior. If you take more than necessary, you’re just wasting time and computer memory. Here’s how McElreath introduced the topic in his text:
 
 > So how many samples do we need for accurate inference about the posterior distribution? It depends. First, what really matters is the *effective* number of samples, not the raw number. The effective number of samples is an estimate of the number of independent samples from the posterior distribution. Markov chains are typically *autocorrelated*, so that sequential samples are not entirely independent. Stan chains tend to be less autocorrelated than those produced by other engines [e.g., the Gibbs sampler], but there is always some autocorrelation. (p. 255, *emphasis* in the original)
 
@@ -1174,7 +1191,7 @@ The plots from `mcmc_act()` are quite handy for focused diagnostics. But if you 
 
 ##### Effective sample size.
 
-Above we quited McElreath as pointing out "what really matters is the *effective* number of samples, not the raw number." With **brms**, you typically get the effective number of samples in the `print()` or `summary()` output. Here it is again for `fit4`.
+Above we quoted McElreath as pointing out "what really matters is the *effective* number of samples, not the raw number." With **brms**, you typically get the effective number of samples in the `print()` or `summary()` output. Here it is again for `fit4`.
 
 ```{r}
 summary(fit4)
@@ -1194,7 +1211,7 @@ nr <- neff_ratio(fit4)
 str(nr)
 ```
 
-Good old `str()` informed us we got a 1787 row named numeric vector.  We can display that output by plugging it into `mcmc_neff()`.
+Good old `str()` informed us we got a named numeric vector of 1787 rows.  We can display that output by plugging it into `mcmc_neff()`.
 
 ```{r, fig.width = 6, fig.height = 4}
 mcmc_neff(nr)
@@ -1247,7 +1264,7 @@ mcmc_acf(post, pars = vars(`r_id[31,Intercept]`:`r_id[145,Intercept]`), lags = 5
         strip.text = element_text(size = 8))
 ```
 
-See those dips below zero for the first lag in each? That's what a negative autocorrelation looks like. Beautiful. For more on negative autocorrelations within chains and how it influences the number of effective samples, check out [this thread on the Stan forums](https://discourse.mc-stan.org/t/n-eff-bda3-vs-stan/2608) where many members of the **Stan** team chime in.
+See those dips below zero for the first lag in each? That's what a negative autocorrelation looks like. Beautiful. For more on negative autocorrelations within chains and how it influences the number of effective samples, check out [this thread on the Stan forums](https://discourse.mc-stan.org/t/n-eff-bda3-vs-stan/2608) where many members of the **Stan** team chimed in.
 
 ##### $\hat R$.
 
@@ -1272,7 +1289,7 @@ rhat(fit4)[1:10]
 
 Or you might get a more global perspective with a plot.
 
-```{r, fig.width = 4, figh.eight = 3}
+```{r, fig.width = 4, fig.height = 2.5}
 rhat(fit4) %>% 
   data.frame() %>% 
   set_names("rhat") %>% 
@@ -1292,7 +1309,7 @@ mcmc_rhat(rhat(fit4)[1:20]) +
 
 By default, `mcmc_rhat()` does not return text on the y-axis. But you can retrieve that text with the `yaxis_text()` function. For more on the $\hat R$, you might check out the *Rhat: potential scale reduction statistic* subsection of Gabry and Modrák's vignette, [*Visual MCMC diagnostics using the bayesplot package*](https://cran.r-project.org/web/packages/bayesplot/vignettes/visual-mcmc-diagnostics.html#rhat-potential-scale-reduction-statistic).
 
-We should also point out that the Stan team has found some deficiencies with the $\hat{R}$. They've made recommendations for improvement that will be implemented in the Stan ecosystem sometime soon. In the meantime, you can read all about it in their [preprint](https://arxiv.org/abs/1903.08008) and in Dan Simpson's guest blog, [*Maybe it's time to let the old ways die; or We broke R-hat so now we have to fix it.*](https://statmodeling.stat.columbia.edu/2019/03/19/maybe-its-time-to-let-the-old-ways-die-or-we-broke-r-hat-so-now-we-have-to-fix-it/). If you learn best by sassy twitter banter, [click through this interchange](https://twitter.com/betanalpha/status/1108185746870030336) among some of our Stan team all-stars.
+We should also point out that the Stan team has found some deficiencies with the $\hat{R}$. They've made recommendations that will be implemented in the Stan ecosystem sometime soon. In the meantime, you can read all about it in their [preprint](https://arxiv.org/abs/1903.08008) and in Dan Simpson's guest blog, [*Maybe it's time to let the old ways die; or We broke R-hat so now we have to fix it*](https://statmodeling.stat.columbia.edu/2019/03/19/maybe-its-time-to-let-the-old-ways-die-or-we-broke-r-hat-so-now-we-have-to-fix-it/). If you learn best by sassy twitter banter, [click through this interchange](https://twitter.com/betanalpha/status/1108185746870030336) among some of our Stan team all-stars.
 
 ### 5.2.3. Distinguishing among different types of missingness.
 
@@ -1304,15 +1321,15 @@ We should also point out that the Stan team has found some deficiencies with the
 >
 > ...When data are MAR, the probability of missingness can depend upon *any* observed data, for either the predictors or any outcome values. It cannot, however, depend upon an *un*observed value of either any predictor or the outcome. (pp. 157--158, *emphasis* in the original)
 
-For some more current introductions to missing data methods, I recommend Enders' (2010) [*Applied Missing Data Analysis*](http://www.appliedmissingdata.com), for which you can find a free sample chapter [here](http://www.appliedmissingdata.com/sample-chapter.pdf), and Little and Rubin's (2019) [*Statistical Analysis with Missing Data, 3rd Edition*](https://www.wiley.com/en-us/Statistical+Analysis+with+Missing+Data%2C+3rd+Edition-p-9780470526798). You might also check out van Burren's great online text [*Flexible Imputation of Missing Data. Second Edition*](https://stefvanbuuren.name/fimd/).
+For some more current introductions to missing data methods, I recommend Enders' (2010) [*Applied Missing Data Analysis*](http://www.appliedmissingdata.com), for which you can find a free sample chapter [here](http://www.appliedmissingdata.com/sample-chapter.pdf), and Little and Rubin's (2019) [*Statistical Analysis with Missing Data, 3rd Edition*](https://www.wiley.com/en-us/Statistical+Analysis+with+Missing+Data%2C+3rd+Edition-p-9780470526798). You might also check out van Burren's great online text [*Flexible Imputation of Missing Data. Second Edition*](https://stefvanbuuren.name/fimd/). And very happily, **brms** has several ways to handle missing data.
 
 ## 5.3 Time-varying predictors
 
-> A time-varying predictor is a variable whose *values* may differ over time. Unlike their time-invariant cousins, which record an individual's static status, time-varying predictors record an individual's potentially differing status on each associated measurement occasion. Some time-varying predictors have values that change naturally; others have values that change by design. (pp. 159-160, *emphasis* in the original)
+> A time-varying predictor is a variable whose *values* may differ over time. Unlike their time-invariant cousins, which record an individual's static status, time-varying predictors record an individual's potentially differing status on each associated measurement occasion. Some time-varying predictors have values that change naturally; others have values that change by design. (pp. 159--160, *emphasis* in the original)
 
 ### 5.3.1. Including the main effect of a time-varying predictor.
 
-You can fing [Ginexi and colleagues' (2000)](https://www.researchgate.net/profile/Elizabeth_Ginexi/publication/12406334_Depression_and_control_beliefs_in_relation_to_reemployment_What_are_the_directions_of_effect/links/553e47930cf20184050e15ed/Depression-and-control-beliefs-in-relation-to-reemployment-What-are-the-directions-of-effect.pdf) unemployment study data in the `reading_pp.csv` file.
+You can find [Ginexi and colleagues' (2000)](https://www.researchgate.net/profile/Elizabeth_Ginexi/publication/12406334_Depression_and_control_beliefs_in_relation_to_reemployment_What_are_the_directions_of_effect/links/553e47930cf20184050e15ed/Depression-and-control-beliefs-in-relation-to-reemployment-What-are-the-directions-of-effect.pdf) unemployment study data in the `reading_pp.csv` file.
 
 ```{r, warning = F, message = F}
 library(tidyverse)
@@ -1353,7 +1370,7 @@ unemployment_pp %>%
   theme(panel.grid = element_blank())
 ```
 
-To make some of our data questions easier, we can use those 3 and 8 `month` thresholds to make an `interview` variable to indicate the periods during which the interviews were conducted.
+To make some of our data questions easier, we can use those 3- and 8-`month` thresholds to make an `interview` variable to indicate the periods during which the interviews were conducted.
 
 ```{r, fig.width = 3.5, fig.height = 2.5}
 unemployment_pp <- 
@@ -1367,7 +1384,7 @@ unemployment_pp %>%
   theme(panel.grid = element_blank())
 ```
 
-With a little wrangling, we can display all possible employment patterns along with counts on how many showed them.
+With a little wrangling, we can display all possible employment patterns along with counts on how many followed them.
 
 ```{r}
 unemployment_pp %>% 
@@ -1376,25 +1393,26 @@ unemployment_pp %>%
   spread(key = interview, value = unemp) %>% 
   group_by(int_1, int_2, int_3) %>% 
   count() %>% 
-  arrange(desc(n))
+  arrange(desc(n)) %>% 
+  knitr::kable()
 ```
 
-Based on that, I'm not sure how Singer and Willett came to the conclusion "62 were always working after the first interview" (p. 161). Based on an analysis of those who had complete data, that corresponds to the pattern in the top row, [1, 0, 0], which we have counted as 55 (i.e., row 2). If you add to that the two rows with missingness on one of the critical values (i.e., [1, 0, NA] and [1, NA, 0]), that gets you $55 + 4 + 2 = 61$
+It takes a little work to see how Singer and Willett came to the conclusion "62 were always working after the first interview" (p. 161). Based on an analysis of those who had complete data, that corresponds to the pattern in the top row, [1, 0, 0], which we have counted as 55 (i.e., row 2). If you add to that the two rows with missingness on one of the critical values (i.e., [1, 0, NA], [1, NA, 0], and [NA, 1, 1]), that gets you $55 + 4 + 2 + 1 = 62$
 
-We can at least confirm that "41 were still unemployed at the second interview but working by the third" (p. 161). That's our pattern [1, 1, 0], shown in row 3. We can also confirm "19 were working by the second interview but unemployed at the third" (p. 161). That's shown in our pattern [1, 0, 1], shown in row 6.
+We can confirm that "41 were still unemployed at the second interview but working by the third" (p. 161). That's our pattern [1, 1, 0], shown in row 3. We can also confirm "19 were working by the second interview but unemployed at the third" (p. 161). That's shown in our pattern [1, 0, 1], shown in row 6.
 
 Before we configure our unconditional growth model, we might familiarize ourselves with our criterion variable, `cesd`. Singer and Willett informed us:
 
-> > Each time participants completed the Center for Epidemiologic Studies’ Depression (CES-D) scale ([Radloff, 1977](https://journals.sagepub.com/doi/pdf/10.1177/014662167700100306?casa_token=igspo7W_9SUAAAAA:hnRVqiDEM-b6nNh_-8VQ6tx1PukP8nsqyo4yd4m_inspjhH-3aeShEGodUxux8GuInG9AYbP1D2GLA)), which asks them to rate, on a four-point scale, the frequency with which they experience each of the 20 depressive symptoms. The CES-D scores can vary from a low or 0 for someone with no symptoms to a high of 80 for someone in serious distress. (p. 161)
+> Each time participants completed the Center for Epidemiologic Studies’ Depression (CES-D) scale ([Radloff, 1977](https://journals.sagepub.com/doi/pdf/10.1177/014662167700100306?casa_token=igspo7W_9SUAAAAA:hnRVqiDEM-b6nNh_-8VQ6tx1PukP8nsqyo4yd4m_inspjhH-3aeShEGodUxux8GuInG9AYbP1D2GLA)), which asks them to rate, on a four-point scale, the frequency with which they experience each of the 20 depressive symptoms. The CES-D scores can vary from a low or 0 for someone with no symptoms to a high of 80 for someone in serious distress. (p. 161)
 
 In addition to Radloff's original article, you can get a copy of the CES-D [here](http://www.chcr.brown.edu/pcoc/cesdscale.pdf). 
 
-To help us pick our priors, [Brown and Gary (1985)](https://scholarworks.wmich.edu/cgi/viewcontent.cgi?article=1721&amp=&context=jssw&amp=&sei-redir=1&referer=https%253A%252F%252Fscholar.google.com%252Fscholar%253Fq%253D%252522CES-D%252522%252Bunemployment%2526hl%253Den%2526as_sdt%253D0%25252C44%2526as_ylo%253D1977%2526as_yhi%253D2000#search=%22CES-D%20unemployment%22) listed the means and standard deviations of the CES-D scores for unemployed Black adults. They gave the summary statistics broken down by sex:
+To help us pick our priors, [Brown and Gary (1985)](https://scholarworks.wmich.edu/cgi/viewcontent.cgi?article=1721&amp=&context=jssw&amp=&sei-redir=1&referer=https%253A%252F%252Fscholar.google.com%252Fscholar%253Fq%253D%252522CES-D%252522%252Bunemployment%2526hl%253Den%2526as_sdt%253D0%25252C44%2526as_ylo%253D1977%2526as_yhi%253D2000#search=%22CES-D%20unemployment%22) listed the means and standard deviations of the CES-D scores for unemployed African-American adults. They gave the summary statistics broken down by sex:
 
 * Males: 14.05 (8.86), $n = 37$
 * Females: 15.35 (9.39), $n = 72$
 
-Based the variables in the data set and the descriptions of it in the text, we don't have a sense of the demographic backgrounds of the participants. But with the information we have in hand, a reasonable empirically-based but nonetheless noncommittal prior for baseline CES-D might be something like `normal(14.5, 20)`. A weakly-regularizing prior on change over 1 month might be `normal(0, 10)`. If you'd like to argue about these priors, and it'd be fair id you did, we might write the statistical formula for the unconditional growth model as
+Based the variables in the data set and the descriptions of it in the text, we don't have a good sense of the demographic backgrounds of the participants. But with the information we have in hand, a reasonable empirically-based but nonetheless noncommittal prior for baseline CES-D might be something like `normal(14.5, 20)`. A weakly-regularizing prior on change over 1 month might be `normal(0, 10)`. It'd be fair id you wanted to argue about these priors. Try your own! But if you are willing to go along with me, we might write the statistical formula for the unconditional growth model as:
 
 $$
 \begin{align*}
@@ -1407,9 +1425,9 @@ $$
 \Bigg ( 
 \begin{bmatrix} 0 \\ 0 \end{bmatrix},
 \mathbf{D} \mathbf{\Omega} \mathbf{D}'
-\Bigg ), \text{where} \\
+\Bigg ) \\
 
-\mathbf{D}       & = \begin{bmatrix} \sigma_0 & 0 \\ 0 & \sigma_1 \end{bmatrix} \text{and} \\ 
+\mathbf{D}       & = \begin{bmatrix} \sigma_0 & 0 \\ 0 & \sigma_1 \end{bmatrix} \\ 
 
 \mathbf{\Omega}  & = \begin{bmatrix} 1 & \rho_{01} \\ \rho_{01} & 1 \end{bmatrix} \\
 
@@ -1480,7 +1498,8 @@ We might specify Model B, our first model with a time-varying covariate, like th
 
 $$
 \begin{align*}
-\text{cesd}_{ij} & = \big [ \gamma_{00} + \gamma_{10} \text{months}_{ij} + \gamma_{20} \text{unemp}_{ij} \big ] + \big [  \zeta_{0i} + \zeta_{1i} \text{months}_{ij} + \epsilon_{ij} \big ]\epsilon_{ij}    & \sim \text{Normal} (0, \sigma_\epsilon) \\
+\text{cesd}_{ij} & = \big [ \gamma_{00} + \gamma_{10} \text{months}_{ij} + \gamma_{20} \text{unemp}_{ij} \big ] + \big [  \zeta_{0i} + \zeta_{1i} \text{months}_{ij} + \epsilon_{ij} \big ]\\
+\epsilon_{ij}    & \sim \text{Normal} (0, \sigma_\epsilon) \\
 
 \begin{bmatrix} 
 \zeta_{0i} \\ \zeta_{1i} 
@@ -1488,9 +1507,9 @@ $$
 \Bigg ( 
 \begin{bmatrix} 0 \\ 0 \end{bmatrix},
 \mathbf{D} \mathbf{\Omega} \mathbf{D}'
-\Bigg ), \text{where} \\
+\Bigg ) \\
 
-\mathbf{D}       & = \begin{bmatrix} \sigma_0 & 0 \\ 0 & \sigma_1 \end{bmatrix} \text{and} \\ 
+\mathbf{D}       & = \begin{bmatrix} \sigma_0 & 0 \\ 0 & \sigma_1 \end{bmatrix} \\ 
 
 \mathbf{\Omega}  & = \begin{bmatrix} 1 & \rho_{01} \\ \rho_{01} & 1 \end{bmatrix} \\
 
@@ -1500,12 +1519,12 @@ $$
 \sigma_\epsilon & \sim \text{Student-t} (3, 0, 10) \\
 \sigma_0        & \sim \text{Student-t} (3, 0, 10) \\
 \sigma_1        & \sim \text{Student-t} (3, 0, 10) \\
-\rho_{01}       & \sim \text{LKJ} (4)
+\rho_{01}       & \sim \text{LKJ} (4).
 
 \end{align*}
 $$
 
-Note a few things about the priors. First, we haven’t changed any of the priors from the previous model. All we did was add $\gamma_{20} \sim \text{Normal}(0, 10)$ for our new parameter. Given how weakly-informative our other priors have been for these data, this isn’t an unreasonable approach. However, the meaning for our intercept, $\gamma_{01}$, has changed. Now it’s the initial status for someone who is *employed* at baseline. But remember that for Model A, we set that prior with unemployed people in mind. A careful researcher might want to dive back into the literature to see if some lower value than 14.5 would be more reasonable to set for the mean of that prior. However, since the standard deviations for our intercepts priors and the covariate priors are all rather wide and permissive, this just won’t be much of a problem, for us. Buy anyway, second, note that we’ve centered our prior for $\gamma_{20}$ on zero. This is a weakly-regularizing prior, slightly favoring smaller effects over larger ones. One could easily argue for different priors. 
+Note a few things about the priors. First, we haven't changed any of the priors from the previous model. All we did was add $\gamma_{20} \sim \text{Normal}(0, 10)$ for our new parameter. Given how weakly-informative our other priors have been for these data, this isn't an unreasonable approach. However, the meaning for our intercept, $\gamma_{01}$, has changed. Now it's the initial status for someone who is *employed* at baseline. But remember that for Model A, we set that prior with unemployed people in mind. A careful researcher might want to dive back into the literature to see if some lower value than 14.5 would be more reasonable to set for the mean of that prior. However, since the standard deviations for our intercepts priors and the covariate priors are all rather wide and permissive, this just won’t be much of a problem, for us. Buy anyway, second, note that we've centered our prior for $\gamma_{20}$ on zero. This is a weakly-regularizing prior, slightly favoring smaller effects over larger ones. And like before, one could easily argue for different priors. 
 
 Here's how to fit the model in **brms**.
 
@@ -1536,18 +1555,16 @@ fixef(fit8)["months", ]
 fixef(fit9)["months", ]
 ```
 
-You might be wondering why the quote from Singer and Willett used positive numbers while our parameter estimates have negative ones. No, there's no mistake, there. Negative parameter estimates for monthly trajectories are then same thing as expressing a rate of decline with a positive number. But anyways, you see our estimates are on par with theirs. But with our Bayesian paradigm, it's also easy to get a formal difference distribution
+You might be wondering why the quote from Singer and Willett used positive numbers while our parameter estimates have negative ones. No, there's no mistake, there. Negative parameter estimates for monthly trajectories are then same thing as expressing a rate of *decline* with a positive number. But anyways, you see our estimates are on par with theirs. But with our Bayesian paradigm, it's also easy to get a formal difference distribution.
 
 ```{r, fig.width = 3, fig.height = 2.25}
-post <-
-  bind_cols(
+bind_cols(
   posterior_samples(fit8) %>% select("b_months"),
   posterior_samples(fit9) %>% select("b_months")
   ) %>% 
   set_names("fit8", "fit9") %>% 
-  mutate(dif = fit9 - fit8) 
-
-post %>% 
+  mutate(dif = fit9 - fit8) %>%
+  
   ggplot(aes(x = dif, y = 0)) +
   geom_halfeyeh(.width = .95) +
   scale_y_continuous(NULL, breaks = NULL) +
@@ -1585,6 +1602,8 @@ model_weights(fit8, fit9, weights = "waic") %>%
 
 By both metrics, `fit9` came out as the clear favorite.
 
+It's finally time to make our version of the upper left panel of Figure 5.3. We’ll do so using `fitted()`.
+
 ```{r, fig.width = 3, fig.height = 4}
 nd <-
   tibble(unemp = 1,
@@ -1608,16 +1627,20 @@ f %>%
   theme(panel.grid = element_blank())
 ```
 
+The upper right panel will take more care. We'll still use `fitted()`, but we'll have to be tricky with how we define the two segments. When we defined the sequence of `months` values over which we wanted to plot the model trajectory, we just casually set `length.out = 30` within the `seq()` function. But now we need to make sure two of those sequential points are at 5. One way to do so is to use the `by = .5` argument within `seq()`, instead. Since we'll be defining the end points in our range with integer values, dividing up the sequence by every .5^th^ value will ensure we'll both be able to stop at 5 and that we'll have a reasonable amount of values in the sequence to ensure the bowtie-shaped 95% intervals don’t look chunky.
+
+But anyway, that also means we’ll need to do a good job determining how many values we'll need to repeat our desired `unemp` values over. So here's a quick way to do the math. Since we're using every .5 in the sequence, you just subtract the integer at the beginning of the sequence from the integer at the end of the sequence, multiply that value by 2, and then add 1 to the product. Like this:
 
 ```{r}
 2 * (5 - 0) + 1
 2 * (14 - 5) + 1
 ```
 
+Those are the number of times we need to repeat `unemp == 1` and `unemp == 0`, respectively. You'll see. Now wrangle and plot.
 
 ```{r, fig.width = 3, fig.height = 4}
 nd <-
-  tibble(unemp = rep(1:0, times = c(11, 19)),
+  tibble(unemp  = rep(1:0, times = c(11, 19)),
          months = c(seq(from = 0, to = 5, by = .5),
                     seq(from = 5, to = 14, by = .5)))
 
@@ -1650,15 +1673,18 @@ f %>%
   theme(panel.grid = element_blank())
 ```
 
+Same deal for the lower left panel of Figure 5.3.
+
 ```{r}
 2 * (10 - 0) + 1
 2 * (14 - 10) + 1
 ```
 
+Now wrangle and plot.
 
 ```{r, fig.width = 3, fig.height = 4}
 nd <-
-  tibble(unemp = rep(1:0, times = c(21, 9)),
+  tibble(unemp  = rep(1:0, times = c(21, 9)),
          months = c(seq(from = 0, to = 10, by = .5),
                     seq(from = 10, to = 14, by = .5)))
 
@@ -1691,6 +1717,7 @@ f %>%
   theme(panel.grid = element_blank())
 ```
 
+It's just a little bit trickier to get that lower right panel. Now we need to calculate three values.
 
 ```{r}
 2 * (5 - 0) + 1
@@ -1698,14 +1725,15 @@ f %>%
 2 * (14 - 10) + 1
 ```
 
+Get that plot.
 
 ```{r, fig.width = 3, fig.height = 4}
 nd <-
-  tibble(unemp = rep(c(1, 0, 1), times = c(11, 11, 9)),
+  tibble(unemp  = rep(c(1, 0, 1), times = c(11, 11, 9)),
          months = c(seq(from = 0, to = 5, by = .5),
                     seq(from = 5, to = 10, by = .5),
                     seq(from = 10, to = 14, by = .5)),
-         group = rep(letters[1:3], times = c(11, 11, 9)))
+         group  = rep(letters[1:3], times = c(11, 11, 9)))
 
 f <-
   fitted(fit9,
@@ -1722,9 +1750,9 @@ lines <-
          yend  = fixef(fit9)[1, 1] + fixef(fit9)[2, 1] * x + fixef(fit9)[3, 1])
 
 arrow <-
-  tibble(x = c(6.75, 8.25),
+  tibble(x    = c(6.75, 8.25),
          xend = c(5.5, 9.5),
-         y = 14,
+         y    = 14,
          yend = c(14.5, 13.5))
 f %>% 
   ggplot(aes(x = months)) +
@@ -1750,6 +1778,7 @@ f %>%
   theme(panel.grid = element_blank())
 ```
 
+Now we've been on a plotting roll, let's knock out the leftmost panel of Figure 5.4. It's just a small extension of what we've been doing.
 
 ```{r}
 2 * (14 - 0) + 1
@@ -1757,10 +1786,9 @@ f %>%
 2 * (14 - 3.5) + 1
 ```
 
-
 ```{r, fig.width = 3.65, fig.height = 4}
 nd <-
-  tibble(unemp = rep(1:0, times = c(29, 22)),
+  tibble(unemp  = rep(1:0, times = c(29, 22)),
          months = c(seq(from = 0, to = 14, by = .5),
                     seq(from = 3.5, to = 14, by = .5)))
 
@@ -1774,29 +1802,31 @@ f <-
 
 f %>% 
   ggplot(aes(x = months, group = unemp)) +
+  # new trick
   geom_abline(intercept = fixef(fit9)[1, 1],
               slope = fixef(fit9)[2, 1],
               color = "grey80", linetype = 2) +
   geom_ribbon(aes(ymin = Q2.5, ymax = Q97.5),
               fill = "grey67", alpha = 1/2) +
   geom_line(aes(y = Estimate)) +
+  # another new trick
   geom_text(data = f %>% filter(months == 14), 
             aes(label = label, y = Estimate), hjust = -.05) +
   scale_x_continuous("Months since job loss", breaks = seq(from = 0, to = 14, by = 2)) +
   scale_y_continuous("CES-D", limits = c(5, 20)) +
   labs(subtitle = "Main effects of unemp and time") +
+  # don't forget this part
   coord_cartesian(clip = "off") +
   theme(panel.grid = element_blank(),
         plot.margin = margin(6, 55, 6, 6))
 ```
-
 
 #### Using a level-1/level-2 specification.
 
 If we wanted to reexpress our composite equation for `fit9` using the level-1/level-2 form, the level-1 model would be
 
 $$
-\text{cesd}_{ij} =  \pi_{0i} + \pi_{1i} \text{months}_{ij} + \pi_{2i} \text{unemp}_{ij} + \epsilon_{ij}.
+\text{cesd}_{ij} = \pi_{0i} + \pi_{1i} \text{months}_{ij} + \pi_{2i} \text{unemp}_{ij} + \epsilon_{ij}.
 $$
 
 Here's the corresponding level-2 model:
@@ -1805,7 +1835,7 @@ $$
 \begin{align*}
 \pi_{0i} & = \gamma_{00} + \zeta_{0i} \\
 \pi_{1i} & = \gamma_{10} + \zeta_{1i} \\
-\pi_{2i} & = \gamma_{20}.\\
+\pi_{2i} & = \gamma_{20}.
 \end{align*}
 $$
 
@@ -1855,7 +1885,7 @@ $$
 \end{align*}
 $$
 
-Singer and Willett then caution readers about hastily adding $\zeta$ parameters to their models, particularly in cases where you're likely to run into estimation issues, such as boundary constraints. Within our **Stan/brms** paradigm, we still have to be aware of these difficulties. However, with carefully chosen priors, I think you'll find we can fit more ambitious models than would typically be possible with frequentist estimators. But do beware that as you stretch your data further and further, your choices in likelihoods and priors more heavily influence the results. For more on the topic, check out [Michael Frank](https://twitter.com/mcxfrank?lang=en)'s blog on the topic, [*Mixed effects models: Is it time to go Bayesian by default?*](http://babieslearninglanguage.blogspot.com/2018/02/mixed-effects-models-is-it-time-to-go.html). Don't miss the action in the comments section.
+Singer and Willett then cautioned readers about hastily adding $\zeta$ parameters to their models, particularly in cases where you're likely to run into estimation issues, such as boundary constraints. Within our **Stan/brms** paradigm, we still have to be aware of these difficulties. However, with skillfully-chosen priors, I think you'll find we can fit more ambitious models than would typically be possible with frequentist estimators. But do beware that as you stretch your data further and further, your choices in likelihoods and priors more heavily influence the results. For more on the topic, check out [Michael Frank](https://twitter.com/mcxfrank?lang=en)'s blog post, [*Mixed effects models: Is it time to go Bayesian by default?*](http://babieslearninglanguage.blogspot.com/2018/02/mixed-effects-models-is-it-time-to-go.html). And make sure not to miss the action in the comments section.
 
 #### Time-varying predictors and variance components.
 
@@ -1892,7 +1922,7 @@ v %>%
   mutate_if(is.double, round, digits = 3)
 ```
 
-When you go beyond point estimates and factor in full posterior uncertainty, it becomes clear how fragile ad hoc statistics like this can be. Interpret then with caution.
+When you go beyond point estimates and factor in full posterior uncertainty, it becomes clear how fragile ad hoc statistics like this can be. Interpret them with caution.
 
 ### 5.3.2. Allowing the effect of a time-varying predictor to vary over time.
 
@@ -1910,9 +1940,9 @@ $$
 \Bigg ( 
 \begin{bmatrix} 0 \\ 0 \end{bmatrix},
 \mathbf{D} \mathbf{\Omega} \mathbf{D}'
-\Bigg ), \text{where} \\
+\Bigg ) \\
 
-\mathbf{D}       & = \begin{bmatrix} \sigma_0 & 0 \\ 0 & \sigma_1 \end{bmatrix} \text{and} \\ 
+\mathbf{D}       & = \begin{bmatrix} \sigma_0 & 0 \\ 0 & \sigma_1 \end{bmatrix} \\ 
 
 \mathbf{\Omega}  & = \begin{bmatrix} 1 & \rho_{01} \\ \rho_{01} & 1 \end{bmatrix} \\
 
@@ -1954,7 +1984,7 @@ Here's how we might make our version of the middle panel of Figure 5.4.
 
 ```{r, fig.width = 3.65, fig.height = 4}
 nd <-
-  tibble(unemp = rep(1:0, times = c(29, 22)),
+  tibble(unemp  = rep(1:0, times = c(29, 22)),
          months = c(seq(from = 0, to = 14, by = .5),
                     seq(from = 3.5, to = 14, by = .5)))
 
@@ -1984,7 +2014,7 @@ f %>%
         plot.margin = margin(6, 55, 6, 6))
 ```
 
-Here’s the posterior for $\gamma_{10}$
+Here's the posterior for $\gamma_{10}$.
 
 ```{r, fig.width = 3, fig.height = 2.25}
 posterior_samples(fit10) %>% 
@@ -2011,9 +2041,9 @@ $$
 \Bigg ( 
 \begin{bmatrix} 0 \\ 0 \end{bmatrix},
 \mathbf{D} \mathbf{\Omega} \mathbf{D}'
-\Bigg ), \text{where} \\
+\Bigg ) \\
 
-\mathbf{D}       & = \begin{bmatrix} \sigma_0 & 0 \\ 0 & \sigma_3 \end{bmatrix} \text{and} \\ 
+\mathbf{D}       & = \begin{bmatrix} \sigma_0 & 0 \\ 0 & \sigma_3 \end{bmatrix} \\ 
 
 \mathbf{\Omega}  & = \begin{bmatrix} 1 & \rho_{03} \\ \rho_{03} & 1 \end{bmatrix} \\
 
@@ -2185,7 +2215,7 @@ fitted(fit12,
   mutate_if(is.double, round, digits = 3)
 ```
 
-There's more posterior uncertainty, there, that you might expect from simply using the point estimates. Always beware the posterior uncertainty. We may as well finish off with a little WAIC.
+There's more posterior uncertainty, there, that you might expect from simply using the point estimates. *Always beware the posterior uncertainty*. We may as well finish off with a little WAIC.
 
 ```{r}
 fit12 <- add_criterion(fit12, "waic")
@@ -2199,20 +2229,470 @@ model_weights(fit8, fit9, fit10, fit11, fit12, weights = "waic") %>%
 
 It's a toss-up between `fit12` and `fit10`.
 
+```{r, echo = F}
+# again, let's free up memory
+rm(fit8, fit9, fit10, fit11, fit12)
+```
+
 ### 5.3.3. Recentering time-varying predictors.
 
+Back to the `wages_pp` data! Here's the generic statistical model we'll be fooling with:
 
+$$
+\begin{align*}
+\text{lnw}_{ij} & = \gamma_{00} + \gamma_{10} \text{exper}_{ij} + \gamma_{01} (\text{hgc}_i - 9) + \gamma_{12} \text{black}_i \times \text{exper}_{ij} \\
+& \;\;\; + \zeta_{0i} + \zeta_{1i} \text{exper}_{ij} + \epsilon_{ij}
+\end{align*}
+$$
 
-
+We’ll be fitting the model with three versions of `uerate`. If you execute `head(wages_pp)`, you'll discover they're already in the data. But it might be worth walking out how to compute those variables. First, centering `uerate` at 7 is easy enough. Just subtract.
 
 ```{r}
-library(tidyverse)
-library(brms)
-library(tidybayes)
-library(bayesplot)
+wages_pp <-
+  wages_pp %>% 
+  mutate(uerate_7 = uerate - 7)
+```
+
+Continuing on with the same priors from before, here's how to fit the new model, our version of Model A on page 175.
+
+```{r, echo = F}
+# This fit is too large to cache and upload to Github
+# save(fit13, file = "fits/fit13.rda")
+load("fits/fit13.rda")
+```
+
+```{r fit13, eval = F}
+fit13 <-
+  brm(data = wages_pp, 
+      family = gaussian,
+      lnw ~ 0 + intercept + exper + hgc_9 + black:exper + uerate_7 + (1 + exper | id),
+      prior = c(prior(normal(1.335, 1), class = b, coef = "intercept"),
+                prior(normal(0, 0.5),   class = b),
+                prior(student_t(3, 0, 1), class = sd),
+                prior(student_t(3, 0, 1), class = sigma),
+                prior(lkj(4), class = cor)),
+      iter = 2000, warmup = 1000, chains = 4, cores = 4,
+      seed = 5)
+```
+
+```{r}
+print(fit13, digits = 3)
 ```
 
 
+```{r}
+wages_pp <-
+  wages_pp %>% 
+  group_by(id) %>% 
+  mutate(uerate_id_mu  = mean(uerate)) %>% 
+  ungroup() %>% 
+  mutate(uerate_id_dev = uerate - uerate_id_mu)
+```
+
+In the original data set, these were the `ue.mean` and `ue.person.cen` variables, respectively. Here's how to fit the model.
+
+```{r, echo = F}
+# This fit is too large to cache and upload to Github
+# save(fit14, file = "fits/fit14.rda")
+load("fits/fit14.rda")
+```
+
+```{r fit14, eval = F}
+fit14 <-
+  brm(data = wages_pp, 
+      family = gaussian,
+      lnw ~ 0 + intercept + exper + hgc_9 + black:exper + uerate_id_mu + uerate_id_dev + 
+        (1 + exper | id),
+      prior = c(prior(normal(1.335, 1), class = b, coef = "intercept"),
+                prior(normal(0, 0.5),   class = b),
+                prior(student_t(3, 0, 1), class = sd),
+                prior(student_t(3, 0, 1), class = sigma),
+                prior(lkj(4), class = cor)),
+      iter = 2000, warmup = 1000, chains = 4, cores = 4,
+      seed = 5)
+```
+
+```{r}
+print(fit14, digits = 3)
+```
+
+Within the **tidyverse**, probably the easiest way to center on the first value for each `id` is to first `group_by(id)` and then make use of the `dplyr::first()` function, which you can learn more about [here](https://dplyr.tidyverse.org/reference/nth.html).
+
+```{r}
+wages_pp <-
+  wages_pp %>% 
+  group_by(id) %>% 
+  mutate(uerate_id_1 = first(uerate)) %>% 
+  ungroup() %>% 
+  mutate(uerate_id_1_dev = uerate - uerate_id_1)
+```
+
+In the original data set, these were the `ue1` and `ue.centert1` variables, respectively. Here's how to fit the updated model.
+
+```{r, echo = F}
+# This fit is too large to cache and upload to Github
+# save(fit15, file = "fits/fit15.rda")
+load("fits/fit15.rda")
+```
+
+```{r fit15, eval = F}
+fit15 <-
+  update(fit14,
+         newdata = wages_pp,
+         lnw ~ 0 + intercept + exper + hgc_9 + black:exper + uerate_id_1 + uerate_id_1_dev + 
+           (1 + exper | id),
+         iter = 2000, warmup = 1000, chains = 4, cores = 4,
+         seed = 5)
+```
+
+```{r}
+print(fit15, digits = 3)
+```
+
+Here are the WAIC comparisons.
+
+```{r}
+fit13 <- add_criterion(fit13, "waic")
+fit14 <- add_criterion(fit14, "waic")
+fit15 <- add_criterion(fit15, "waic")
+
+loo_compare(fit13, fit14, fit15, criterion = "waic") %>% 
+  print(simplify = F)
+
+model_weights(fit13, fit14, fit15, weights = "waic") %>% 
+  round(digits = 3)
+```
+
+Much like with the AIC and BIC values in the text, the WAIC estimates among our models are too similar to declare one model the clear winner. And that's a good thing. They're all re-expressions of the same model.
+
+```{r, echo = F}
+# let's free up some memory
+rm(fit13, fit14, fit15)
+```
+
+### 5.3.4. An important caveat: The problem of reciprocal causation.
+
+In this section, Singer and Willett gave a typology for time-varying covariates. 
+
+* A variable is *defined* if, "in advance to data collection, its values are predetermined for everyone under study" (p. 177). Examples are time and the seasons.
+* A variable is *ancillary* if "its values cannot be influenced by study participants because they are determined by a stochastic process totally external to them" (p. 178). Within the context of a study on people within monogamous relationships, the availability of potential mates within the region would be an example.
+* A variable is *contextual* if "it describes an 'external' stochastic process, but the connection between units is closer--between husbands and wives, parents and children, teachers and students, employers and employees. Because of this proximity, contextual predictors can be influenced by an individual’s contemporaneous outcome values; if so, they are susceptible to issues of reciprocal causation" (p. 179). 
+* A variable is *internal* if it describes an "individual's potentially changeable status over time" (p. 179). Examples include mood, psychiatric syndromes, and employment status.
+
+## 5.4. Recentering the effect of *TIME*
+
+Our version of the data from Tomarken, Shelton, Elkins, and Anderson (1997) are saved as `medication_pp.csv`. 
+
+```{r, warning = F, message = F}
+medication_pp <- read_csv("data/medication_pp.csv")
+
+glimpse(medication_pp)
+```
+
+The `medication_pp` data do not come with a `reading` variable, as in Table 5.9. Here we'll make one and display the time variables highlighted in Table 5.9.
+
+```{r}
+medication_pp <-
+  medication_pp %>% 
+  mutate(reading = ifelse(time.of.day == 0, "8 am",
+                          ifelse(time.of.day < .6, "3 pm", "10 pm")))
+
+medication_pp %>% 
+  select(wave, day, reading, time.of.day:time667) %>% 
+  head(n = 10)
+```
+
+To help get a sense of the balance in the data, here is a bar plot of the distribution of the numbers of measurement occasions within participants. It's color coded by treatment status.
+
+```{r, fig.width = 6, fig.height = 3}
+medication_pp %>% 
+  mutate(treat = str_c("treat = ", treat)) %>% 
+  group_by(treat, id) %>% 
+  count() %>% 
+  
+  ggplot(aes(x = n, fill = treat)) +
+  geom_bar() +
+  scale_x_continuous(breaks = c(2,12, 15:21)) +
+  scale_fill_viridis_d(NULL, end = .8) +
+  coord_flip() +
+  labs(x = "# measurement occasions",
+       y = "count of cases") +
+  theme(panel.grid = element_blank()) 
+```
+
+For this section, our basic model will be
+
+$$
+\begin{align*}
+\text{pos}_{ij} & = \pi_{0i} + \pi_{1i} (\text{time}_{ij} - c) + \epsilon_{ij} \\
+\pi_{0i}        & = \gamma_{00} + \gamma_{01} \text{treat}_i + \zeta_{0i} \\
+\pi_{1i}        & = \gamma_{10} + \gamma_{11} \text{treat}_i + \zeta_{1i},
+\end{align*}
+$$
+
+where $c$ is a generic constant. For our there variants of $\text{time}$, $c$ will be
+
+* 0 for `time`,
+* 3.3333333 for `time333`, and
+* 6.666667 for `time667`.
+
+Our criterion variable is `pos`, positive mood rating. The text told us these were from "a package of mood diaries (which use a five-point scale to assess positive and negative moods)" (p. 182). However, we don't know what numerals were assigned to the points on the scale, we don't know how many items were used, and we don't even know whether the items were taken from an existing questionnaire. And unfortunately, the citation Singer and Willett gave for the study is from a conference presentation, making it a pain to track down background information on the internet. In such a situation, it's difficult to figure out how to set our priors. Though suboptimal, we might first get a sense of the `pos` data with a histogram.
+
+```{r, fig.width = 4, fig.height = 2.5, warning = F, message = F}
+medication_pp %>% 
+  ggplot(aes(x = pos)) +
+  geom_histogram() +
+  theme(panel.grid = element_blank())
+```
+
+Here's the `range()`.
+
+```{r}
+range(medication_pp$pos)
+```
+
+Starting with the prior for our intercept, I think there's a lot of room for argument, here. But to keep with our weakly-regularizing approach to priors, it might make sense to use something like `normal(200, 100)`. But then again, we know something about the study design. At the beginning, participants were in treatment for depression, so we'd expect the starting point to be closer to the lower end of the scale. In that case, we might update our approach to something like `normal(150, 50)`. Feel free to play with alternatives. What I hope this illustrates is that our task would be much easier with more domain knowledge. 
+
+Anyway, given the scale of the data, weakly-regularizing priors for the predictor variables might take the form of something like `normal(0, 25)`. We'll use `student_t(0, 50)` on the $\sigma$s and stay steady with `lkj(4)` on $\rho_{01}$. 
+
+Here we fit the model with all three versions of `time`.
+
+```{r fit16_18, cache = T, warning = F, message = F, results = "hide"}
+fit16 <-
+  brm(data = medication_pp, 
+      family = gaussian,
+      pos ~ 0 + intercept + time + treat + time:treat + (1 + time | id),
+      prior = c(prior(normal(150, 50), class = b, coef = "intercept"),
+                prior(normal(0, 25),   class = b),
+                prior(student_t(3, 0, 50), class = sd),
+                prior(student_t(3, 0, 50), class = sigma),
+                prior(lkj(4), class = cor)),
+      iter = 2000, warmup = 1000, chains = 4, cores = 4,
+      seed = 5)
+
+fit17 <-
+  update(fit16,
+         newdata = medication_pp,
+         pos ~ 0 + intercept + time333 + treat + time333:treat + (1 + time333 | id),
+         iter = 2000, warmup = 1000, chains = 4, cores = 4,
+         seed = 5)
+
+fit18 <-
+  update(fit16,
+         newdata = medication_pp,
+         pos ~ 0 + intercept + time667 + treat + time667:treat + (1 + time667 | id),
+         iter = 2000, warmup = 1000, chains = 4, cores = 4,
+         seed = 5)
+```
+
+Given the size of our posterior standard deviations, our $\gamma$ posteriors are quite comparable to the point estimates (and their standard errors) in the text.
+
+```{r}
+print(fit16)
+```
+
+Given the scales we're working with, it's difficult to compare our $\sigma$ summaries with the $\sigma^2$ summaries in Table 5.10 of the text. Here we convert and resummarize.
+
+```{r}
+v <-
+  posterior_samples(fit16) %>%
+  transmute(sigma_2_0 = sd_id__Intercept^2,
+            sigma_2_1 = sd_id__time^2,
+            sigma_2_epsilon = sigma^2)
+
+v %>% 
+  gather() %>% 
+  group_by(key) %>% 
+  median_qi() %>% 
+  mutate_if(is.double, round, digits = 2)
+```
+
+Turns out the posterior medians are quite similar to the ML estimates in the text. Here's what the entire distributions looks like.
+
+```{r, fig.width = 8, fig.height = 2.5}
+v %>% 
+  set_names("sigma[0]^2", "sigma[1]^2", "sigma[epsilon]^2") %>% 
+  gather() %>%
+  
+  ggplot(aes(x = value, y = 0)) +
+  geom_halfeyeh(.width = .95, scale = "width") +
+  scale_y_continuous(NULL, breaks = NULL) +
+  xlab("posterior") +
+  theme(panel.grid = element_blank(),
+        strip.text = element_text(size = 11)) +
+  facet_wrap(~key, scales = "free", labeller = label_parsed)
+```
+
+Here's our version of Figure 5.5.
+
+```{r, fig.width = 4, fig.height = 2.75}
+nd <-
+  tibble(treat = 0:1) %>% 
+  expand(treat,
+         time = seq(from = 0, to = 7, length.out = 30))
+
+text <-
+  tibble(treat = 0:1,
+         time  = 4,
+         y     = c(135, 197),
+         label = c("control", "treatment"),
+         angle = c(350, 15))
+
+fitted(fit16,
+       newdata = nd,
+       re_formula = NA) %>% 
+  data.frame() %>% 
+  bind_cols(nd) %>% 
+  
+  ggplot(aes(x = time, fill = treat, color = treat, group = treat)) +
+  geom_ribbon(aes(ymin = Q2.5, ymax = Q97.5),
+              alpha = 1/3, size = 0) +
+  geom_line(aes(y = Estimate)) +
+  geom_text(data = text,
+            aes(y = y, label = label, angle = angle)) +
+  scale_fill_viridis_c(option = "A", begin = .3, end = .6) +
+  scale_color_viridis_c(option = "A", begin = .3, end = .6) +
+  labs(x = "days",
+       y = "pos") +
+  theme(panel.grid = element_blank(),
+        legend.position = "none")
+```
+
+Although we still have clear evidence of an interaction, adding those 95% intervals makes it look less impressive, doesn't it?
+
+Here are the summaries for the models with the alternative versions of $(\text{time}_{ij} - c)$.
+
+```{r}
+print(fit17)
+print(fit18)
+```
+
+It might be easier to compare the $\gamma$s across models with a well-designed coefficient plot. Here’s an attempt.
+
+```{r, fig.width = 8, fig.height = 1.5}
+tibble(name    = str_c("fit", 16:18)) %>% 
+  mutate(fit   = map(name, get)) %>% 
+  mutate(fixef = map(fit, ~fixef(.) %>% data.frame() %>% rownames_to_column("parameter"))) %>% 
+  unnest(fixef) %>% 
+  mutate(gamma = rep(c("gamma[0][0]", "gamma[1][0]", "gamma[0][1]", "gamma[1][1]"), times = 3)) %>% 
+  
+  ggplot(aes(x = name, y = Estimate, ymin = Q2.5, ymax = Q97.5)) +
+  geom_pointrange() +
+  xlab(NULL) +
+  coord_flip() +
+  theme(panel.grid = element_blank(),
+        strip.text = element_text(size = 11),
+        axis.ticks.y = element_blank()) +
+  facet_wrap(~gamma, scales = "free_x", labeller = label_parsed, ncol = 4)
+```
+
+Since we're juggling less information, we might compare the posteriors for $\sigma_1^2$ across the three models with good old `tidybayes::geom_halfeyeh()`.
+
+```{r, fig.width = 6, fig.height = 2}
+tibble(name        = str_c("fit", 16:18)) %>% 
+  mutate(fit       = map(name, get)) %>% 
+  mutate(sigma_2_1 = map(fit, ~VarCorr(., summary = F)[[1]][[1]][, 1]^2 %>% 
+                           data.frame() %>% 
+                           set_names("sigma_2_1"))) %>% 
+  unnest(sigma_2_1) %>% 
+  
+  ggplot(aes(x = sigma_2_1, y = name)) +
+  geom_halfeyeh(.width = c(.5, .95)) +
+  labs(x = expression(sigma[1]^2),
+       y = NULL) +
+  theme(panel.grid   = element_blank(),
+        axis.ticks.y = element_blank())
+```
+
+For kicks and giggles, we marked off both 50% and 95% intervals for each. Here's the same for $\rho_{01}$.
+
+```{r, fig.width = 6, fig.height = 2}
+tibble(name        = str_c("fit", 16:18)) %>% 
+  mutate(fit       = map(name, get)) %>% 
+  mutate(rho = map(fit, ~VarCorr(., summary = F)[[1]][[2]][, 2, "Intercept"] %>% 
+                           data.frame() %>% 
+                           set_names("rho"))) %>% 
+  unnest(rho) %>% 
+  
+  ggplot(aes(x = rho, y = name)) +
+  geom_halfeyeh(.width = c(.5, .95)) +
+  coord_cartesian(xlim = -1:1) +
+  labs(x = expression(rho[0][1]),
+       y = NULL) +
+  theme(panel.grid   = element_blank(),
+        axis.ticks.y = element_blank())
+```
+
+"As [Rogosa and Willett (1985)](https://link.springer.com/content/pdf/10.1007/BF02294247.pdf) demonstrate, you can always alter the correlation between the level-1 growth parameters simply by changing the centering constant" (p. 186).
+
+Here are the WAIC comparisons.
+
+```{r}
+fit16 <- add_criterion(fit16, "waic")
+fit17 <- add_criterion(fit17, "waic")
+fit18 <- add_criterion(fit18, "waic")
+
+loo_compare(fit16, fit17, fit18, criterion = "waic") %>% 
+  print(simplify = F)
+
+model_weights(fit16, fit17, fit18, weights = "waic") %>% 
+  round(digits = 3)
+```
+
+As one might hope, not much going on.
+
+As Singer and Willett alluded to in the text (p. 187), the final model in this chapter is an odd one. Do note the `initial` and `final` columns in the data.
+
+```{r}
+glimpse(medication_pp)
+```
+
+With this model
+
+$$
+\begin{align*}
+\text{pos}_{ij} & = \pi_{0i} \bigg (\frac{6.67 - \text{time}_{ij}}{6.67} \bigg ) + \pi_{1i} \bigg (\frac {\text{time}_{ij}}{6.67} \bigg ) + \epsilon_{ij} \\
+\pi_{0i}        & = \gamma_{00} + \gamma_{01} \text{treat}_i + \zeta_{0i} \\
+\pi_{1i}        & = \gamma_{10} + \gamma_{11} \text{treat}_i + \zeta_{1i}.
+\end{align*}
+$$
+
+Because of the parameterization, we'll use both variables simultaneously to indicate time. In the code, below, you’ll notice we no longer have an intercept parameter. Rather, we just have `initial` and `final`. As such, both of those parameters get the same prior we've been using for the intercept in the previous models. 
+
+```{r fit19, cache = T, warning = F, message = F, results = "hide"}
+fit19 <-
+  brm(data = medication_pp, 
+      family = gaussian,
+      pos ~ 0 + initial + final + initial:treat + final:treat + (0 + initial + final | id),
+      prior = c(prior(normal(150, 50), class = b, coef = "initial"),
+                prior(normal(150, 50), class = b, coef = "final"),
+                prior(normal(0, 25),   class = b),
+                prior(student_t(3, 0, 50), class = sd),
+                prior(student_t(3, 0, 50), class = sigma),
+                prior(lkj(4), class = cor)),
+      iter = 2000, warmup = 1000, chains = 4, cores = 4,
+      seed = 5)
+```
+
+Our results are quite similar to those in the text.
+
+```{r}
+print(fit19)
+```
+
+Let's finish up with the WAIC.
+
+```{r}
+fit19 <- add_criterion(fit19, "waic")
+
+loo_compare(fit16, fit17, fit18, fit19, criterion = "waic") %>% 
+  print(simplify = F)
+
+model_weights(fit16, fit17, fit18, fit19, weights = "waic") %>% 
+  round(digits = 3)
+```
+
+All about the same.
 
 ## Reference {-}
 
