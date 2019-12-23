@@ -20,7 +20,7 @@ output:
 
 These are also sometimes referred to as the wide and long data formats, respectively.
 
-As you will see, we will use two primary functions from the tidyverse to convert data from one format to another.
+As you will see, we will use two primary functions from the **tidyverse** to convert data from one format to another.
 
 ### The person-level data set.
 
@@ -48,7 +48,7 @@ tolerance %>%
   nrow()
 ```
 
-With the base R `cor()` function, you can get the Pearson's correlation matrix shown in Table 2.1.
+With the base **R** `cor()` function, you can get the Pearson's correlation matrix shown in Table 2.1.
 
 ```{r}
 cor(tolerance[ , 2:6]) %>%
@@ -63,11 +63,13 @@ It can be hard to see the patters within a matrix of numerals. It might be easie
 cor(tolerance[ , 2:6]) %>%
   data.frame() %>%
   rownames_to_column("row") %>% 
-  gather(column, correlation, -row) %>%
-  mutate(row_order = rep(5:1, times = 5)) %>%
+  pivot_longer(-row,
+               names_to = "column",
+               values_to = "correlation") %>% 
+  mutate(row = factor(row) %>% fct_rev(.)) %>% 
   
   ggplot(aes(x = column, 
-             y = reorder(row, row_order))) + 
+             y = row)) + 
   geom_raster(aes(fill = correlation)) + 
   geom_text(aes(label = round(correlation, digits = 2)),
             size = 3.5) +
@@ -78,7 +80,7 @@ cor(tolerance[ , 2:6]) %>%
   theme(axis.ticks = element_blank())
 ```
 
-And if all you wanted was the lower diagonal, you could use the `lowerCor()` function from the [**psych** package](https://personality-project.org/r/).
+If all you wanted was the lower diagonal, you could use the `lowerCor()` function from the [**psych** package](https://personality-project.org/r/).
 
 ```{r}
 psych::lowerCor(tolerance[ , 2:6])
@@ -96,7 +98,7 @@ tolerance_pp %>%
   slice(c(1:9, 76:80))
 ```
 
-Now simple use of `count()` or `nrow()` won't help us discover how many participants there are in the `tolerance_pp` data. One quick way is to `count()` the number of `distinct()` `id` values.
+With data like these, the simple use of `count()` or `nrow()` won't help us discover how many participants there are in the `tolerance_pp` data. One quick way is to `count()` the number of `distinct()` `id` values.
 
 ```{r}
 tolerance_pp %>% 
@@ -104,12 +106,13 @@ tolerance_pp %>%
   count()
 ```
 
-A fundamental skill is knowing how to convert longitudinal data in one format to the other. If you're using packages within the tidyverse, the `gather()` function will get you from the person-level format to the person-period format.
+A fundamental skill is knowing how to convert longitudinal data in one format to the other. If you're using packages within the **tidyverse**, the `pivot_longer()` function will get you from the person-level format to the person-period format.
 
 ```{r}
 tolerance %>%
   # this is the main event
-  gather(age, tolerance, -id, -male, -exposure) %>% 
+  pivot_longer(-c(id, male, exposure),
+               names_to = "age", values_to = "tolerance") %>% 
   # here we remove the `tol` prefix from the `age` values and then save the numbers as integers
   mutate(age = str_remove(age, "tol") %>% as.integer()) %>% 
   # these last two lines just make the results look more like those in the last code chunk
@@ -117,9 +120,9 @@ tolerance %>%
   slice(c(1:9, 76:80))
 ```
 
-You can learn more about using the `gather()` function this way [here](https://r4ds.had.co.nz/tidy-data.html#spreading-and-gathering) and [here](https://uc-r.github.io/tidyr) and [here](https://tidyr.tidyverse.org/).
+You can learn more about using the `pivot_longer()` function this way [here](https://tidyr.tidyverse.org/reference/pivot_longer.html) and [here](https://tidyr.tidyverse.org/articles/pivot.html).
 
-As hinted at in the above hyperlinks, the opposite of the `gather()` function is `spread()`. We can use `spread()` to convert the person-period `tolerance_pp` data to the same format as the person-level `tolerance` data.
+As hinted at in the above hyperlinks, the opposite of the `pivot_longer()` function is `pivot_wider()`. We can use `pivot_wider()` to convert the person-period `tolerance_pp` data to the same format as the person-level `tolerance` data.
 
 ```{r}
 tolerance_pp %>% 
@@ -128,7 +131,7 @@ tolerance_pp %>%
   # this variable is just in the way. we'll drop it
   select(-time) %>%
   # here's the main action
-  spread(key = age, value = tolerance)
+  pivot_wider(names_from = age, values_from = tolerance)
 ```
 
 ## Descriptive analysis of individual change over time
@@ -185,7 +188,7 @@ tolerance_pp %>%
 
 #### Smoothing the empirical growth trajectory using ~~OLS~~ single-level Bayesian regression.
 
-Although "fitting person-specific regression models, one individual at a time, is hardly the most efficient use of longitudinal data" (p. 28), we may as well play along with the text. It’ll have pedagogical utility. You’ll see.
+Although "fitting person-specific regression models, one individual at a time, is hardly the most efficient use of longitudinal data" (p. 28), we may as well play along with the text. It'll have pedagogical utility. You'll see.
 
 For this section, we'll take a [cue from Hadley Wickham](https://www.youtube.com/watch?v=rz3_FDVt9eg&t=3458s) and use `group_by()` and `nest()` to make a tibble composed of tibbles (i.e., a nested tibble).
 
@@ -202,13 +205,13 @@ You can get a sense of what we did with `head()`.
 by_id %>% head()
 ```
 
-As indexed by `id`, each participant now has their own data set, denoted by the `data` column. To bet a better sense, we'll use our double-bracket subsetting skills to open up the first data set, the one for `id == 9`. If you're not familiar with this skill, you can learn more from [Chapter 9](https://bookdown.org/rdpeng/rprogdatascience/subsetting-r-objects.html) of [Roger Peng](https://twitter.com/rdpeng?lang=en)'s great online book, [*R Programming for Data Science*](https://bookdown.org/rdpeng/rprogdatascience/) or [Jenny Bryan](https://twitter.com/JennyBryan)'s fun and useful talk [*Behind every great plot there's a great deal of wrangling*](https://www.youtube.com/watch?v=4MfUCX_KpdE).
+As indexed by `id`, each participant now has their own data set stored in the `data` column. To get a better sense, we'll use our double-bracket subsetting skills to open up the first data set, the one for `id == 9`. If you're not familiar with this skill, you can learn more from [Chapter 9](https://bookdown.org/rdpeng/rprogdatascience/subsetting-r-objects.html) of [Roger Peng](https://twitter.com/rdpeng?lang=en)'s great online book, [*R Programming for Data Science*](https://bookdown.org/rdpeng/rprogdatascience/) or [Jenny Bryan](https://twitter.com/JennyBryan)'s fun and useful talk [*Behind every great plot there's a great deal of wrangling*](https://www.youtube.com/watch?v=4MfUCX_KpdE).
 
 ```{r}
 by_id$data[[1]]
 ```
 
-So our `by_id` data object has many data sets stored in a higher-level data set. The code we used is verbose, but that's what made it human-readable. Now we have our nested tibble, we can make a function that will fit the simple linear model `tolerance ~ 1 + time` to each id-level data set. *Why use `time` as the predictor?* you ask. On page 29 in the text, Singer and Willett clarified they fit their individual models with $(\text{age} - 11)$ in order to have the model intercepts centered at 11 years old rather than 0. If we wanted to, we could make an $(\text{age} - 11)$ variable like so:
+Our `by_id` data object has many data sets stored in a higher-level data set. The code we used is verbose, but that's what made it human-readable. Now we have our nested tibble, we can make a function that will fit the simple linear model `tolerance ~ 1 + time` to each id-level data set. *Why use `time` as the predictor?* you ask. On page 29 in the text, Singer and Willett clarified they fit their individual models with $(\text{age} - 11)$ in order to have the model intercepts centered at 11 years old rather than 0. If we wanted to, we could make an $(\text{age} - 11)$ variable like so:
 
 ```{r}
 by_id$data[[1]] %>% 
@@ -217,70 +220,84 @@ by_id$data[[1]] %>%
 
 Did you notice how our `age_minus_11` variable is the same as the `time` variable already in the data set? Yep, that's why we'll be using `time` in the model. In our data, $(\text{age} - 11)$ is encoded as `time`.
 
-Singer and Willett used OLS to fit their exploratory models. We could do that to with the `lm()` function and we will do a little of that in thie project. But let's get frisky and fit the models as Bayesians, instead. Our primary statistical package for fitting Bayesian models will be [Paul Bürkner](https://twitter.com/paulbuerkner?lang=en)'s [**brms** package](https://github.com/paul-buerkner/brms). Let's open it up.
+Singer and Willett used OLS to fit their exploratory models. We could do that to with the `lm()` function and we will do a little of that in this project. But let's get frisky and fit the models as Bayesians, instead. Our primary statistical package for fitting Bayesian models will be [Paul Bürkner](https://twitter.com/paulbuerkner?lang=en)'s [**brms**](https://github.com/paul-buerkner/brms). Let's open it up.
 
 ```{r, warning = F, message = F}
 library(brms)
 ```
 
-Since this is our first Bayesian model, we should start slow. The primary model-fitting function in brms is `brm()`. The function is astonishingly general and includes a lot of arguments, most of which have sensible defaults. The primary two arguments are `data` and `formula`. I'm guessing they're self-explanatory. I'm not going to go into detail on the three arguments at the bottom of the code. We'll go over them later. For simple models like these, I would have omitted them entirely, but given the sparsity of the data (i.e., 5 data points per model), I wanted to make sure we gave the algorithm a good chance to arrive at reasonable estimates.
+Since this is our first Bayesian model, we should start slow. The primary model-fitting function in **brms** is `brm()`. The function is astonishingly general and includes a lot of arguments, most of which have sensible defaults. The primary two arguments are `data` and `formula`. I'm guessing they're self-explanatory. I'm not going to go into detail on the three arguments at the bottom of the code. We'll go over them later. For simple models like these, I would have omitted them entirely, but given the sparsity of the data (i.e., 5 data points per model), I wanted to make sure we gave the algorithm a good chance to arrive at reasonable estimates.
 
-```{r fit1, cache = T, warning = F, message = F}
-fit1 <-
+```{r fit2.1, echo = F}
+# save(fit2.1, file = "fits/fit02.01.rda")
+# rm(fit2.1)
+
+load("fits/fit02.01.rda")
+```
+
+```{r, eval = F}
+fit2.1 <-
   brm(data = by_id$data[[1]],
       formula = tolerance ~ 1 + time,
       iter = 8000, chains = 4, cores = 4)
 ```
 
-We just fit a single-level Bayesian regression model for our first participant. We saved the results as an object named `fit1`. We can return a useful summary of `fit1` with either `print()` or `summary()`. Since it's less typing, we'll use `print()`.
+We just fit a single-level Bayesian regression model for our first participant. We saved the results as an object named `fit2.1`. We can return a useful summary of `fit2.1` with either `print()` or `summary()`. Since it's less typing, we'll use `print()`.
 
 ```{r}
-print(fit1)
+print(fit2.1)
 ```
 
-The 'Intercept' and 'time' coefficients are the primary regression parameters. Also notice 'sigma', which is our variant of the residual standard error you might from an OLS output (i.e., from base R `lm()`). Since we're Bayesians, we don't get $p$-values in the output summaries. But we do get posterior standard deviations (i.e., the 'Est.Error' column) and the upper- and lower-levels of the percentile-based 95% intervals.
+The 'Intercept' and 'time' coefficients are the primary regression parameters. Also notice 'sigma', which is our variant of the residual standard error you might from an OLS output (i.e., from base **R** `lm()`). Since we're Bayesians, we don't get $p$-values in the output summaries. But we do get posterior standard deviations (i.e., the 'Est.Error' column) and the upper- and lower-levels of the percentile-based 95% intervals.
 
-You probably heard somewhere that Bayesian statistics require priors. Since we didn't specify any, the `brm()` function did so for us. We can see what those were by pulling them out of our `fit1` object.
+You probably heard somewhere that Bayesian statistics require priors. Since we didn't specify any, the `brm()` function did so for us. We can see what those were by pulling them out of our `fit2.1` object.
 
 ```{r}
-fit1$prior
+fit2.1$prior
 ```
 
 **brms** default priors are designed to be weakly informative. Given the data and the model, these priors have a minimal influence on the results. We'll focus more on priors later in the project. For now just recognize that even if you don't specify your priors, you can't escape using some priors when using `brm()`. This is a good thing.
 
 Okay, so that was the model for just one participant. We want to do that for all 16. Instead of repeating that code 15 times, let's work in bulk. With **brms**, you can reuse a model with the `update()` function. Here's how to do that for our second participant.
 
-```{r fit2, cache = T, warning = F, message = F, results = "hide"}
-fit2 <-
-  update(fit1, 
+```{r fit2.2, echo = F}
+# save(fit2.2, file = "fits/fit02.02.rda")
+# rm(fit2.2)
+
+load("fits/fit02.02.rda")
+```
+
+```{r, eval = F}
+fit2.2 <-
+  update(fit2.1, 
          newdata = by_id$data[[2]])
 ```
 
 Peek at the results.
 
 ```{r}
-print(fit2)
+print(fit2.2)
 ```
 
-Different participant, different model results.
+Different participants yield different model results.
 
 Looking ahead a bit, we'll need to know how to get the $R^2$ for a single-level Gaussian model. With **brms**, you do that with the `bayes_R2()` function.
 
 ```{r}
-bayes_R2(fit2)
+bayes_R2(fit2.2)
 ```
 
 Though the default spits out summary statistics, you can get the full posterior distribution for the $R^2$ by specifying `summary = F`.
 
 ```{r}
-bayes_R2(fit2, summary = F) %>% 
+bayes_R2(fit2.2, summary = F) %>% 
   str()
 ```
 
-This returns a numeric vector. If you'd like to plot the results with ggplot2, you'll need to convert it to a data frame.
+This returns a numeric vector. If you'd like to plot the results with **ggplot2**, you'll need to convert it to a data frame.
 
 ```{r, fit.width = 4, fig.height = 2}
-bayes_R2(fit2, summary = F) %>% 
+bayes_R2(fit2.2, summary = F) %>% 
   data.frame() %>% 
   
   ggplot(aes(x = R2)) +
@@ -291,10 +308,10 @@ bayes_R2(fit2, summary = F) %>%
   theme(panel.grid = element_blank())
 ```
 
-You'll note how non-Gaussian the Bayesian $R^2$ can be. Also, with only 5 data points + default minimally-informative priors in our `id`-specific model, there' massive uncertainty in the shape. As such, the value of central tendency will vary widely based on which statistic you use.
+You'll note how non-Gaussian the Bayesian $R^2$ can be. Also, with the combination of default minimally-informative priors and only 5 data points, there' massive uncertainty in the shape. As such, the value of central tendency will vary widely based on which statistic you use.
 
 ```{r}
-bayes_R2(fit2, summary = F) %>% 
+bayes_R2(fit2.2, summary = F) %>% 
   data.frame() %>% 
   summarise(mean   = mean(R2),
             median = median(R2),
@@ -310,10 +327,10 @@ With a little tricky programing, we can use the `purrr::map()` function to seria
 ```{r models, cache = T, warning = F, message = F, results = "hide"}
 models <- 
   by_id %>%
-  mutate(model = map(data, ~update(fit1, newdata = .)))
+  mutate(model = map(data, ~update(fit2.1, newdata = .)))
 ```
 
-Let’s walk through what we did. The `map()` function takes two primary arguments, `.x` and `.f`, respectively. We set `.x = data`, which meant we wanted to iterate over the contents in our `data` vector. Recall that each row of `data` itself contained an entire data set—one for each of the 16 participants. It's with the second argument `.f` that we indicated what we wanted to do with our rows of `data`. We set that to `.f = ~update(fit1, newdata = .)`. With the `~` syntax, we entered in a formula, which was `update(fit1, newdata = .)`. Just like we did with `fit2`, above, we reused the model formula and other technical specs from `fit1`. Now notice the last part of the formula, `newdata = .`. That little `.` refers to the element we specified in the `.x` argument. What this combination means is that for each of the 16 rows of our nested `by_id` tibble, we plugged in the `id`-specific data set into `update(fit, newdata[[i]])` where `i` is simply meant as a row index. The new column, `model`, contains the output of each of the 16 iterations.
+Let's walk through what we did. The `map()` function takes two primary arguments, `.x` and `.f`, respectively. We set `.x = data`, which meant we wanted to iterate over the contents in our `data` vector. Recall that each row of `data` itself contained an entire data set—one for each of the 16 participants. It's with the second argument `.f` that we indicated what we wanted to do with our rows of `data`. We set that to `.f = ~update(fit2.1, newdata = .)`. With the `~` syntax, we entered in a formula, which was `update(fit2.1, newdata = .)`. Just like we did with `fit2.2`, above, we reused the model formula and other technical specs from `fit2.1`. Now notice the last part of the formula, `newdata = .`. That little `.` refers to the element we specified in the `.x` argument. What this combination means is that for each of the 16 rows of our nested `by_id` tibble, we plugged in the `id`-specific data set into `update(fit, newdata[[i]])` where `i` is simply meant as a row index. The new column, `model`, contains the output of each of the 16 iterations.
 
 ```{r}
 print(models)
@@ -321,25 +338,28 @@ print(models)
 
 Next, we'll want to extract the necessary summary information from our `models` to remake our version of Table 2.2. There's a lot of info in that table. So let's take it step by step. First we'll extract the posterior means (i.e., "Estimate") and standard deviations (i.e., "se") for the initial status and rate of change of each model. We'll also do the same for sigma (i.e., the square of the "Residual variance").
 
-```{r}
+```{r, message = F}
 mean_structure <-
   models %>% 
   mutate(coefs = map(model, ~ posterior_summary(.)[1:2, 1:2] %>% 
                        data.frame() %>% 
                        rownames_to_column("coefficients"))) %>% 
   unnest(coefs) %>% 
+  select(-data, -model) %>% 
   unite(temp, Estimate, Est.Error) %>% 
-  spread(key = coefficients, value = temp) %>% 
+  pivot_wider(names_from = coefficients,
+              values_from = temp) %>% 
   separate(b_Intercept, into = c("init_stat_est", "init_stat_sd"), sep = "_") %>% 
   separate(b_time, into = c("rate_chante_est", "rate_chante_sd"), sep = "_") %>% 
-  mutate_if(is.character, ~ as.double(.) %>% round(digits = 2))
+  mutate_if(is.character, ~ as.double(.) %>% round(digits = 2)) %>% 
+  ungroup()
 
 head(mean_structure)
 ```
 
-It's a little simpler to extract the residual variance. Recall that because **brms** gives that in the standard deviation metric (i.e., $\sigma$), you need to square it to return it in a variance metric (i.e., $\sigma^2$).
+It's simpler to extract the residual variance. Recall that because **brms** gives that in the standard deviation metric (i.e., $\sigma$), you need to square it to return it in a variance metric (i.e., $\sigma^2$).
 
-```{r}
+```{r, message = F}
 residual_variance <-
   models %>% 
   mutate(residual_variance = map_dbl(model, ~ posterior_summary(.)[3, 1])^2) %>% 
@@ -351,7 +371,7 @@ head(residual_variance)
 
 Next, we'll extract our Bayesian $R^2$ summaries. Given how nonnormal these are, we'll use the posterior median rather than the mean. We get that by using the `robust = T` argument within the `bayes_R2()` function.
 
-```{r}
+```{r, message = F}
 r2 <-
   models %>% 
   mutate(r2 = map_dbl(model, ~ bayes_R2(., robust = T)[1])) %>% 
@@ -455,38 +475,43 @@ tolerance_pp %>%
 
 But we wanted to be Bayesians. We already have the `id`-specific trajectories. All we need now is one based on all the data.
 
-```{r fit3, cache = T, warning = F, message = F, results = "hide"}
-fit3 <-
-  update(fit1, 
+```{r fit2.3, echo = F}
+# save(fit2.3, file = "fits/fit02.03.rda")
+# rm(fit2.3)
+
+load("fits/fit02.03.rda")
+```
+
+```{r, eval = F}
+fit2.3 <-
+  update(fit2.1, 
          newdata = tolerance_pp)
 ```
 
 Here's the model summary.
 
 ```{r}
-summary(fit3)
+summary(fit2.3)
 ```
 
 Before, we used `posterior_summary()` to isolate the posterior means and $SD$s. We can also use the `fixef()` function for that.
 
 ```{r}
-fixef(fit3)
+fixef(fit2.3)
 ```
 
 And with subsetting, we can extract just the means from each.
 
 ```{r}
-fixef(fit3)[1, 1]
-fixef(fit3)[2, 1]
+fixef(fit2.3)[1, 1]
+fixef(fit2.3)[2, 1]
 ```
 
-For this plot, we'll work more directly with the model formulas to plot the trajectories. We can use `init_stat_est` and `rate_chante_est` from the `mean_structure` object as stand-ins for $\beta_0_\text{id}$ and $\beta_1_\text{id}$ from our model equation,
+For this plot, we'll work more directly with the model formulas to plot the trajectories. We can use `init_stat_est` and `rate_chante_est` from the `mean_structure` object as stand-ins for $\beta_{0i}$ and $\beta_{1i}$ from our model equation,
 
-$$
-\text{tolerance}_\text{id} = \beta_0_\text{id} + \beta_1_\text{id} \cdot \text{time}_\text{id} + \epsilon_\text{id}.
-$$
+$$\text{tolerance}_{ij} = \beta_{0i} + \beta_{1i} \cdot \text{time}_{ij} + \epsilon_{ij},$$
 
-All we need to do is plug in the appropriate values for `time` and we'll have the fitted `tolerance` values for each level of `id`. After a little wrangling, the data will be in good shape for plotting.
+where $i$ indexes children and $j$ indexes time points. All we need to do is plug in the appropriate values for `time` and we'll have the fitted `tolerance` values for each level of `id`. After a little wrangling, the data will be in good shape for plotting.
 
 ```{r}
 tol_fitted <-
@@ -494,20 +519,22 @@ tol_fitted <-
   mutate(`11` = init_stat_est + rate_chante_est * 0,
          `15` = init_stat_est + rate_chante_est * 4) %>% 
   select(id, `11`, `15`) %>% 
-  gather(age, tolerance, -id) %>% 
+  pivot_longer(-id, 
+               names_to = "age", 
+               values_to = "tolerance") %>% 
   mutate(age = as.integer(age))
 
 head(tol_fitted)
 ```
 
-We’ll plot the `id`-level trajectories with those values and `geom_line()`. To get the overall trajectory, we’ll get tricky with `fixef(fit3)` and `geom_abline()`.
+We'll plot the `id`-level trajectories with those values and `geom_line()`. To get the overall trajectory, we'll get tricky with `fixef(fit2.3)` and `geom_abline()`.
 
 ```{r, fig.width = 2.5, fig.height = 3.25}
 tol_fitted %>% 
   ggplot(aes(x = age, y = tolerance, group = id)) +
   geom_line(color = "blue", size = 1/4) +
-  geom_abline(intercept = fixef(fit3)[1, 1] + fixef(fit3)[2, 1] * -11,
-              slope     = fixef(fit3)[2, 1],
+  geom_abline(intercept = fixef(fit2.3)[1, 1] + fixef(fit2.3)[2, 1] * -11,
+              slope     = fixef(fit2.3)[2, 1],
               color = "blue", size = 2) +
   coord_cartesian(ylim = 0:4) +
   theme(panel.grid = element_blank()) 
@@ -525,9 +552,8 @@ Here are the means and standard deviations presented in Table 2.3.
 
 ```{r}
 mean_structure %>% 
-  select(init_stat_est, rate_chante_est) %>% 
-  gather() %>% 
-  group_by(key) %>% 
+  pivot_longer(ends_with("est")) %>% 
+  group_by(name) %>% 
   summarise(mean = mean(value),
             sd   = sd(value)) %>% 
   mutate_if(is.double, round, digits = 2)
@@ -550,9 +576,16 @@ mean_structure %>%
 
 If we'd like Bayesian estimates differing by `male`, we'll need to fit an interaction model.
 
-```{r fit4, cache = T, warning = F, message = F, results = "hide"}
-fit4 <-
-  update(fit1, 
+```{r fit2.4, echo = F}
+# save(fit2.4, file = "fits/fit02.04.rda")
+# rm(fit2.4)
+
+load("fits/fit02.04.rda")
+```
+
+```{r, eval = F}
+fit2.4 <-
+  update(fit2.1, 
          newdata = tolerance_pp,
          tolerance ~ 1 + time + male + time:male)
 ```
@@ -560,7 +593,7 @@ fit4 <-
 Check the model summary.
 
 ```{r}
-print(fit4)
+print(fit2.4)
 ```
 
 Here's how to use `fixef()` and the model equation to get fitted values for `tolerance` based on specific values for `time` and `male`.
@@ -570,10 +603,10 @@ tol_fitted_male <-
   tibble(male      = rep(0:1, each = 2),
          age       = rep(c(11, 15), times = 2)) %>% 
   mutate(time      = age - 11) %>% 
-  mutate(tolerance = fixef(fit4)[1, 1] + 
-           fixef(fit4)[2, 1] * time + 
-           fixef(fit4)[3, 1] * male + 
-           fixef(fit4)[4, 1] * time * male)
+  mutate(tolerance = fixef(fit2.4)[1, 1] + 
+           fixef(fit2.4)[2, 1] * time + 
+           fixef(fit2.4)[3, 1] * male + 
+           fixef(fit2.4)[4, 1] * time * male)
 
 tol_fitted_male
 ```
@@ -598,19 +631,26 @@ tol_fitted %>%
   facet_wrap(~male)
 ```
 
-Before we can do the same thing with `exposure`, we'll need to dichotomize it by its median. A simple way is with a conditional statement within the `ifelse()` function.
+Before we can do the same thing with `exposure`, we'll need to dichotomize it by its median. A simple way is with a conditional statement within the `if_else()` function.
 
 ```{r}
 tolerance_pp <-
   tolerance_pp %>% 
-  mutate(exposure_01 = ifelse(exposure > median(exposure), 1, 0))
+  mutate(exposure_01 = if_else(exposure > median(exposure), 1, 0))
 ```
 
 Now fit the second interaction model.
 
-```{r fit5, cache = F, warning = F, message = F, results = "hide"}
-fit5 <-
-  update(fit4, 
+```{r fit2.5, echo = F}
+# save(fit2.5, file = "fits/fit02.05.rda")
+# rm(fit2.5)
+
+load("fits/fit02.05.rda")
+```
+
+```{r, eval = F}
+fit2.5 <-
+  update(fit2.4, 
          newdata = tolerance_pp,
          tolerance ~ 1 + time + exposure_01 + time:exposure_01)
 ```
@@ -618,33 +658,37 @@ fit5 <-
 Here's the summary.
 
 ```{r}
-print(fit5)
+print(fit2.5)
 ```
 
 Now use `fixef()` and the model equation to get fitted values for `tolerance` based on specific values for `time` and `exposure_01`.
 
 ```{r}
 tol_fitted_exposure <-
-  tibble(exposure_01 = rep(0:1, each = 2),
-         age         = rep(c(11, 15), times = 2)) %>% 
+  crossing(exposure_01 = 0:1,
+           age         = c(11, 15)) %>% 
   mutate(time        = age - 11) %>% 
-  mutate(tolerance   = fixef(fit5)[1, 1] + 
-           fixef(fit5)[2, 1] * time + 
-           fixef(fit5)[3, 1] * exposure_01 + 
-           fixef(fit5)[4, 1] * time * exposure_01)
+  mutate(tolerance   = fixef(fit2.5)[1, 1] + 
+           fixef(fit2.5)[2, 1] * time + 
+           fixef(fit2.5)[3, 1] * exposure_01 + 
+           fixef(fit2.5)[4, 1] * time * exposure_01,
+         exposure = if_else(exposure_01 == 1, "high exposure", "low exposure") %>% 
+           factor(., levels = c("low exposure", "high exposure")))
 
 tol_fitted_exposure
 ```
 
-Now make our Bayesian version of the bottom panels of Figure 2.7.
+Did you notice in the last lines in the second `mutate()` how we made a version of `exposure` that is a factor? That will come in handy for labeling and ordering the subplots. Now make our Bayesian version of the bottom panels of Figure 2.7.
 
 ```{r, fig.width = 5, fig.height = 3.25}
 tol_fitted %>% 
   # we need to add `exposure_01` values to `tol_fitted`
   left_join(tolerance_pp %>% select(id, exposure_01),
             by = "id") %>% 
+  mutate(exposure = if_else(exposure_01 == 1, "high exposure", "low exposure") %>% 
+           factor(., levels = c("low exposure", "high exposure"))) %>% 
   
-  ggplot(aes(x = age, y = tolerance, color = factor(exposure_01))) +
+  ggplot(aes(x = age, y = tolerance, color = exposure)) +
   geom_line(aes(group = id),
             size = 1/4) +
   geom_line(data = tol_fitted_exposure,
@@ -653,66 +697,77 @@ tol_fitted %>%
   coord_cartesian(ylim = 0:4) +
   theme(panel.grid = element_blank(),
         legend.position = "none") +
-  facet_wrap(~exposure_01)
+  facet_wrap(~exposure)
 ```
 
 #### The relationship between ~~OLS-Estimated~~ single-level Bayesian trajectories and substantive predictors
 
-Here are the left panels of Figure 2.8.
+"To investigate whether fitted trajectories vary systematically with predictors, we can treat the estimated intercepts and slopes as outcomes and explore the relationship between them and predictors" (p. 39). Here are the left panels of Figure 2.8.
 
 ```{r, fig.width = 2.5, fig.height = 5}
-mean_structure %>% 
-  select(id, init_stat_est, rate_chante_est) %>% 
-  gather(key, value, -id) %>% 
-  mutate(key = factor(key, labels = c("Fitted inital status", "Fitted rate of change"))) %>% 
+p1 <-
+  mean_structure %>% 
+  pivot_longer(ends_with("est")) %>% 
+  mutate(name = factor(name, labels = c("Fitted inital status", "Fitted rate of change"))) %>% 
   # we need to add `male` values to `tol_fitted`
   left_join(tolerance_pp %>% select(id, male),
             by = "id") %>% 
   
-  ggplot(aes(x = factor(male), y = value, color = key)) +
+  ggplot(aes(x = factor(male), y = value, color = name)) +
   geom_point(alpha = 1/2) +
   scale_color_viridis_d(option = "B", begin = .2, end = .7) +
   labs(x = "male",
        y = NULL) +
   theme(panel.grid = element_blank(),
         legend.position = "none") +
-  facet_wrap(~key, scale = "free_y", ncol = 1)
+  facet_wrap(~name, scale = "free_y", ncol = 1)
+
+p1
 ```
 
 Here are the right panels.
 
 ```{r, fig.width = 2.5, fig.height = 5}
-mean_structure %>% 
-  select(id, init_stat_est, rate_chante_est) %>% 
-  gather(key, value, -id) %>% 
-  mutate(key = factor(key, labels = c("Fitted inital status", "Fitted rate of change"))) %>% 
+p2 <-
+  mean_structure %>% 
+  pivot_longer(ends_with("est")) %>% 
+  mutate(name = factor(name, labels = c("Fitted inital status", "Fitted rate of change"))) %>% 
   # we need to add `male` values to `tol_fitted`
   left_join(tolerance_pp %>% select(id, exposure),
             by = "id") %>% 
   
-  ggplot(aes(x = exposure, y = value, color = key)) +
+  ggplot(aes(x = exposure, y = value, color = name)) +
   geom_point(alpha = 1/2) +
   scale_color_viridis_d(option = "B", begin = .2, end = .7) +
   scale_x_continuous(breaks = 0:2,
                      limits = c(0, 2.4)) +
-  labs(x = "male",
-       y = NULL) +
+  labs(y = NULL) +
   theme(panel.grid = element_blank(),
         legend.position = "none") +
-  facet_wrap(~key, scale = "free_y", ncol = 1)
+  facet_wrap(~name, scale = "free_y", ncol = 1)
+
+p2
+```
+
+Did you notice how we saved those last two plots as `p1` and `p2`. We can use syntax from the [**patchwork** package](https://github.com/thomasp85/patchwork) to combine them into one compound plot.
+
+```{r, fig.width = 5, fig.height = 5}
+library(patchwork)
+
+p1 + p2 + scale_y_continuous(breaks = NULL)
 ```
 
 As interesting as these plots are, do remember that "the need for ad hoc correlations has been effectively replaced by the widespread availability of computer software for fitting the multilevel model for change directly" (pp. 41--42). As you'll see, Bürkner's **brms** package is one of the foremost in that regard.
 
 ## Improving the precision and reliability of ~~OLS~~ single-level-Bayesian-estimated rates of change: Lessons for research design
 
-> Statisticians assess the precision of a parameter estimate in terms of its *sampling variation*, a measure of the variability that would be found across infinite resamplings from the same population. The most common measure of sampling variability is an estimate’s *standard error*, the square root of its estimated sampling variance. Precision and standard error have an inverse relationship; the smaller the standard error, the more precise the estimate. (p. 41, *emphasis* in the original)
+> Statisticians assess the precision of a parameter estimate in terms of its *sampling variation*, a measure of the variability that would be found across infinite resamplings from the same population. The most common measure of sampling variability is an estimate's *standard error*, the square root of its estimated sampling variance. Precision and standard error have an inverse relationship; the smaller the standard error, the more precise the estimate. (p. 41, *emphasis* in the original)
 
-So here’s the deal: When Singer and Willett wrote "Statisticians assess..." a more complete expression would have been 'Frequentist statisticians assess...' Bayesian statistics are not based on asymptotic theory. They do not presume an idealized infinite distribution of replications. Rather, Bayesian statistics use Bayes theorem to estimate the probability of the parameters given the data. That probability has a distribution. Analogous to frequentist statistics, we often summarize that distribution (i.e., the posterior distribution) in terms of central tendency (e.g., posterior mean, posterior median, posterior mode) and spread. *Spread?* you say. We typically express spread in one or both of two ways. One typical expression of spread is the 95% intervals. In the Bayesian world, these are often called credible or probability intervals. The other typical expression of spread is the *posterior standard deviation*. In brms, this of typically summarized in the 'Est.error' column. The posterior standard deviation is analogous to the frequentist standard error. Philosophically and mechanically, they are not the same. But in practice, they are often quite similar.
+So here's the deal: When Singer and Willett wrote "Statisticians assess..." a more complete expression would have been 'Frequentist statisticians assess...' Bayesian statistics are not based on asymptotic theory. They do not presume an idealized infinite distribution of replications. Rather, Bayesian statistics use Bayes theorem to estimate the probability of the parameters given the data. That probability has a distribution. Analogous to frequentist statistics, we often summarize that distribution (i.e., the posterior distribution) in terms of central tendency (e.g., posterior mean, posterior median, posterior mode) and spread. *Spread?* you say. We typically express spread in one or both of two ways. One typical expression of spread is the 95% intervals. In the Bayesian world, these are often called credible or probability intervals. The other typical expression of spread is the *posterior standard deviation*. In **brms**, this of typically summarized in the 'Est.error' column of the output of functions like `print()` and `posterior_summary()` and so on. The posterior standard deviation is analogous to the frequentist standard error. Philosophically and mechanically, they are *not* the same. But in practice, they are often quite similar.
 
 Later we read:
 
-> Unlike precision which describes how well an individual slope estimate measures that person’s true rate of change, reliability describes how much the rate of change varies across people. Precision has meaning for the individual; reliability has meaning for the group. (p. 42)
+> Unlike precision which describes how well an individual slope estimate measures that person's true rate of change, reliability describes how much the rate of change varies across people. Precision has meaning for the individual; reliability has meaning for the group. (p. 42)
 
 I have to protest. True, if we were working within a Classical Test Theory paradigm, this would be correct. But this places reliability with the context of group-based cross-sectional design. Though this is a popular design, it is not the whole story (i.e., see this book!). For introductions to more expansive and person-specific notions of reliability, check out Cronbach's Generalizability Theory ([Cronbach, Gleser, Nanda, & Rajaratnam, 1972](https://www.amazon.com/Dependability-Behavioral-Measurements-Generalizability-Profiles/dp/0471188506); [Brennan, 2001](https://www.springer.com/us/book/9780387952826); also [Cranford, Shrout, Iida, Rafaeli, Yip, & Bolger, 2006](https://journals.sagepub.com/doi/pdf/10.1177/0146167206287721?casa_token=okVoJxGFt0UAAAAA:4TWd7Imln0hZc3f2VDPlMvaI5omrI_F_9lUDtkd8i6nn0h_VE-g-f_ZrwB608HWaUqT0v1eJgcD_JA); [LoPilato, Carter, & Wang , 2015](https://journals.sagepub.com/doi/pdf/10.1177/0149206314554215?casa_token=AYMEPAKydVQAAAAA:oqFgrMlto2rhdlZrgdLaOUvvJO9s9BJ5jek4UA6eVL7Zz5tmKqYgoX_jGvKd9ZX9_bdgV39ZcJXlmQ); [Shrout & Lane, 2012](https://psycnet.apa.org/record/2012-05165-017)).
 
@@ -728,7 +783,7 @@ sessionInfo()
 
 ```{r, echo = F}
 # here we'll remove our objects
-rm(tolerance, tolerance_pp, by_id, fit1, fit2, models, mean_structure, residual_variance, r2, table, fit3, tol_fitted, fit4, tol_fitted_male, fit5, tol_fitted_exposure)
+rm(tolerance, tolerance_pp, by_id, fit2.1, fit2.2, models, mean_structure, residual_variance, r2, table, fit2.3, tol_fitted, fit2.4, tol_fitted_male, fit2.5, tol_fitted_exposure, p1, p2)
 
 theme_set(theme_grey())
 ```
