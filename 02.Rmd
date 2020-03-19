@@ -24,7 +24,7 @@ As you will see, we will use two primary functions from the **tidyverse** to con
 
 ### The person-level data set.
 
-Here we load the person-level data from [this UCLA web site](https://stats.idre.ucla.edu/r/examples/alda/r-applied-longitudinal-data-analysis-ch-2/). These are the data shown in the top of Figure 2.1.
+Here we load the person-level data from [this UCLA web site](https://stats.idre.ucla.edu/r/examples/alda/r-applied-longitudinal-data-analysis-ch-2/). These are the NLY data (see [Raudenbush & Chan, 1992](https://journals.sagepub.com/doi/10.1177/0022427892029004001)) shown in the top of Figure 2.1.
 
 ```{r, warning = F, message = F}
 library(tidyverse)
@@ -68,13 +68,11 @@ cor(tolerance[ , 2:6]) %>%
                values_to = "correlation") %>% 
   mutate(row = factor(row) %>% fct_rev(.)) %>% 
   
-  ggplot(aes(x = column, 
-             y = row)) + 
+  ggplot(aes(x = column, y = row)) + 
   geom_raster(aes(fill = correlation)) + 
   geom_text(aes(label = round(correlation, digits = 2)),
             size = 3.5) +
-  scale_fill_gradient(low = "white", high = "red4",
-                      limits = c(0, 1)) +
+  scale_fill_gradient(low = "white", high = "red4", limits = c(0, 1)) +
   scale_x_discrete(NULL, position = "top", expand = c(0, 0)) +
   scale_y_discrete(NULL, expand = c(0, 0)) +
   theme(axis.ticks = element_blank())
@@ -112,7 +110,8 @@ A fundamental skill is knowing how to convert longitudinal data in one format to
 tolerance %>%
   # this is the main event
   pivot_longer(-c(id, male, exposure),
-               names_to = "age", values_to = "tolerance") %>% 
+               names_to = "age", 
+               values_to = "tolerance") %>% 
   # here we remove the `tol` prefix from the `age` values and then save the numbers as integers
   mutate(age = str_remove(age, "tol") %>% as.integer()) %>% 
   # these last two lines just make the results look more like those in the last code chunk
@@ -136,7 +135,7 @@ tolerance_pp %>%
 
 ## Descriptive analysis of individual change over time
 
-The following "descriptive analyses [are intended to] reveal the nature and idiosyncrasies of each person’s temporal pattern of growth, addressing the question: How does each person change over time" (p. 23)?
+The following "descriptive analyses [are intended to] reveal the nature and idiosyncrasies of each person's temporal pattern of growth, addressing the question: How does each person change over time" (p. 23)?
 
 ### Empirical growth plots.
 
@@ -228,18 +227,12 @@ library(brms)
 
 Since this is our first Bayesian model, we should start slow. The primary model-fitting function in **brms** is `brm()`. The function is astonishingly general and includes a lot of arguments, most of which have sensible defaults. The primary two arguments are `data` and `formula`. I'm guessing they're self-explanatory. I'm not going to go into detail on the three arguments at the bottom of the code. We'll go over them later. For simple models like these, I would have omitted them entirely, but given the sparsity of the data (i.e., 5 data points per model), I wanted to make sure we gave the algorithm a good chance to arrive at reasonable estimates.
 
-```{r fit2.1, echo = F}
-# save(fit2.1, file = "fits/fit02.01.rda")
-# rm(fit2.1)
-
-load("fits/fit02.01.rda")
-```
-
-```{r, eval = F}
+```{r fit2.1}
 fit2.1 <-
   brm(data = by_id$data[[1]],
       formula = tolerance ~ 1 + time,
-      iter = 8000, chains = 4, cores = 4)
+      iter = 4000, chains = 4, cores = 4,
+      file = "fits/fit02.01")
 ```
 
 We just fit a single-level Bayesian regression model for our first participant. We saved the results as an object named `fit2.1`. We can return a useful summary of `fit2.1` with either `print()` or `summary()`. Since it's less typing, we'll use `print()`.
@@ -248,7 +241,7 @@ We just fit a single-level Bayesian regression model for our first participant. 
 print(fit2.1)
 ```
 
-The 'Intercept' and 'time' coefficients are the primary regression parameters. Also notice 'sigma', which is our variant of the residual standard error you might from an OLS output (i.e., from base **R** `lm()`). Since we're Bayesians, we don't get $p$-values in the output summaries. But we do get posterior standard deviations (i.e., the 'Est.Error' column) and the upper- and lower-levels of the percentile-based 95% intervals.
+The 'Intercept' and 'time' coefficients are the primary regression parameters. Also notice 'sigma', which is our variant of the residual standard error you might from an OLS output (e.g., from base **R** `lm()`). Since we're Bayesians, we don't get $p$-values in the output summaries. But we do get posterior standard deviations (i.e., the 'Est.Error' column) and the upper- and lower-levels of the percentile-based 95% intervals.
 
 You probably heard somewhere that Bayesian statistics require priors. Since we didn't specify any, the `brm()` function did so for us. We can see what those were by pulling them out of our `fit2.1` object.
 
@@ -260,17 +253,11 @@ fit2.1$prior
 
 Okay, so that was the model for just one participant. We want to do that for all 16. Instead of repeating that code 15 times, let's work in bulk. With **brms**, you can reuse a model with the `update()` function. Here's how to do that for our second participant.
 
-```{r fit2.2, echo = F}
-# save(fit2.2, file = "fits/fit02.02.rda")
-# rm(fit2.2)
-
-load("fits/fit02.02.rda")
-```
-
-```{r, eval = F}
+```{r fit2.2}
 fit2.2 <-
   update(fit2.1, 
-         newdata = by_id$data[[2]])
+         newdata = by_id$data[[2]],
+         file = "fits/fit02.02")
 ```
 
 Peek at the results.
@@ -302,9 +289,8 @@ bayes_R2(fit2.2, summary = F) %>%
   
   ggplot(aes(x = R2)) +
   geom_density(fill = "black") +
+  scale_x_continuous(expression(Bayesian~italic(R)^2), limits = c(0, 1)) +
   scale_y_continuous(NULL, breaks = NULL) +
-  xlim(0, 1) +
-  xlab(expression(paste("Bayesian ", italic(R)^2))) +
   theme(panel.grid = element_blank())
 ```
 
@@ -330,7 +316,7 @@ models <-
   mutate(model = map(data, ~update(fit2.1, newdata = .)))
 ```
 
-Let's walk through what we did. The `map()` function takes two primary arguments, `.x` and `.f`, respectively. We set `.x = data`, which meant we wanted to iterate over the contents in our `data` vector. Recall that each row of `data` itself contained an entire data set—one for each of the 16 participants. It's with the second argument `.f` that we indicated what we wanted to do with our rows of `data`. We set that to `.f = ~update(fit2.1, newdata = .)`. With the `~` syntax, we entered in a formula, which was `update(fit2.1, newdata = .)`. Just like we did with `fit2.2`, above, we reused the model formula and other technical specs from `fit2.1`. Now notice the last part of the formula, `newdata = .`. That little `.` refers to the element we specified in the `.x` argument. What this combination means is that for each of the 16 rows of our nested `by_id` tibble, we plugged in the `id`-specific data set into `update(fit, newdata[[i]])` where `i` is simply meant as a row index. The new column, `model`, contains the output of each of the 16 iterations.
+Let's walk through what we did. The `map()` function takes two primary arguments, `.x` and `.f`, respectively. We set `.x = data`, which meant we wanted to iterate over the contents in our `data` vector. Recall that each row of `data` itself contained an entire data set--one for each of the 16 participants. It's with the second argument `.f` that we indicated what we wanted to do with our rows of `data`. We set that to `.f = ~update(fit2.1, newdata = .)`. With the `~` syntax, we entered in a formula, which was `update(fit2.1, newdata = .)`. Just like we did with `fit2.2`, above, we reused the model formula and other technical specs from `fit2.1`. Now notice the last part of the formula, `newdata = .`. That little `.` refers to the element we specified in the `.x` argument. What this combination means is that for each of the 16 rows of our nested `by_id` tibble, we plugged in the `id`-specific data set into `update(fit, newdata[[i]])` where `i` is simply meant as a row index. The new column, `model`, contains the output of each of the 16 iterations.
 
 ```{r}
 print(models)
@@ -369,7 +355,7 @@ residual_variance <-
 head(residual_variance)
 ```
 
-Next, we'll extract our Bayesian $R^2$ summaries. Given how nonnormal these are, we'll use the posterior median rather than the mean. We get that by using the `robust = T` argument within the `bayes_R2()` function.
+We'll extract our Bayesian $R^2$ summaries, next. Given how nonnormal these are, we'll use the posterior median rather than the mean. We get that by using the `robust = T` argument within the `bayes_R2()` function.
 
 ```{r, message = F}
 r2 <-
@@ -436,8 +422,7 @@ by_id %>%
               aes(intercept = init_stat_est,
                   slope = rate_chante_est, group = id),
               color = "blue") +
-  scale_x_continuous(breaks = 0:4,
-                     labels = 0:4 + 11) +
+  scale_x_continuous(breaks = 0:4, labels = 0:4 + 11) +
   coord_cartesian(ylim = 0:4) +
   theme(panel.grid = element_blank()) +
   facet_wrap(~id)
@@ -475,17 +460,11 @@ tolerance_pp %>%
 
 But we wanted to be Bayesians. We already have the `id`-specific trajectories. All we need now is one based on all the data.
 
-```{r fit2.3, echo = F}
-# save(fit2.3, file = "fits/fit02.03.rda")
-# rm(fit2.3)
-
-load("fits/fit02.03.rda")
-```
-
-```{r, eval = F}
+```{r fit2.3}
 fit2.3 <-
   update(fit2.1, 
-         newdata = tolerance_pp)
+         newdata = tolerance_pp,
+         file = "fits/fit02.03")
 ```
 
 Here's the model summary.
@@ -576,18 +555,12 @@ mean_structure %>%
 
 If we'd like Bayesian estimates differing by `male`, we'll need to fit an interaction model.
 
-```{r fit2.4, echo = F}
-# save(fit2.4, file = "fits/fit02.04.rda")
-# rm(fit2.4)
-
-load("fits/fit02.04.rda")
-```
-
-```{r, eval = F}
+```{r fit2.4}
 fit2.4 <-
   update(fit2.1, 
          newdata = tolerance_pp,
-         tolerance ~ 1 + time + male + time:male)
+         tolerance ~ 1 + time + male + time:male,
+         file = "fits/fit02.04")
 ```
 
 Check the model summary.
@@ -600,9 +573,9 @@ Here's how to use `fixef()` and the model equation to get fitted values for `tol
 
 ```{r}
 tol_fitted_male <-
-  tibble(male      = rep(0:1, each = 2),
-         age       = rep(c(11, 15), times = 2)) %>% 
-  mutate(time      = age - 11) %>% 
+  tibble(male = rep(0:1, each = 2),
+         age  = rep(c(11, 15), times = 2)) %>% 
+  mutate(time = age - 11) %>% 
   mutate(tolerance = fixef(fit2.4)[1, 1] + 
            fixef(fit2.4)[2, 1] * time + 
            fixef(fit2.4)[3, 1] * male + 
@@ -626,8 +599,8 @@ tol_fitted %>%
             size = 2) +
   scale_color_viridis_d(end = .75) +
   coord_cartesian(ylim = 0:4) +
-  theme(panel.grid = element_blank(),
-        legend.position = "none") +
+  theme(legend.position = "none",
+        panel.grid = element_blank()) +
   facet_wrap(~male)
 ```
 
@@ -641,18 +614,12 @@ tolerance_pp <-
 
 Now fit the second interaction model.
 
-```{r fit2.5, echo = F}
-# save(fit2.5, file = "fits/fit02.05.rda")
-# rm(fit2.5)
-
-load("fits/fit02.05.rda")
-```
-
-```{r, eval = F}
+```{r fit2.5}
 fit2.5 <-
   update(fit2.4, 
          newdata = tolerance_pp,
-         tolerance ~ 1 + time + exposure_01 + time:exposure_01)
+         tolerance ~ 1 + time + exposure_01 + time:exposure_01,
+         file = "fits/fit02.05")
 ```
 
 Here's the summary.
@@ -667,8 +634,8 @@ Now use `fixef()` and the model equation to get fitted values for `tolerance` ba
 tol_fitted_exposure <-
   crossing(exposure_01 = 0:1,
            age         = c(11, 15)) %>% 
-  mutate(time        = age - 11) %>% 
-  mutate(tolerance   = fixef(fit2.5)[1, 1] + 
+  mutate(time = age - 11) %>% 
+  mutate(tolerance = fixef(fit2.5)[1, 1] + 
            fixef(fit2.5)[2, 1] * time + 
            fixef(fit2.5)[3, 1] * exposure_01 + 
            fixef(fit2.5)[4, 1] * time * exposure_01,
@@ -695,8 +662,8 @@ tol_fitted %>%
             size = 2) +
   scale_color_viridis_d(option = "A", end = .75) +
   coord_cartesian(ylim = 0:4) +
-  theme(panel.grid = element_blank(),
-        legend.position = "none") +
+  theme(legend.position = "none",
+        panel.grid = element_blank()) +
   facet_wrap(~exposure)
 ```
 
@@ -718,8 +685,8 @@ p1 <-
   scale_color_viridis_d(option = "B", begin = .2, end = .7) +
   labs(x = "male",
        y = NULL) +
-  theme(panel.grid = element_blank(),
-        legend.position = "none") +
+  theme(legend.position = "none",
+        panel.grid = element_blank()) +
   facet_wrap(~name, scale = "free_y", ncol = 1)
 
 p1
@@ -742,8 +709,8 @@ p2 <-
   scale_x_continuous(breaks = 0:2,
                      limits = c(0, 2.4)) +
   labs(y = NULL) +
-  theme(panel.grid = element_blank(),
-        legend.position = "none") +
+  theme(legend.position = "none",
+        panel.grid = element_blank()) +
   facet_wrap(~name, scale = "free_y", ncol = 1)
 
 p2
