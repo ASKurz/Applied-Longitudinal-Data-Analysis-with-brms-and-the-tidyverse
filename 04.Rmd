@@ -1052,19 +1052,6 @@ Like the $\gamma$s, our variance components are all similar to those in the text
 ```{r}
 bind_cols(
   posterior_samples(fit4.2) %>% 
-  transmute(fit2_sigma_2_epsilon = sigma^2,
-            fit2_sigma_2_0 = sd_id__Intercept^2,
-            fit2_sigma_2_1 = sd_id__age_14^2),
-  posterior_samples(fit4.5) %>% 
-  transmute(fit2_sigma_2_epsilon = sigma^2,
-            fit2_sigma_2_0 = sd_id__Intercept^2,
-            fit2_sigma_2_1 = sd_id__age_14^2)
-)
-```
-
-```{r}
-bind_cols(
-  posterior_samples(fit4.2) %>% 
   transmute(fit4.2_sigma_2_epsilon = sigma^2,
             fit4.2_sigma_2_0 = sd_id__Intercept^2,
             fit4.2_sigma_2_1 = sd_id__age_14^2),
@@ -1362,7 +1349,7 @@ The reasons frequentists multiply the LL by -2 is because after doing so, the di
 
 As for the frequentists, deviance values in the Bayesian context are only meaningful in the relative sense. You cannot directly interpret single deviance values by their magnitudes or signs. But you can compare two or more models by their relative deviance values. When doing so, they must have been computed using the same data (i.e., no differences in missingness in the predictors) and the models must be nested.
 
-However, in contemporary Bayesian practice we don't tend to compare models with deviance. For details on why, check out chapter 6 in McElreath's [*Statistical Rethinking*](https://xcelab.net/rm/statistical-rethinking/). McElreath also covered the topic in several online lectures (e.g., [here](https://www.youtube.com/watch?v=vSjL2Zc-gEQ&list=PLDcUM9US4XdMdZOhJWJJD4mDBMnbTWw_z&index=8) and [here](https://www.youtube.com/watch?v=gjrsYDJbRh0&list=PLDcUM9US4XdNM4Edgs7weiyIguLSToZRI&index=8)).
+However, in contemporary Bayesian practice we don't tend to compare models with deviance. For details on why, check out Chapter 6 in McElreath's [*Statistical Rethinking*](https://xcelab.net/rm/statistical-rethinking/). McElreath also covered the topic in several online lectures (e.g., [here](https://www.youtube.com/watch?v=vSjL2Zc-gEQ&list=PLDcUM9US4XdMdZOhJWJJD4mDBMnbTWw_z&index=8) and [here](https://www.youtube.com/watch?v=gjrsYDJbRh0&list=PLDcUM9US4XdNM4Edgs7weiyIguLSToZRI&index=8)).
 
 ### 4.6.3 Implementing deviance-based hypothesis tests.
 
@@ -1615,7 +1602,7 @@ f <-
          re_formula = NA) %>%
   data.frame() %>%
   bind_cols(nd) %>%
-  mutate(age  = age_14 + 14) 
+  mutate(age = age_14 + 14) 
 
 f %>%
 
@@ -1630,7 +1617,7 @@ f %>%
         panel.grid = element_blank())
 ``` 
 
-Recall that the result of our Bayesian analyses are the probability of the parameters given the data (i.e., $p(\theta | d)$). Based on our plot, there is much less than a .05 probability either intercept or slope for teens of this demographic are zero. If you really wanted to fixate on zero, you could even use `geom_hline()` to insert a horizontal line at zero in the figure. But all that fixating on zero detracts from what to my mind are the more important parts of the model. The intercept at `age = 14` is about 1/3 and the endpoint when `age = 16` is almost at 1. Those are our effect sizes. If you wanted to quantify those effect sizes more precisely, just query our `fitted()` object, `f`.
+Recall that the result of our Bayesian analyses are the probability of the parameters given the data (i.e., $p(\theta | d)$). Based on our plot, there is much less than a .05 probability either intercept or slope for teens of this demographic are zero. If you really wanted to fixate on zero, you could even use `geom_hline()` to insert a horizontal line at zero in the figure. But all that fixating on zero detracts from what to my mind are the more important parts of the model. The intercept at `age = 14` is about 1/3 and the endpoint when `age = 16` is almost at $1$. Those are our effect sizes. If you wanted to quantify those effect sizes more precisely, just query our `fitted()` object, `f`.
 
 ```{r}
 f %>% 
@@ -1639,7 +1626,7 @@ f %>%
   mutate_all(round, digits = 2)
 ```
 
-Works like a champ. But we haven’t fully covered part of Singer and Willett’s joint hypothesis text. They proposed a joint Null that included the $\gamma_{10} = 0$. Though it’s clear from the plot that the trajectory increases, we can address the issue more directly with a difference score. For our difference, we’ll subtract the estimate at `age = 14` from the one at `age = 15`. But to that, we’ll have to return to `fitted()`. So far, we’ve been using the default output which returns summaries of the posterior. To compute a proper difference score, we’ll need to work with all the posterior draws in order to approximate the full distribution. We do that by setting `summary = F`. And since we’re only interested in the estimates from these two `age` values, we’ll streamline our `nd` data.
+Works like a champ. But we haven't fully covered part of Singer and Willett's joint hypothesis text. They proposed a joint Null that included the $\gamma_{10} = 0$. Though it’s clear from the plot that the trajectory increases, we can address the issue more directly with a difference score. For our difference, we'll subtract the estimate at `age = 14` from the one at `age = 15`. But to that, we'll have to return to `fitted()`. So far, we’ve been using the default output which returns summaries of the posterior. To compute a proper difference score, we’ll need to work with all the posterior draws in order to approximate the full distribution. We do that by setting `summary = F`. And since we're only interested in the estimates from these two `age` values, we’ll streamline our `nd` data.
 
 ```{r}
 nd <-
@@ -1657,7 +1644,7 @@ f <-
 str(f)
 ```
 
-Now our `f` object has 4000 rows and 2 columns. Each of the rows corresponds to one of the 4000 post-warmup posterior draws. The columns correspond to the two rows in our `nd` data. To get a slope based on this combination of predictor values, we simply subtract the first column from the second.
+Now our `f` object has 4,000 rows and 2 columns. Each of the rows corresponds to one of the 4,000 post-warmup posterior draws. The columns correspond to the two rows in our `nd` data. To get a slope based on this combination of predictor values, we simply subtract the first column from the second.
 
 ```{r, fig.width = 4, fig.height = 3}
 f <-
@@ -1668,7 +1655,7 @@ f %>%
   ggplot(aes(x = difference)) +
   geom_density(size = 0, fill = "grey25") +
   scale_y_continuous(NULL, breaks = NULL) +
-  labs(subtitle = "Based on 4000 posterior draws, not a single one\nsuggests the slope is even close to zero. Rather, the\nposterior mass is concentrated around 0.25.",
+  labs(subtitle = "Based on 4,000 posterior draws, not a single one\nsuggests the slope is even close to zero. Rather, the\nposterior mass is concentrated around 0.25.",
        x = expression(paste(gamma[0][1], " (i.e., the difference between the two time points)"))) +
   coord_cartesian(xlim = 0:1) +
   theme(panel.grid = element_blank())
@@ -1689,7 +1676,7 @@ On page 125, Singer and Willett further mused:
 
 Within their joint hypothesis testing paradigm, they pose this as testing
 
-$$H_0: 0\gamma_{00} + 0\gamma_{01} + 1\gamma_{02} + 0\gamma_{10} + 2\gamma_{12} = 0$$
+$$H_0: 0\gamma_{00} + 0\gamma_{01} + 1\gamma_{02} + 0\gamma_{10} + 2\gamma_{12} = 0.$$
 
 From our perspective, this is a differences of differences analysis. That is, first we'll compute the model implied `alcuse` estimates for the four combinations of the two levels of `age` and `peer`, holding `coa` constant at 0. Second, we'll compute the differences between the two `peer` levels at each `age`. Third and finally, we'll compute a difference of those differences.
 
@@ -1698,9 +1685,8 @@ For our first step, recall it was `fit4.7` that used the `cpeer` variable.
 ```{r}
 # first step
 nd <-
-  tibble(age_14 = c(0, 2)) %>% 
-  expand(age_14,
-         cpeer = c(-.363, .363)) %>% 
+  crossing(age_14 = c(0, 2),
+           cpeer  = c(-.363, .363)) %>% 
   mutate(coa = 0)
 
 head(nd)
