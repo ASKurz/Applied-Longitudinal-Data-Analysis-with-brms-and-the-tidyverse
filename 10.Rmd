@@ -14,7 +14,7 @@ options(width = 100)
 
 > In this chapter, [Singer and Willett presented] a framework for describing discrete-time event occurrence data.... As we will [see], the conceptual linchpin for all subsequent survival methods is to approach the analysis on a period-by-period basis. This allows you to examine event occurrence sequentially among those individuals eligible to experience the event at each discrete point in time. (p. 325)
 
-## 10.1 The life table
+## The life table
 
 > The fundamental tool for summarizing the sample distribution of event occurrence is the *life table*. As befits its name, a life table tracks the event histories (the "lives") of a sample of individuals from the beginning of time (when no one has yet experienced the target event) through the end of data collection. (p. 326, *emphasis* in the original)
 
@@ -37,35 +37,35 @@ library(survival)
 
 Here we'll use the `survfit()` function to compute survival curves. Within the `survfit()` function, we'll use the `Surv()` function to make a survival object, which will become the criterion within the model formula. It takes two basic arguments, `time` and `event`. With the `teachers` data, `t` is time in years. In the data, events are encoded in `censor`. However, it's important to understand how the `event` argument expects the data. From the [**survival** reference manual](https://cran.r-project.org/web/packages/survival/survival.pdf), we read that `event` is "the status indicator, normally `0=alive`, `1=dead`. Other choices are `TRUE/FALSE` (`TRUE = death`) or `1/2` (`2=death`)." Note that whereas within our data `censor` is coded `0 = event` `1 = censored`, the `event` argument expects the opposite. A quick way to solve that is to enter `1 - censor`.
 
-```{r}
-fit1 <- survfit(data = teachers,
-                Surv(t, 1 - censor) ~ 1)
+```{r fit10.1}
+fit10.1 <- survfit(data = teachers,
+                   Surv(t, 1 - censor) ~ 1)
 ```
 
 Use the `str()` function to survey the results.
 
 ```{r}
-fit1 %>% str()
+fit10.1 %>% str()
 ```
 
-We can retrieve the values for the "Year" column from `fit1$time`. The values in the "Time interval" column are a simple transformation from there.
+We can retrieve the values for the "Year" column from `fit10.1$time`. The values in the "Time interval" column are a simple transformation from there.
 
 ```{r}
-fit1$time
+fit10.1$time
 ```
 
-We can find the values in the "Employed at the beginning of the year" column in `fit1$n.risk` and those in the "Who left during the year" column in `fit1$n.event`.
+We can find the values in the "Employed at the beginning of the year" column in `fit10.1$n.risk` and those in the "Who left during the year" column in `fit10.1$n.event`.
 
 ```{r}
-fit1$n.risk
-fit1$n.event
+fit10.1$n.risk
+fit10.1$n.event
 ```
 
 We'll have to work a little harder to compute the values in the "Censored at the end of the year column." Here we'll walk it through in a data frame format.
 
 ```{r}
-data.frame(n_risk  = fit1$n.risk,
-           n_event = fit1$n.event) %>% 
+data.frame(n_risk  = fit10.1$n.risk,
+           n_event = fit10.1$n.event) %>% 
   mutate(n_risk_1 = lead(n_risk, default = 0)) %>% 
   mutate(n_censored = n_risk - n_event - n_risk_1)
 ```
@@ -75,26 +75,26 @@ That is, to get the number of those censored at the end of a given year, you tak
 To get the values in the "Teachers at the beginning of the year who left during the year" column, which is in a proportion metric, we use division.
 
 ```{r}
-fit1$n.event / fit1$n.risk
+fit10.1$n.event / fit10.1$n.risk
 ```
 
-Finally, to pull the values in the "All teachers still employed at the end of the year" column, we just execute `fit1$surv`.
+Finally, to pull the values in the "All teachers still employed at the end of the year" column, we just execute `fit10.1$surv`.
 
 ```{r}
-fit1$surv
+fit10.1$surv
 ```
 
 Let's put that all together in a tibble.
 
 ```{r}
 most_rows <-
-  tibble(year = fit1$time) %>% 
+  tibble(year = fit10.1$time) %>% 
   mutate(time_int   = str_c("[", year, ", ", year + 1, ")"), 
-         n_employed = fit1$n.risk, 
-         n_left     = fit1$n.event) %>% 
+         n_employed = fit10.1$n.risk, 
+         n_left     = fit10.1$n.event) %>% 
   mutate(n_censored   = n_employed - n_left - lead(n_employed, default = 0),
          hazard_fun   = n_left / n_employed,
-         survivor_fun = fit1$surv)
+         survivor_fun = fit10.1$surv)
 
 most_rows
 ```
@@ -105,7 +105,7 @@ The only thing missing from our version of Table 10.1 is we don't have a row for
 row_1 <-
   tibble(year         = 0, 
          time_int     = "[0, 1)", 
-         n_employed   = fit1$n.risk[1], 
+         n_employed   = fit10.1$n.risk[1], 
          n_left       = NA, 
          n_censored   = NA, 
          hazard_fun   = NA, 
@@ -124,7 +124,7 @@ We might walk out the notation in our `time_int` column a bit. Those intervals
 
 The values in the `n_employed` column the *risk set*, those who are "*eligible* to experience the event during that interval" (p. 329, *emphasis* in the original).
 
-## 10.2 A framework for characterizing the distribution of discrete-time event occurrence data
+## A framework for characterizing the distribution of discrete-time event occurrence data
 
 > The fundamental quantity used to assess the risk of event occurrence in each discrete time period is known as *hazard.* Denoted by $h(t_{ij})$, discrete time hazard is the *conditional probability that individual* $i$ *will experience the event time in period* $j$, *given that he or she did not experience it in any earlier time period*. Because hazard represents the risk of the event occurrence in each discrete time period among those people eligible to experience the event (those in the risk set) hazard tells us precisely what we want to know: whether and when events occurs. (p. 330, *emphasis* in the original)
 
@@ -157,7 +157,7 @@ d %>%
   theme(panel.grid = element_blank())
 ```
 
-### 10.2.2 Survivor function.
+### Survivor function.
 
 The survivor function provides another way of describing the distribution of event occurrence over time. Unlike the hazard function, which assesses the unique risk associated with each time period, the survivor function cumulates these period-by-period risks of event occurrence (or more properly, nonoccurrence) together to assess the probability that a randomly selected individual will survive will not experience the event.
 
@@ -178,7 +178,7 @@ d %>%
   theme(panel.grid = element_blank())
 ```
 
-### 10.2.3 Median lifetime.
+### Median lifetime.
 
 > Having characterized the *distribution* of event times using the hazard and survivor functions, we often want to identify the distribution's center. Were there no censoring, all event times would be known, and we could compute a sample mean. But because of censoring, another estimate of central tendency is preferred: the *median lifetime*.
 >
@@ -249,7 +249,7 @@ d %>%
   mutate(`survival rate (%)` = (100 * survivor_fun) %>% round(digits = 0))
 ```
 
-## 10.3 Developing intuition about hazard functions, survivor functions, and median lifetimes
+## Developing intuition about hazard functions, survivor functions, and median lifetimes
 
 > Developing intuition about these sample statistics requires exposure to estimates computed from a wide range of studies. To jump-start this process, we review results from four studies that differ across three salient dimensions--the type of event investigated, the metric used to record discrete time, and most important, the underlying profile of risk--and discuss how we would examine, and describe, the estimated hazard functions, survivor functions, and median lifetimes. (p. 339)
 
@@ -269,20 +269,20 @@ congress <- read_csv("data/congress.csv")
 
 We have a lot of leg work in front of use before we can recreate Figure 10.2. First, we'll feed each of the four data sets into the `survfit()` function.
 
-```{r}
-fit2 <- 
+```{r fit10.2}
+fit10.2 <- 
   survfit(data = cocaine,
           Surv(week, 1 - censor) ~ 1)
 
-fit3 <- 
+fit10.3 <- 
   survfit(data = sex,
           Surv(time, 1 - censor) ~ 1)
 
-fit4 <- 
+fit10.4 <- 
   survfit(data = suicide,
           Surv(time, 1 - censor) ~ 1)
 
-fit5 <- 
+fit10.5 <- 
   survfit(data = congress,
           Surv(time, 1 - censor) ~ 1)
 ```
@@ -322,16 +322,15 @@ make_lt <- function(fit) {
   lt
   
 }
-
 ```
 
 Use `make_lt()` to make the four life tables.
 
 ```{r}
-lt_cocaine  <- make_lt(fit2)
-lt_sex      <- make_lt(fit3)
-lt_suicide  <- make_lt(fit4)
-lt_congress <- make_lt(fit5)
+lt_cocaine  <- make_lt(fit10.2)
+lt_sex      <- make_lt(fit10.3)
+lt_suicide  <- make_lt(fit10.4)
+lt_congress <- make_lt(fit10.5)
 ```
 
 You'll note that the four survival curve plots in Figure 10.2 all show the medial lifetime using the interpolation method. Here we'll save the necessary steps to compute that for each model as the `make_iml()` function.
@@ -421,8 +420,7 @@ h_plot <- function(data = data,
 Now we'll make a similar custom plotting function, `s_plot()`, for the hazard function plots on the right column of Figure 10.2.
 
 ```{r}
-s_plot <- function(data = data, 
-                   xlab = xlab, xbreaks = xbreaks, xlimits = xlimits) {
+s_plot <- function(data = data, xlab = xlab, xbreaks = xbreaks, xlimits = xlimits) {
   
   # compute the imterpolated median life value
   iml <- make_iml(data)
@@ -519,7 +517,7 @@ p78 <- (p7 + p8) + plot_annotation(title = "D") & theme(plot.margin = margin(0, 
 
 Boom! Looks like a dream.
 
-### 10.3.1 Identifying periods of high and low risk using hazard functions.
+### Identifying periods of high and low risk using hazard functions.
 
 It can be useful to evaluate hazard functions based on whether they are *monotonic* (i.e., have a single distinctive peak and single distinctive trough) and *nonmonotonic* (i.e., have multiple distinctive peaks or troughs). Globally speaking, the hazard functions for rows `A` and `B` are monotonic and the remaining two are nonmonotonic. 
 
@@ -527,7 +525,7 @@ Singer and Willett remarked "monotonically increasing hazard functions are commo
 
 However, when risk is constant over time, hazard functions will not have peaks or troughs.
 
-### 10.3.2 Survivor functions as a context for evaluating the magnitude of hazard.
+### Survivor functions as a context for evaluating the magnitude of hazard.
 
 Unlike with hazard functions, all survivor functions decrease or stay constant over time. They are monotonic (i.e., they never switch direction, they never increase). From the text (p. 344), we learn three ways hazard functions relate to survival functions:
 
@@ -535,29 +533,29 @@ Unlike with hazard functions, all survivor functions decrease or stay constant o
 * *When hazard is low, the survivor function drops slowly*.
 * *When hazard is zero, the survivor function remains unchanged*.
 
-### 10.3.3 Strengths and limitations of estimated median lifetimes.
+### Strengths and limitations of estimated median lifetimes.
 
 > When examining a median lifetime, we find it helpful to remember three important limitations on its interpretation. First, it identifies only an "average" event time; it tells us little about the distribution of even times and is relatively insensitive to extreme values. Second, the median lifetime is not necessarily a moment when the target event is *especially* likely to occur.... Third, the median lifetime reveals little about the distribution of risk over time; identical median lifetimes can result from dramatically different survivor and hazard functions. (pp. 345--346, *emphasis* in the original)
 
 Without access to Singer and Willett's hypothetical data, we're not in a good position to recreate their Figure 10.3. Even the [good folks at IDRE](https://stats.idre.ucla.edu/r/examples/alda/r-applied-longitudinal-data-analysis-ch-10/) gave up on that one.
 
-## 10.4 Quantifying the effects of sampling variation
+## Quantifying the effects of sampling variation
 
 We can quantify the uncertainty in the estimates with standard errors.
 
-### 10.4.1 The standard error of the estimated hazard probabilities.
+### The standard error of the estimated hazard probabilities.
 
 The formula for the frequentist standard errors for the hazard probabilities follows the form
 
 $$se \big (\hat h(t_j) \big) = \sqrt{\frac{\hat h(t_j) \big (1 - \hat h(t_j) \big)}{n \text{ at risk}_j}}.$$
 
-We can express that equation **R** code to recreate the first four columns of Table 10.2. We'll be pulling much of the information from `fit1`. But to show our work within a tibble format, we'll be adding a column after $n_j$. Our additional `n_event` column will contain the information pulled from `fit1$n.event`, which we'll use to compute the $\hat h(t_j)$.
+We can express that equation **R** code to recreate the first four columns of Table 10.2. We'll be pulling much of the information from `fit10.1`. But to show our work within a tibble format, we'll be adding a column after $n_j$. Our additional `n_event` column will contain the information pulled from `fit10.1$n.event`, which we'll use to compute the $\hat h(t_j)$.
 
 ```{r}
 se_h_hat <-
-  tibble(year    = fit1$time,
-         n_j     = fit1$n.risk,
-         n_event = fit1$n.event) %>% 
+  tibble(year    = fit10.1$time,
+         n_j     = fit10.1$n.risk,
+         n_event = fit10.1$n.event) %>% 
   mutate(h_hat = n_event / n_j) %>% 
   mutate(se_h_hat = sqrt((h_hat * (1 - h_hat)) / n_j))
 
@@ -607,7 +605,7 @@ crossing(n_j   = c(100, 1000, 10000),
   facet_wrap(~n_j, nrow = 1, labeller = label_parsed)
 ```
 
-### 10.4.2 Standard error of the estimated survival probabilities.
+### Standard error of the estimated survival probabilities.
 
 Computing the standard errors for estimated survival probabilities is more difficult because these are the products of (1 - hazard) for the current and all previous survival probabilities. Computing them is such a pain, Singer and Willett recommend you rely on Greenwood's ([1926](https://www.cabdirect.org/cabdirect/abstract/19272700028)) approximation. This follows the form
 
@@ -619,29 +617,29 @@ Here we put the formula to work and finish our version of Table 10.2. For the sa
 # suspend scientific notation
 options(scipen = 999)
 
-tibble(year    = fit1$time,
-       n_j     = fit1$n.risk,
-       n_event = fit1$n.event) %>% 
+tibble(year    = fit10.1$time,
+       n_j     = fit10.1$n.risk,
+       n_event = fit10.1$n.event) %>% 
   mutate(h_hat = n_event / n_j) %>% 
   mutate(se_h_hat = sqrt((h_hat * (1 - h_hat)) / n_j),
-         s_hat    = fit1$surv,
+         s_hat    = fit10.1$surv,
          term     = cumsum(h_hat / (n_j * (1 - h_hat)))) %>% 
   mutate(se_s_hat = s_hat * sqrt(term),
-         std.err  = fit1$std.err)
+         std.err  = fit10.1$std.err)
 ```
 
 For comparisson, we also added the $se \big (\hat S(t_j) \big)$ values coputed by the **survivor** package in the final column, `std.err`.
 
 ```{r, fig.width = 6, fig.height = 3}
-tibble(year    = fit1$time,
-       n_j     = fit1$n.risk,
-       n_event = fit1$n.event) %>% 
+tibble(year    = fit10.1$time,
+       n_j     = fit10.1$n.risk,
+       n_event = fit10.1$n.event) %>% 
   mutate(h_hat = n_event / n_j) %>% 
   mutate(se_h_hat = sqrt((h_hat * (1 - h_hat)) / n_j),
-         s_hat    = fit1$surv,
+         s_hat    = fit10.1$surv,
          term     = cumsum(h_hat / (n_j * (1 - h_hat)))) %>% 
   mutate(Greenwood = s_hat * sqrt(term),
-         `survival package`  = fit1$std.err) %>% 
+         `survival package`  = fit10.1$std.err) %>% 
   pivot_longer(Greenwood:`survival package`) %>% 
   mutate(name = factor(name,
                        levels = c("survival package", "Greenwood"))) %>% 
@@ -664,7 +662,7 @@ It's out of my expertise to comment on which should we should trust more. But Si
 options(scipen = 0)
 ```
 
-## 10.5 A simple and useful strategy for constructing the life table
+## A simple and useful strategy for constructing the life table
 
 > How can you construct a life table for *your* data set? For preliminary analyses, it is easy to use the prepackaged routines available in the major statistical packages. If you choose this approach, be sure to check whether your package allows you to: (1) select the partition of time; and (2) ignore any actuarial corrections invoked due to continuous-time assumptions (that do not hold in discrete time). When event times have been measured using a discrete-time scale, actuarial corrections (discussed in chapter13) are inappropriate. Although most packages clearly document the algorithm being used, we suggest that you double-check by comparing results with one or two estimates computed by hand. (p. 351, *emphasis* in the original)
 
@@ -672,7 +670,7 @@ For more information about the methods we've been using via the **survival** pac
 
 > Despite the simplicity of preprogrammed algorithms, [Singer and Willett] prefer an alternative approach for life table construction. This approach requires construction of a person-period data set, much like the period-period data set used for growth modeling. Once you create the person-period data set, you can compute descriptive statistics sing any standard cross-tabulation routine. (p. 351)
 
-### 10.5.1 The person-period data set.
+### The person-period data set.
 
 Here is the person-level data set displayed in Figure 10.4; it's just a subset of the `teachers` data.
 
@@ -726,7 +724,7 @@ teachers_pp %>%
   count(event)
 ```
 
-### 10.5.2 Using the person-period data set to construct the life table.
+### Using the person-period data set to construct the life table.
 
 ```{r}
 teachers_lt <-
@@ -772,15 +770,15 @@ teachers_pp %>%
               values_from = total)
 ```
 
-### 10.6 Bonus: Fit the discrete survival models with brms
+### Bonus: Fit the discrete survival models with brms
 
 The frequentists aren't the only ones who can discrete survival models. Us Bayesians can get in on the fun, too. The first step is to decide on an appropriate likelihood function. Why? Because Bayes' formula requires we define the likelihood and the priors. As all the parameters in the model are seen through the lens of the likelihood, it's important we consider it with care. 
 
 Happily, the exercises in the last section did a great job preparing us for the task. In Table 10.3, Singer and Willett hand computed the discrete hazards (i.e., the values in the "Proportion *EVENT* = 1" column) by dividing the valued in the "*EVENT* = 1" column by those in the "Total" column. Discrete hazards are proportions. Proportions have two important characteristics; they are continuous and necessarily range between 0 and 1. You know what else has those characteristics? Probabilities. 
 
-So far in this text, we have primarily focused on models using the Gaussian likelihood. Though it's a workhorse, the Gaussian is inappropriate for modeling proportions/probabilities. Though good old Gauss is great at modeling unbounded continuous data, it can fail miserably when working with bounded data and our proportions/probabilities are most certainly bounded. The binomial likelihood, however, is well-suited for handling probabilities. Imagine you have data that can take on values of 0 and 1, such as failures/successes, no’s/yesses, fails/passes, and no-events/events. If you sum up all the 1's and divide them by the total cases, you get a proportion/probability. The simple binomial model take just that kind of data—the number of 1's and the number of total cases. The formula for the binomial likelihood follows the form
+So far in this text, we have primarily focused on models using the Gaussian likelihood. Though it's a workhorse, the Gaussian is inappropriate for modeling proportions/probabilities. Though good old Gauss is great at modeling unbounded continuous data, it can fail miserably when working with bounded data and our proportions/probabilities are most certainly bounded. The binomial likelihood, however, is well-suited for handling probabilities. Imagine you have data that can take on values of 0 and 1, such as failures/successes, no's/yesses, fails/passes, and no-events/events. If you sum up all the 1's and divide them by the total cases, you get a proportion/probability. The simple binomial model take just that kind of data—the number of 1's and the number of total cases. The formula for the binomial likelihood follows the form
 
-$$\text{Pr} (z | n, p) = \frac{n!}{z!(n - z)!} p^z (1 - p)^{n - z},$$
+$$\operatorname{Pr} (z | n, p) = \frac{n!}{z!(n - z)!} p^z (1 - p)^{n - z},$$
 
 where $z$ is the number of cases for which the value is 1, $n$ is the total number of cases, and $p$ is the constant chance of a 1 across cases. As the data provide us with $z$ and $n$, we end up estimating $p$. And if we're willing to use what's called a *link function*, we can estimate $p$ with a linear model with any number of predictors. When fitting binomial regression models, you can take your choice among several link functions. The most popular is the logit link. This will be our approach. As you may have guesses, using the logit link to fit a binomial model is often termed *logistic regression*. Welcome to the generalized linear model. 
 
@@ -801,26 +799,27 @@ teachers_lt <-
 
 With this formulation, `event` is our $z$ term and `total` is our $n$ term. We're estimating $p$. Behold the mode syntax.
 
-```{r fit6, warning = F, message = F, cache = T, results = "hide"}
-fit6 <-
+```{r fit10.6}
+fit10.6 <-
   brm(data = teachers_lt,
       family = binomial,
       event | trials(total) ~ 0 + period,
       prior(normal(0, 4), class = b),
       chains = 4, cores = 1, iter = 2000, warmup = 1000,
-      seed = 10)
+      seed = 10,
+      file = "fits/fit10.06")
 ```
 
 Check the summary.
 
 ```{r}
-print(fit6)
+print(fit10.6)
 ```
 
 Because we used the `0 + Intercept` syntax in the presence of a factor predictor, `period`, we suppressed the default intercept. Instead, we have separate "intercepts" for each of the 12 levels `period`. Because we used the confentinal logit link, the parameters are all on the log-odds scale. Happily, we can use the `brms::inv_logit_scaled()` function to convert them back into the probability metric. Here's a quick and dirty conversion using the output from `fixef()`.
 
 ```{r}
-fixef(fit6) %>% inv_logit_scaled()
+fixef(fit10.6) %>% inv_logit_scaled()
 ```
 
 Compare these `Estimate` values with the values in the "Estimated hazard probability" column from Table 10.2 in the text (p. 349). They are very close. We can go further and look at these hazard estimates in a plot. We'll use the `tidybayes::stat_lineribbon()` function to plot their posterior means atop their 50% and 95% intervals.
@@ -828,7 +827,7 @@ Compare these `Estimate` values with the values in the "Estimated hazard probabi
 ```{r, fig.width = 6, fig.height = 3}
 library(tidybayes)
 
-posterior_samples(fit6) %>% 
+posterior_samples(fit10.6) %>% 
   select(starts_with("b_")) %>% 
   mutate_all(inv_logit_scaled) %>% 
   set_names(1:12) %>% 
@@ -840,8 +839,8 @@ posterior_samples(fit6) %>%
   ggplot(aes(x = period, y = hazard)) +
   stat_lineribbon(.width = c(.5, .95), size = 1/3) +
   # add the hazard estimates from `survival::survfit()`
-  geom_point(data = tibble(period = fit1$time,
-                           hazard = fit1$n.event / fit1$n.risk),
+  geom_point(data = tibble(period = fit10.1$time,
+                           hazard = fit10.1$n.event / fit10.1$n.risk),
              aes(y = hazard),
              size = 2, color = "violetred1") +
   scale_fill_manual("CI", values = c("grey75", "grey60")) +
@@ -857,7 +856,7 @@ For comparison sake, those violet dots in the foreground are the hazard estimate
 Remember that awful $se \big (\hat h(t_j) \big)$ formula from back in section 10.4.1? That doesn't quite apply to the posterior standard deviations from our Bayesian model. Even so, our posterior $SD$s will be very similar to the ML standard errors. Let's compare those in a plot, too.
 
 ```{r, fig.width = 6, fig.height = 3}
-posterior_samples(fit6) %>% 
+posterior_samples(fit10.6) %>% 
   select(starts_with("b_")) %>% 
   mutate_all(inv_logit_scaled) %>% 
   set_names(1:12) %>% 
@@ -894,7 +893,7 @@ In words, "each year's estimated survival probability is the successive product 
 
 ```{r}
 post <-
-  posterior_samples(fit6) %>% 
+  posterior_samples(fit10.6) %>% 
   select(starts_with("b_")) %>% 
   # transform the hazards from the log-odds metric to probabilities
   mutate_all(inv_logit_scaled) %>% 
@@ -939,8 +938,8 @@ post %>%
             color = "white", linetype = 2) +
   stat_lineribbon(.width = .95, size = 1/3, fill = "grey75") +
   # add the survival estimates from `survival::survfit()`
-  geom_point(data = tibble(period   = fit1$time,
-                           survival = fit1$surv),
+  geom_point(data = tibble(period   = fit10.1$time,
+                           survival = fit10.1$surv),
              size = 2, color = "violetred1") +
   scale_x_continuous("years in teaching", breaks = 0:13, limits = c(0, 13)) +
   scale_y_continuous(expression("estimated survival probability, "*hat(italic(S))(italic(t[j]))),
@@ -962,7 +961,7 @@ sessionInfo()
 
 ```{r, echo = F, message = F}
 # here we'll remove our objects
-rm(teachers, fit1, most_rows, row_1, d)
+rm(teachers, fit10.1, most_rows, row_1, d, m, m_plus_1, stm, stm_plus_1, iml, line, cocaine, sex, suicide, congress, fit10.2, fit10.3, fit10.4, fit10.5, make_lt, lt_cocaine, lt_sex, lt_suicide, lt_congress, make_iml, line_tbl, h_plot, s_plot, p1, p2, p3, p4, p5, p6, p7, p8, p12, p34, p56, p78, se_h_hat, teachers_pp, teachers_lt, fit10.6, post)
 
 pacman::p_unload(pacman::p_loaded(), character.only = TRUE)
 ```
