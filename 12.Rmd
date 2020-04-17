@@ -14,7 +14,7 @@ options(width = 110)
 
 > Like all statistical models, the basic discrete-time hazard model invokes assumptions about the population that may, or may not, hold in practice. Because no model should be adopted without scrutiny, we devote this chapter to examining its assumptions, demonstrating how to evaluate their tenability and relax their constraints when appropriate. In doing so, we illustrate practical principles of data analysis and offer theoretical insights into the model’s behavior and interpretation. (p. 407)
 
-## 12.1 Alternative specification for the "main effect" of *TIME*
+## Alternative specification for the "main effect" of *TIME*
 
 > Use of a completely general specification for *TIME* [as explored in the last chapter] is an analytic decision, not an integral feature of the model. Nothing about the model or its estimation *requires* adoption of this, or any other, particular specification for *TIME* (p. 409, *emphasis* in the original)
 
@@ -26,7 +26,7 @@ In the next page, Singer and Willett listed three circumstances under which we m
 
 In the subsections to follow, we will explore each in turn.
 
-### 12.1.1 An ordered series of polynomial specifications for *TIME*.
+### An ordered series of polynomial specifications for *TIME*.
 
 Load the Gamse and Conger's (1997) `tenure_pp.csv` data.
 
@@ -372,7 +372,7 @@ p1 + p2 + p3 +
 
 Instead of the two-row layout in the text, it seemed simpler to arrange the panels all in one row. This way we can let the full version of the line-color legend serve for all three panels.
 
-### 12.1.2 Criteria for comparing alternative specification.
+### Criteria for comparing alternative specification.
 
 > The decline in the deviance statistic across models indicates that fit improves with increasing complexity of the temporal specification. To evaluate the magnitude of this decline, we must also account for the increased number of parameters in the model. You should not adopt a more complex specification if it fits no better than a simpler one. But if an alternative specification is (nearly) as good as the most general one, it may be "good enough." At the same time, we would not want an alternative that performs measurably worse than we know we can do. (p. 415)
 
@@ -498,7 +498,7 @@ p2 <-
   plot_annotation(title = "Behold the fitted hazard and survival curves based on a weighted\naverage of the quadratic and linear models!")
 ```
 
-### 12.1.3 Interpreting parameters from linear, quadratic, and cubic specifications.
+### Interpreting parameters from linear, quadratic, and cubic specifications.
 
 "One advantage of a polynomial specification is that you can often interpret its parameters directly" (p. 417). For the polynomial models in this section, Singer and Willett used the $TIME - c$ specification for `period` where $c$ is a centering constant. They used $c = 5$. Before we can refit our polynomial models with this parameterization, we'll want to make a new `period` variable with this centering. We'll call it `period_5`.
 
@@ -703,7 +703,7 @@ f %>%
   theme(panel.grid = element_blank())
 ```
 
-## 12.2 Using the complementary log-log link to specify a discrete-time hazard model
+## Using the complementary log-log link to specify a discrete-time hazard model
 
 So far we've been using the
 
@@ -717,7 +717,7 @@ $$\operatorname{clog-log} = \log (- \log (1 - p)),$$
 
 where $p$ is a probability value. In words, while logit transformation yields the logarithm of the *odds of event occurrence*, the clog-log transformation yields *the logarithm of the negated logarithm of the probability of event nonoccurrence* (p. 420, *emphasis* in the original).
 
-### 12.2.1 The clog-log transformation: When and why it is useful.
+### The clog-log transformation: When and why it is useful.
 
 Here's our version of Figure 12.2, where we compare the logit and clog-log transformations.
 
@@ -749,18 +749,16 @@ Both transformations extend to the full $-\infty$ to $\infty$ parameter space. B
 
 > it provides a discrete-time statistical model for hazard that has a built-in *proportional hazards* assumption, and not a *proportional odds* assumption (as in the case of the logit link). This would be completely unremarkable except for one thing: it provides a conceptual parallelism between the clog-log discrete-time hazard model and the models that we will ultimately describe for continuous-time survival analysis. (p. 421, *emphasis* in the original)
 
-### 12.2.2 A discrete-time hazard model using the complementary log-log link.
+### A discrete-time hazard model using the complementary log-log link.
 
 Singer and Willett (p. 422):
 
 > Any discrete-time hazard model postulated using a logit link can be rewritten using a clog-log link, simply by substituting transformations of the outcome. For example, we can write a general discrete-time hazard model for $J$ time periods and $P$ substantive predictors as:
 
-$$
 \begin{align*}
 \operatorname{clog-log} h(t_j) & = [\alpha_1 D_1 + \alpha_2 D_2 + \cdots + \alpha_J D_J] \\
 & \;\; + [\beta_1 X_1 + \beta_2 X_2 + \cdots + \beta_P X_P].
 \end{align*}
-$$
 
 Now reload the `firstsex_pp.csv` data to test this baby out.
 
@@ -855,12 +853,10 @@ f %>%
 
 Our next step is to fit proper models to the data. First, we will refit `fit11.8` from last chapter. Then we'll fit the clog-log analogue to the same model. The two models, respectively, follow the form
 
-$$
 \begin{align*}
 \operatorname{logit} h(t_{ij}) & = [\alpha_7 D_{7ij} + \alpha_8 D_{8ij} + \cdots + \alpha_{12} D_{12ij}] + [\beta_1 \text{PT}_i ] \\
 \operatorname{clog-log} h(t_{ij}) & = [\alpha_7 D_{7ij} + \alpha_8 D_{8ij} + \cdots + \alpha_{12} D_{12ij}] + [\beta_1 \text{PT}_i ].
 \end{align*}
-$$
 
 Fit the models.
 
@@ -888,14 +884,12 @@ fit12.15 <-
 
 Both models used the binomial likelihood. They only differed in the link function we used to transform the data. To further explicate,  we can more fully write out our Bayesian clog-log model as
 
-$$
 \begin{align*}
 \text{event}_{ij} & = \operatorname{Binomial}(n = 1, p_{ij}) \\ 
 \operatorname{clog-log} (p_{ij}) & =  [\alpha_7 D_{7ij} + \alpha_8 D_{8ij} + \cdots + \alpha_{12} D_{12ij}] + [\beta_1 \text{PT}_{1i} ] \\
 \alpha_7, \alpha_8, ..., \alpha_{12} & \sim \operatorname{Normal}(0, 4) \\
 \beta_1 & \sim \operatorname{Normal}(0, 4).
 \end{align*}
-$$
 
 Here are the posterior means for `fit11.8` and `fit12.15`, as depicted in the firs three columns of Table 12.3.
 
@@ -999,17 +993,17 @@ For the clog-log model, then,
 
 > in every grade from 7^th^ to 12^th^, we estimate the hazard of first intercourse for boys who experienced a parenting transition to be [about] 2.2 times the hazard for their peers raised with both biological parents. This interpretation contrasts with that from the model with a logit link, which suggests that the odds of first intercourse are [about] 2.4 times the *odds* for boys who experienced a parenting transition. (pp. 424--425, *emphasis* in the original)
 
-### 12.2.3 Choosing between logit and clog-log links for discrete-time hazard models.
+### Choosing between logit and clog-log links for discrete-time hazard models.
 
 > The primary advantage of the clog-log link is that in invoking a proportional hazards assumption it yields a direct analog to the continuous time hazard model.... If you believe that the underlying metric for time is truly continuous and that the only reason you observe discretized values is due to measurement difficulties, a model specified with a clog-log link has much to recommend it....
 >
 > [Yet,] if data are collected in truly discrete time, the clog-log specification has no particular advantage. As [Beck (1999)](https://www.oxfordscholarship.com/view/10.1093/0198292376.001.0001/acprof-9780198292371); [Beck, Katz, and Tucker (1998)](http://www-personal.umich.edu/~franzese/BeckKatzTucker.TakingTimeSeriously.AJPS1998.pdf); and [Sueyoshi (1995)](http://halweb.uc3m.es/esp/Personal/personas/mhveiga/eng/docencia_Master_archivos/2285055.pdf) argue, the proportional hazards assumption is no more sacred than the proportional odds assumption, and while consistency across models is noble, so, too, is simplicity (which decreases the chances of mistake). (p. 426)
 
-## 12.3 Time-varying predictors
+## Time-varying predictors
 
 "Discrete-time survival analysis adopts naturally to the inclusion of time-varying predictors. Because models are fit using a person-period data set, a time-varying predictor simply takes on its appropriate value for each person in each period" (p. 427).
 
-### 12.3.1 Assumptions underlying a model with time-varying predictors.
+### Assumptions underlying a model with time-varying predictors.
 
 Load the depression data from [Wheaton, Rozell, and Hall (1997)](https://www.cambridge.org/core/books/stress-and-adversity-over-the-life-course/8CD7EE190B912C5C7DD0B3831C95348F).
 
@@ -1143,7 +1137,7 @@ p2 <-
   plot_layout(guides = "collect")
 ```
 
-### 12.3.2 Interpreting and displaying time-varying predictors' effects.
+### Interpreting and displaying time-varying predictors' effects.
 
 We jumped the gun a little, but to repeat:
 
@@ -1151,7 +1145,6 @@ We jumped the gun a little, but to repeat:
 
 For example, here is the statistical formula we used when we fit `fit12.17`:
 
-$$
 \begin{align*}
 \text{event}_{ij}             & = \operatorname{Binomial}(n = 1, p_{ij}) \\ 
 \operatorname{logit} (p_{ij}) & = [\alpha_0 + \alpha_1 (\text{age}_{ij} - 18) + \alpha_2 (\text{age}_{ij} - 18)^2 + \alpha_3 (\text{age}_{ij} - 18)^3] \\
@@ -1159,8 +1152,7 @@ $$
 \alpha_0, ..., \alpha_3       & \sim \operatorname{Normal}(0, 4) \\
 \beta_1 \text{ and } \beta_2  & \sim \operatorname{Normal}(0, 4),
 \end{align*}
-$$
-      
+
 where $\operatorname{logit} (p_{ij}) = \operatorname{logit} \hat h(t_{ij})$. If you'd like to compare our results for those displayed by Singer and Willett in Equation 12.8, here are our posterior means.
 
 ```{r}
@@ -1249,15 +1241,15 @@ p2 <-
 
 Note how with this many `age` levels, our discrete-time models are beginning to look like continuous-time models.
 
-### 12.3.3 Two caveats: The problems of state and rate dependence.
+### Two caveats: The problems of state and rate dependence.
 
 > A time-varying predictor is *state-dependent* if its values at time $t_j$ are affected by an individual's *state* (event occurrence status) at time $t_j$: $EVENT_{ij}$. A time-varying predictor is *rate-dependent* if its values at time $t_j$ are affected by the individuals value of *hazard* (the "rate") at time $t_j$: $h (t_{ij})$. (p. 440, *emphasis* in the original)
 
-## 12.4 The linear additivity assumption: Uncovering violations and simple solutions
+## The linear additivity assumption: Uncovering violations and simple solutions
 
 > Because the focus on hazard causes you to analyze group level summaries, model violations can be more difficult to discern [than in other kinds of regression models]. We therefore devote this section to introducing practical strategies for diagnosing and correcting violations of the linear additivity assumption. (p. 443)
 
-### 12.4.1 Interactions between substantive predictors.
+### Interactions between substantive predictors.
 
 > We do not advocate fishing expeditions. Open searches for interactions can be counterproductive, leading to the discovery of many "effects" that are little more than sampling variation. But there *are* at least two circumstances when a guided search for interactions is crucial:
 >
@@ -1505,7 +1497,7 @@ make_fitted(fit12.23,
   facet_wrap(~sex)
 ```
 
-### 12.4.2 Nonlinear effects.
+### Nonlinear effects.
 
 > There are two general strategies for exploring the linearity assumption. The simplest approach--although somewhat limited--is to fit additional models, replacing the raw predictor with a re-expressed version. Although the additional models also invoke a linearity constraint, use of re-expressed predictors guarantees that the effects represent nonlinear relationships for the *raw* predictors. The ladder of power (section 6.2.1) provides a dizzying array of options. The second approach is to categorize each continuous variable into a small number of groups, create a series of dummy variables representing group membership, and visually examine the *pattern of parameter estimates for consecutive dummies* to deduce the appropriate functional form. If the pattern is linear, retain the predictor in its raw state; if not, explore an alternative specification. 
 >
@@ -1683,13 +1675,13 @@ model_weights(fit12.24, fit12.25, fit12.26, weights = "waic") %>% round(digits =
 
 Our WAIC estimates are very similar to the AIC estimates presented in Table 12.4. By both the differences and the weights, `fit12.16` (Model C) is the best among the three. Though its rank is decisive with the weights, it's less impressive if you compare the `se_diff` values with the `elpd_diff` values. Those suggest there's a lot of uncertainty in our WAIC differences.
 
-## 12.5 The proportionality assumption: Uncovering violations and simple solutions
+## The proportionality assumption: Uncovering violations and simple solutions
 
 > All the discrete hazard models postulated so far invoke another common, but restrictive assumption: that each predictor has an identical effect in every time period under study. This constraint, known as the *proportionality assumption*, stipulates that a predictor's effect does not depend on the respondent's duration in the initial state….
 >
 > Yet is it not possible, even likely, that the effects of some predictors will *vary* over time? (p. 451, *emphasis* in the original)
 
-### 12.5.1 Discrete-time hazard models that do not invoke a proportionality assumption.
+### Discrete-time hazard models that do not invoke a proportionality assumption.
 
 "There are dozens of ways of violating the proportionality assumption" (p. 452). We see three such examples in panels B through D in Figure 12.7. Here's our version of the plot.
 
@@ -1745,10 +1737,7 @@ p4 <-
 
 In case is wasn’t clear, I just winged it on the equations for the `y` values in each subplot. If you'd like to annotate the subplots with the arrows and $\beta$ labels as depicted in the original Figure 12.7, consider it a homework exercise.
 
-### 12.5.2 Investigating the proportionality assumption in practice.
-
-
-
+### Investigating the proportionality assumption in practice.
 
 Load the data from [Graham's (1997) dissertation](https://scholar.google.com/scholar?cluster=10047024316925658696&hl=en&oi=scholarr).
 
@@ -2012,7 +2001,7 @@ posterior_samples(fit12.29) %>%
   facet_wrap(~name, scales = "free")
 ```
 
-## 12.6 The no unobserved heterogeneity assumption: No simple solution
+## The no unobserved heterogeneity assumption: No simple solution
 
 > All the hazard models discussed in this book--both the discrete-time models we are discussing now and the continuous-time models we will soon introduce--impose an additional assumption to which we have alluded: the assumption of no unobserved heterogeneity. Every model assumes that the population hazard function for individual $i$ depends only on his or her predictor values. Any pair of individuals who share identical predictor profiles will have identical population functions....
 >
@@ -2022,7 +2011,7 @@ posterior_samples(fit12.29) %>%
 >
 > Is it possible to fit a hazard model that accounts for unobserved heterogeneity? As you might expect, doing so requires that we have either additional data (for example, data on repeated events within individuals) or that we invoke other--perhaps less tenable--assumptions about the distribution of event time errors ([Aalen, 1988](https://onlinelibrary.wiley.com/doi/abs/10.1002/sim.4780071105); [Heckman and Singer, 1984](https://www.cambridge.org/core/books/longitudinal-analysis-of-labor-market-data/0D46228F1D5803E54310FA89FD8118C0); [Vaupel, Manton, & Stallard, 1979](http://www.ressources-actuarielles.net/EXT/ISFA/1226.nsf/769998e0a65ea348c1257052003eb94f/2d6493f9f0d93b50c125774b0045c00b/$FILE/Vaupel-Demography-16-1979-3.pdf); [Scheike & Jensen, 1997](https://www.ncbi.nlm.nih.gov/pubmed/9147597); [Mare, 1994](https://www.semanticscholar.org/paper/DISCRETE-TIME-BIVARIATE-HAZARDS-WITH-UNOBSERVED-A-Mare/c13ff07817b0b0a28774806db29c2491e0ec6a3d)). As a result, most empirical researchers--and we--proceed ahead, if not ignoring the problem, at least not addressing it. In the remainder of this book, we assume that all heterogeneity is observed and attributable t0 the predictors included in our models.
 
-## 12.7 Residual analysis
+## Residual analysis
 
 > Before concluding that your model is sound, you should ascertain how well it performs for individual cases. As in regular regression, we [can] address this question by examining residuals.
 >
@@ -2132,7 +2121,7 @@ loo(fit11.10)$diagnostics %>%
   theme(panel.grid = element_blank())
 ```
 
-To learn the technical details about `pareto_k`, check out Vehtari, Gelman, and Gabry's [*Practical Bayesian model evaluation using leave-one-out cross-validation and WAIC*](https://arxiv.org/abs/1507.04544) or Vehtari, Simpson, Gelman, Yao, and Gabry’s [*Pareto smoothed importance sampling*](https://arxiv.org/abs/1507.02646). In short, we can use `pareto_k` values to flag cases that were overly-influential on the model in a way that's a little like Singer and Willett's deviance residuals. As pointed out in the [reference manual](https://cran.r-project.org/web/packages/loo/loo.pdf) for the **loo** package, which **brms** used to compute all this, the makers of the **loo** package warn against `pareto_k` values when they get much larger than 0.5. We should be a little worried by values that exceed the 0.7 threshold and it's very likely a problem when they get larger than 1. In this case, they're all below 0.4 and all is good.
+To learn the technical details about `pareto_k`, check out Vehtari, Gelman, and Gabry's [*Practical Bayesian model evaluation using leave-one-out cross-validation and WAIC*](https://arxiv.org/abs/1507.04544) or Vehtari, Simpson, Gelman, Yao, and Gabry's [*Pareto smoothed importance sampling*](https://arxiv.org/abs/1507.02646). In short, we can use `pareto_k` values to flag cases that were overly-influential on the model in a way that's a little like Singer and Willett's deviance residuals. As pointed out in the [reference manual](https://cran.r-project.org/web/packages/loo/loo.pdf) for the **loo** package, which **brms** used to compute all this, the makers of the **loo** package warn against `pareto_k` values when they get much larger than $0.5$. We should be a little worried by values that exceed the $0.7$ threshold and it's very likely a problem when they get larger than $1$. In this case, they're all below $0.4$ and all is good.
 
 To learn more about `pareto_k` values and what the **loo** package can do for you, check out Vehtari and Gabry's [*Using the loo package*](https://cran.r-project.org/web/packages/loo/vignettes/loo2-example.html) vignette.
 
@@ -2146,9 +2135,9 @@ To learn more about `pareto_k` values and what the **loo** package can do for yo
 sessionInfo()
 ```
 
-```{r, echo = F, message = F, eval = F}
+```{r, echo = F, message = F}
 # here we'll remove our objects
-rm()
+rm(tenure_pp, fit12.1, fit12.2, fit12.3, fit12.4, fit12.5, fit12.6, fit12.7, fit12.8, p1, p2, p3, p4, p5, p6, p7, make_fitted, nd, f, models, new_rows, l1, l2, l3, n, pp, tenure_pp, fit12.9, fit12.10, post, sex_pp, fit12.11, fit12.12, fit12.13, fit12.14, fit11.8, fit12.15, pars, depression_pp, fit12.16, fit12.17, depression_aggregated, firstarrest_pp, fit12.18, fit12.19, fit12.20, fit12.21, fit12.22, fit12.23, fit12.24, fit12.25, fit12.26, breaks, labels, mathdropout_pp, fit12.27, fit12.28, fit12.29, fit11.10)
 
 pacman::p_unload(pacman::p_loaded(), character.only = TRUE)
 ```
