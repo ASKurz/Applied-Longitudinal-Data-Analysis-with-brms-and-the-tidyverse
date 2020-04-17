@@ -1,0 +1,200 @@
+---
+title: 'Chapter 13. Describing Continuous-Time Event Occurrence Data'
+author: "A Solomon Kurz"
+date: "`r format(Sys.Date())`"
+output:
+  github_document
+---
+
+```{r, echo = FALSE, cache = FALSE}
+options(width = 100)
+```
+
+# Describing Continuous-Time Event Occurrence Data
+
+> In this chapter, we present strategies for describing continuous-time event data. Although survivor and hazard functions continue to form the cornerstone of our work, the challenge in the time scale from discrete to continuous demands that we revise our fundamental definitions and modify estimation strategies….
+>
+> In the [second half of the chapter], we offer solutions to the core conundrum embedded in contentious-time event data: our inability to estimate the hazard function well. This is a concern as it leads some researchers to conclude that they should not even *try* to ascertain the pattern of risk over time. (pp, 468--469, *emphasis* in the original)
+
+## 13.1 A framework for characterizing the distribution of continuous-time event data
+
+> Variables measured with greater precision contain more information than those measured with less precision… Finer distinctions, as long as they can be made reliably, lead to more subtle interpretations and more powerful analyses. 
+>
+> Unfortunately, a switch from discrete- to continuous-time survival analysis is not as trivial as you might hope. In discrete time, the definition of the hazard function is intuitive, its values are easily estimated, and simple graphic displays can illuminate its behavior. In continuous time, although the survivor function is easily defined and estimated, the hazard function is not. As explained below, we must revise its definition and develop new methods for its estimation and exploration. (p. 469)
+
+### 13.1.1 Salient features of continuous-time event occurrence data.
+
+> Because continuous time is infinitely divisible, the distribution of event times displays two highly salient properties:
+>
+> * *The probability of observing* any particular event time *is infinitesimally small*. In continuous time, the probability that an event will occur *at any specific instant* approaches 0. The probability may nor reach 0, but as time’s divisions become finer and finer, it becomes smaller and smaller.
+> * *The probability that two or more individuals will share the same event time is also infinitesimally small*. If the probability of event occurrence at each instant is infinitesimally small, the probability of *co*occurrence (a tie) must be smaller still. (p. 470, *emphasis* in the original)
+
+Load the horn honking data from [Diekmann, Jungbauer-Gans, Krassing, and Lorenz (1996)](https://www.researchgate.net/profile/Andreas_Diekmann2/publication/14168210_Social_Status_and_Aggression_A_Field_Study_Analyzed_by_Survival_Analysis/links/54c041be0cf28eae4a696897/Social-Status-and-Aggression-A-Field-Study-Analyzed-by-Survival-Analysis.pdf).
+
+```{r, warning = F, message = F}
+library(tidyverse)
+
+honking <- 
+  read_csv("data/honking.csv") %>%
+  # make all names lower case
+  rename_all(str_to_lower) %>% 
+  mutate(censor_1 = abs(censor - 1))
+
+glimpse(honking)
+```
+
+Here's a quick way to arrange the `seconds` values and `censor` status of each case in a similar way to how they appear in Table 13.1.
+
+```{r}
+honking %>% 
+  arrange(seconds) %>% 
+  transmute(seconds = ifelse(censor == 0, seconds, str_c(seconds, "*")))
+```
+
+For kicks, here's a tile-plot version of Table 13.1.
+
+```{r}
+honking %>% 
+  arrange(seconds) %>% 
+  # `formatC()` allows us to retain the trailing zeros when converting the numbers to text
+  mutate(text = formatC(seconds, digits = 2, format = "f")) %>% 
+  mutate(time = ifelse(censor == 0, text, str_c(text, "*")),
+         row  = c(rep(1:6, times = 9), 1:3),
+         col  = rep(1:10, times = c(rep(6, times = 9), 3))) %>% 
+  
+  ggplot(aes(x = col, y = row)) +
+  geom_tile(aes(fill = seconds)) +
+  geom_text(aes(label = time, color = seconds < 10)) +
+  scale_fill_viridis_c(option = "B", limits = c(0, NA)) +
+  scale_color_manual(values = c("black", "white")) +
+  scale_y_reverse() +
+  labs(subtitle = "Table 13.1: Known and censored (*) event times for 57 motorists blocked by another automobile\n(reaction times are recorded to the nearest hundredth of a second)") +
+  theme_void() +
+  theme(legend.position = "none")
+```
+
+### 13.1.2 The survivor function.
+
+"In continuous time, the survival probability for individual $i$ at time $t_j$ is the probability that his or her event time, $T_i$ will exceed $t_j$" (p. 472). This follows the equation
+
+$$S(t_{ij}) = \operatorname{Pr} [T_i > t_j].$$
+
+Heads up: When Singer and Willett "do not distinguish individuals on the basis of predictors, [they] remove the subscript $i$, letting $S(t_j)$ represent the survivor function for a randomly selected member of the population" (p. 472).
+
+### 13.1.3 The hazard function.
+
+
+
+
+## 13.3 The Kaplan-Meier method of estimating the continuous-time survivor function
+
+> The Kaplan-Meier method is a simple extension of the discrete-time method with a fundamental change: instead of rounding event times to construct the intervals, capitalize on the raw event times and construct intervals so that each contains just *one observed event time* (as shown in table 13.3). Each Kaplan-Meier interval begins at one observed event time and ends just before the next. (p. 483, *emphasis* in the original)
+
+Load the horn honking data.
+
+```{r, warning = F, message = F}
+library(tidyverse)
+
+honking <- 
+  read_csv("data/honking.csv") %>%
+  # make all names lower case
+  rename_all(str_to_lower) %>% 
+  mutate(censor_1 = abs(censor - 1))
+
+glimpse(honking)
+```
+
+As discussed in the prose in the middle of page 483, here are the first three event times.
+
+```{r}
+honking %>% 
+  filter(censor == 0) %>% 
+  top_n(-3, seconds)
+```
+
+> The Kaplan-Meier estimate of the survivor function is obtained by applying the discrete-time estimator of section 13.2.2 to the data of these intervals. [MOst] statistical packages include a routine for computing and plotting the estimates. Numerically, the process is simple: first compute the conditional probability of event occurrence (column 7) and then successively multiply the complements of these probabilities together to obtain the Kaplan-Meier estimate of the survivor function (column 8). Because the Kaplan-Meier estimator of the survivor function is identical to the discrete-time estimator of chapter 10, its standard errors (column 9) are estimated using the same formula (pp. 483—485).
+
+Load the **survival** and **broom** packages.
+
+```{r, warning = F, message = F}
+library(survival)
+library(broom)
+```
+
+Fit the unconditional model with the Kaplan-Meier estimator.
+
+```{r}
+kap1 <-
+  survfit(data = honking,
+          Surv(seconds, censor_1) ~ 1)
+```
+
+Here are the results.
+
+```{r}
+summary(kap1)
+```
+
+We can use the `broom::tidy()` function to convert that to a tidy tibble.
+
+```{r}
+k <-
+  tidy(kap1)
+
+k
+```
+
+Unlike in the text, this output does not contain the 0 interval, $[0, 1.41)$. The `time` column is the same as the "[Start" column of Table 13.3. The `n.risk` column is a direct analogue to the "n at risk" column. The `n.event` column is similar to the "n events" column in the text, but whereas the latter is cumulative, the former is not. We do not get a "$\hat p (t)$" column like in the text, but that's just a straight algebraic transform of the `estimate` column subtracted from 1. Speaking of which, our `estimate` column is an analogue of the "$\hat S(t)$" column in the text. It appears the values in our `std.error` column are a bit different from those in the text. Our last two columns mark off the 95% intervals. 
+
+We can get a quick base **R** plot of the Kaplan-Meier survivor function with `plot()`.
+
+```{r, fig.width = 6, fig.height = 4}
+plot(kap1,
+     xlab = "seconds after light turns green",
+     ylab = "Kaplan-Meier survivor function")
+```
+
+With the **ggplot2** paradigm, one can make a Kaplan-Meier survivor function with the `ggsurvplot()` function from the [**survminer** package](https://CRAN.R-project.org/package=survminer).
+
+```{r, fig.width = 6, fig.height = 4, warning = F}
+library(survminer)
+
+ggsurvplot(kap1, data = honking,
+           color = "grey25",
+           size = 1/2,
+           xlim = c(0, 20),
+           break.time.by = 5,
+           legend = "none",
+           ggtheme = theme_gray() + 
+             theme(panel.grid = element_blank())) +
+  labs(x = "seconds after light turns green",
+       y = "Kaplan-Meier survivor function")
+```
+
+
+
+
+
+
+
+
+
+
+
+## Reference {-}
+
+[Singer, J. D., & Willett, J. B. (2003). *Applied longitudinal data analysis: Modeling change and event occurrence*. New York, NY, US: Oxford University Press.](https://www.oxfordscholarship.com/view/10.1093/acprof:oso/9780195152968.001.0001/acprof-9780195152968)
+
+## Session info {-}
+
+```{r}
+sessionInfo()
+```
+
+```{r, echo = F, eval = F}
+# here we'll remove our objects
+rm()
+
+theme_set(theme_grey())
+```
+

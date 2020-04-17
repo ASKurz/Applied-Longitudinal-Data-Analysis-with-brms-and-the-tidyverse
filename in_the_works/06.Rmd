@@ -1,0 +1,674 @@
+---
+title: 'Chapter 6. Modeling Discontinuous and Nonlinear Change'
+author: "A Solomon Kurz"
+date: "`r format(Sys.Date())`"
+output:
+  github_document
+---
+
+```{r, echo = FALSE, cache = FALSE}
+options(width = 100)
+```
+
+# Modeling Discontinuous and Nonlinear Change
+
+> All the multilevel models for change presented so far assume that individual growth is smooth and linear. Yet individual change can also be discontinuous or nonlinear...
+>
+> In this chapter, we introduce strategies for fitting models in which individual change is explicitly discontinuous or nonlinear. Rather than view these patterns as inconveniences, we treat them as substantively compelling opportunities. In doing so, we broaden our questions about the nature of change beyond the basic concepts of initial status and rate of change to a consideration of acceleration, deceleration, turning points, shifts, and asymptotes. The strategies that we use fall into two broad classes. *Empirical* strategies that let the "data speak for themselves." Under this approach, you inspect observed growth records systematically and identify a transformation of the outcome, or of *TIME*, that linearizes the individual change trajectory. Unfortunately, this approach can lead to interpretive difficulties, especially if it involves esoteric transformations or higher order polynomials. Under *rational* strategies, on the other hand, you use theory to hypothesize a substantively meaningful functional form for the individual change trajectory. Although rational strategies generally yield clearer interpretations, their dependence on good theory makes them somewhat more difficult to develop and apply.
+. (p. 189--190, *emphasis* in the original)
+
+## Discontinuous individual change
+
+> Not all individual change trajectories are continuous functions of time...
+>
+> If you have reason to believe that individual change trajectories might shift in elevation and/or slope, your level-1 model should reflect this hypothesis. Doing so allows you to test ideas about how the trajectory’s shape might change over time...
+>
+> To postulate a discontinuous individual change trajectory, you need to know not just *why* the shift might occur but also *when*. This is because your level-1 individual growth model must include one (or more) time-varying predictor(s) that specify whether and if so, when each person experiences the hypothesized shift. (pp. 190--191, *emphasis* in the original)
+
+### Alternative discontinuous level-1 models for change.
+
+> To postulate a discontinuous level-1 individual growth model, you must first decide on its functional form. Although you can begin empirically, we prefer to focus on substance and the longitudinal process that gave rise to the data. What kind of discontinuity might the precipitating event create? What would a plausible level-1 trajectory look like? Before parameterizing models and constructing variables, we suggest that you: (1) take a pen and paper and sketch some options; and (2) articulate--in words, not equations--the rationale for each. We recommend these steps because, as we demonstrate, the easiest models to specify may not display the type of discontinuity you expect to find. (pp. 191--192)
+
+I'll leave the pen and paper scribbling to you. Here we load the `wages_pp.csv` data.
+
+```{r, warning = F, message = F}
+library(tidyverse)
+
+wages_pp <- read_csv("data/wages_pp.csv")
+
+glimpse(wages_pp)
+```
+
+Here's a more focused look along the lines of Table 6.1.
+
+```{r}
+wages_pp %>% 
+  select(id, lnw, exper, ged, postexp) %>% 
+  mutate(`ged by exper` = ged * exper) %>% 
+  filter(id %in% c(206, 2365, 4384))
+```
+
+Similar to what we did in section 5.2.1, here is a visualization of the two primary variables, `exper` and `lnw`, for those three participants.
+
+```{r, fig.width = 6, fig.height = 2.5}
+wages_pp %>% 
+  filter(id %in% c(206, 2365, 4384)) %>% 
+  mutate(id = factor(id)) %>% 
+  
+  ggplot(aes(x = exper, y = lnw)) +
+  geom_point(aes(color = id),
+             size = 4) +
+  geom_line(aes(color = id)) +
+  geom_text(aes(label = ged),
+            size = 3) +
+  scale_x_continuous(breaks = 1:13) +
+  scale_color_viridis_d(option = "B", begin = .6, end = .9) +
+  labs(caption = expression(italic("Note")*'. GED status is coded 0 = "not yet", 1 = "yes."')) +
+  theme(panel.grid = element_blank(),
+        plot.caption = element_text(hjust = 0))
+```
+
+
+```{r}
+tibble(exper = c(0, 3, 3, 10),
+       ged   = rep(0:1, each = 2)) %>% 
+  expand(model = letters[1:4],
+         nesting(exper, ged))
+```
+
+
+
+```{r, fig.width = 5, fig.height = 3}
+tibble(exper = c(0, 3, 3, 10),
+       ged   = rep(0:1, each = 2)) %>% 
+  expand(model = letters[1:4],
+         nesting(exper, ged)) %>% 
+  mutate(exper2 = if_else(ged == 0, 0, exper - 3)) %>% 
+  mutate(lnw = case_when(
+    model == "a" ~ 1.60 + 0.04 * exper,
+    model == "b" ~ 1.65 + 0.04 * exper + 0.05 * ged,
+    model == "c" ~ 1.75 + 0.04 * exper + 0.02 *  exper2 * ged,
+    model == "d" ~ 1.85 + 0.04 * exper + 0.01 * ged + 0.02 * exper * ged
+  ),
+  model = fct_rev(model)) %>% 
+  
+  ggplot(aes(x = exper, y = lnw)) +
+  geom_line(aes(color = model),
+            size = 1) +
+  scale_color_viridis_d(option = "D", begin = 1/4, end = 3/4) +
+  ylim(1.5, 2.5) +
+  theme(panel.grid.minor = element_blank())
+```
+
+#### Including a discontinuity in elevation, not slope.
+
+We can write the level-1 formula for when there is a change in elevation, but not slope, as
+
+$$
+\text{lnw}_{ij} = \pi_{0i} + \pi_{1i} \text{exper}_{ij} + \pi_{2i} \text{ged}_{ij} + \epsilon_{ij}.
+$$
+
+Because we are equating `ged` values as relating to the intercept, but not the slope, it might be helpful to rewrite that formula as
+
+$$
+\text{lnw}_{ij} = (\pi_{0i} + \pi_{2i} \text{ged}_{ij}) + \pi_{1i} \text{exper}_{ij} + \epsilon_{ij},
+$$
+
+where the portion inside of the parentheses concerns initial status and discontinuity in elevation, but not slope. Because the `ged` values only come in 0's and 1's, we can express the two versions of this equation as
+
+$$
+\begin{align*}
+\text{lnw}_{ij} & = [\pi_{0i} + \pi_{2i} (0)] + \pi_{1i} \text{exper}_{ij} + \epsilon_{ij} \;\;\; \text{and} \\
+                & = [\pi_{0i} + \pi_{2i} (1)] + \pi_{1i} \text{exper}_{ij} + \epsilon_{ij}.
+\end{align*}
+$$
+
+In other words, whereas the pre-GED intercept is $\pi_{0i}$, the post-GED intercept is $\pi_{0i} + \pi_{2i}$.
+
+#### Including a discontinuity in slope, not elevation.
+
+> To specify a level-1 individual growth model that includes a discontinuity in slope, not elevation, you need a different time-varying predictor. Unlike GED, this predictor must clock the passage of time (like *EXPER*). But unlike *EXPER*, it must do so within only one of the two epochs (pre- or post-GED receipt). Adding a second temporal predictor allows each individual change trajectory to have two distinct slopes: one before the hypothesized discontinuity an another after. (p. 195, *emphasis* in the original)
+
+In the `wages_pp` data, `postexp` is this second variable. Here is how it compares to the other relevant variables.
+
+```{r}
+wages_pp %>% 
+  select(id, ged, exper, postexp) %>% 
+  filter(id >= 53)
+```
+
+Singer and Willett then go on to report "construction of a suitable time-varying predictor to register the desired discontinuity is often the hardest part of the model specification" (p. 195). They weren't kidding. 
+
+This concept caused me a good bit of frustration when learning about these models. Let's walk through this slowly. In the last code block, we looked at four relevant variables. You may wonder why we executed `filter(id >= 53)`. This is because the first two participants always had `ged == 1`. They're valid cases and all, but those data won't be immediately helpful for understanding what's going on with `postexp`. Happily, the next case, `id == 53`, is perfect for our goal. First, notice how that person's `postexp` values are always 0 when `ged == 0`. Second, notice how the first time where `ged == 1`, `postexp` is still a 0. Third, notice that after that first initial row, `postexp` increases. If you caught all that, go you! 
+
+To make the next point, it'll come in handy to subset the data. Because we're trying to understand the relationship between `exper` and `postesp` conditional on `ged`, cases for which `ged` is always the same will be of little use. Let's drop them. 
+
+```{r}
+wages_pp_subset <-
+  wages_pp %>% 
+  group_by(id) %>% 
+  filter(mean(ged) > 0) %>% 
+  filter(mean(ged) < 1) %>% 
+  ungroup() %>% 
+  select(id, ged, exper, postexp)
+
+wages_pp_subset
+```
+
+What might not be obvious yet is `exper` and `postexp` scale together. To show how this works, we'll make two new columns. First, we'll mark the minimum `exper` value for each level of `id`. Then we'll make a `exper - postexp` which is exactly what the name implies. Here's what that looks like.
+
+```{r}
+wages_pp_change %>% 
+  filter(ged == 1) %>% 
+  group_by(id) %>% 
+  mutate(min_exper         = min(exper),
+         `exper - postexp` = exper - postexp)
+```
+
+Huh. For each case, the `min_exper` value is (near)identical with `exper - postexp`. The reason they're not always identical is simply rounding error. Had we computed them by hand without rounding, they would always be the same. This relationship is the consequence of our having coded `postexp == 0` the very first time `ged == 1`, but allowed it to linearly increase afterward. Within each level of `id`--and conditional on `ged == 1`--, the way it increases is simply `exper – min(exper)`. Here's that value.
+
+```{r}
+wages_pp_change %>% 
+  filter(ged == 1) %>% 
+  group_by(id) %>% 
+  mutate(min_exper         = min(exper),
+         `exper - postexp` = exper - postexp,
+         `exper - min_exper` = exper - min_exper)
+```
+
+See? Our new `exper - min_exper` column is the same, within rounding error, as `postexp`. 
+
+> A fundamental feature of *POSTEXP*--indeed, any temporal predictor designed to register a shift in slope--is that the difference between each non-zero pair of consecutive values must be numerically identical to the difference between the corresponding pair of values for the basic predictor (here, *EXPER*). (p. 197, *emphasis* in the original)
+
+```{r}
+wages_pp %>% 
+  group_by(id) %>% 
+  filter(mean(ged) > 0) %>% 
+  filter(mean(ged) < 1) %>% 
+  ungroup() %>%
+  pivot_longer(c(exper, postexp),
+               names_to = "temporal predictor") %>% 
+  filter(id < 250) %>% 
+  
+  ggplot(aes(x = value, y = lnw)) +
+  geom_line(aes(linetype = `temporal predictor`, color = `temporal predictor`)) +
+  scale_color_viridis_d(option = "A", begin = 1/3, end = 2/3, direction = -1) +
+  theme(panel.grid = element_blank(),
+        legend.position = c(5/6, .25)) +
+  facet_wrap(~id, scales = "free_x")
+```
+
+See how those two scale together within each level of `id`?
+
+All of this work is a setup for the level-1 equation
+
+$$
+\text{lnw}_{ij} = \pi_{0i} + \pi_{1i} \text{exper}_{ij} + \pi_{3i} \text{postexp}_{ij} + \epsilon_{ij},
+$$
+
+where $\pi_{0i}$ is the only intercept parameter and $\pi_{1i}$ and $\pi_{3i}$ are two slope parameters. Singer and Willett explained
+
+> each slope assesses the effect of work experience, but it does so from a different origin: (1) $\pi_{1i}$ captures the effects of *total* work experience (measured from labor force entry); and (2) $\pi_{3i}$ captures the *added* effect of post-GED work experience (measured from GED receipt). (p. 197, *emphasis* in the original)
+
+#### Including discontinuities in both elevation and slope.
+
+There are (at least) two ways to do this. They are similar, but not identical. The first is an extension of the model from the last subsection where we retain `postexp` from our second slope parameter. We can express this as the equation
+
+$$
+\text{lnw}_{ij} = \pi_{0i} + \pi_{1i} \text{exper}_{ij} + \pi_{2i} \text{ged}_{ij} + \pi_{3i} \text{postexp}_{ij} + \epsilon_{ij}.
+$$
+
+For those without a GED, the equation reduces to
+
+$$
+\begin{align*}
+\text{lnw}_{ij} & = \pi_{0i} + \pi_{1i} \text{exper}_{ij} + \pi_{2i} (0) + \pi_{3i} (0) + \epsilon_{ij} \\
+                & = \pi_{0i} + \pi_{1i} \text{exper}_{ij} + \epsilon_{ij}.
+\end{align*}
+$$
+
+Once people secure their GED, $\pi_{2i}$ is always multiplied by 1 (i.e., $\pi_{2i} (1) $) and the values by which we multiply $\pi_{3i}$ scale linearly with `exper`, but with the offset the way we discussed in the previous subsection. To emphasize that, we might rewrite the equation as
+
+$$
+\begin{align*}
+\text{lnw}_{ij} & = \pi_{0i} + \pi_{1i} \text{exper}_{ij} + \pi_{2i} (1) + \pi_{3i} \text{postexp} + \epsilon_{ij} \\
+                & = (\pi_{0i} + \pi_{2i}) + \pi_{1i} \text{exper}_{ij} + \pi_{3i} \text{postexp} + \epsilon_{ij}.
+\end{align*}
+$$
+
+The second way to include discontinuities in both elevation and slope replaces the `postexp` variable with an interaction between `exper` and `ged`. Here's the equation:
+
+$$
+\text{lnw}_{ij} = \pi_{0i} + \pi_{1i} \text{exper}_{ij} + \pi_{2i} \text{ged}_{ij} + \pi_{3i} (\text{exper}_{ij} \times \text{ged}_{ij}) + \epsilon_{ij}.
+$$
+
+For those without a GED, the equation simplifies to
+
+$$
+\begin{align*}
+\text{lnw}_{ij} & = \pi_{0i} + \pi_{1i} \text{exper}_{ij} + \pi_{2i} (0) + \pi_{3i} (\text{exper}_{ij} \times 0) + \epsilon_{ij} \\
+                & = \pi_{0i} + \pi_{1i} \text{exper}_{ij} + \epsilon_{ij}.
+\end{align*}
+$$
+
+Once a participant secures their GED, the equation changes to
+
+$$
+\begin{align*}
+\text{lnw}_{ij} & = \pi_{0i} + \pi_{1i} \text{exper}_{ij} + \pi_{2i} (1) + \pi_{3i} (\text{exper}_{ij} \times 1) + \epsilon_{ij} \\
+               & = (\pi_{0i} + \pi_{2i}) + (\pi_{1i} + \pi_{3i}) \text{exper}_{ij} + \epsilon_{ij}.
+\end{align*}
+$$
+
+So again, the two ways we might include discontinuities in both elevation and slope are
+
+$$
+\begin{align*}
+\text{lnw}_{ij} & = \pi_{0i} + \pi_{1i} \text{exper}_{ij} + \pi_{2i} \text{ged}_{ij} + \pi_{3i} \text{postexp}_{ij} + \epsilon_{ij} & \text{and} \\
+\text{lnw}_{ij} & = \pi_{0i} + \pi_{1i} \text{exper}_{ij} + \pi_{2i} \text{ged}_{ij} + \pi_{3i} (\text{exper}_{ij} \times \text{ged}_{ij}) + \epsilon_{ij}.
+\end{align*}
+$$
+
+The $\pi_{0i}$ and $\pi_{1i}$ terms have the same meaning in both. Even though $\pi_{3i}$ is multiplied by different values in the two equations, it has the same interpretation: "it represents the increment (or decrement) of the slope in the post-GED epoch" (p. 200). However, the big difference is the behavior and interpretation for $\pi_{2i}$. In the equation for the first approach, it "assesses the magnitude of the instantaneous increment (or decrement) associated with GED attainment" (p. 200). But in the equation for the second approach, "$\pi_{2i}$ assesses the magnitude of the increment (or decrement) associated with GED attainment at a particular--and not particularly meaningful--moment: the day of labor force entry" (p. 220, *emphasis* added). That is, whereas $\pi_{2i}$ has a fixed value for the first approach, its magnitude changes with time in the second.
+
+### Selecting among the alternative discontinuous models.
+
+
+
+<Here we skip a bunch of sections to page 223>
+
+## Truly nonlinear trajectories
+
+> All the individual growth models described so far—including the curvilinear ones presented in this chapter--share an important mathematical property: they are *linear in the individual growth parameters*. Why do we use the label "linear" to describe trajectories that are blatantly nonlinear? The explanation for this apparent paradox is that this mathematical property depends not on the *shape* of the underlying growth trajectory but rather *where*--in which portion of the model--the nonlinearity arises. In all previous model, nonlinearity (or discontinuity) stems from the representation of the *predictors*. To allow the hypothesized trajectory to deviate from a straight line, *TIME* is either transformed or expressed using higher order polynomial terms. In the truly nonlinear models we now discuss, nonlinearity arises in a different way__through the *parameters*. (pp. 223--224, *emphasis* in the original)
+
+
+Load the data from Tivan's (1980) unpublished dissertation.
+
+```{r, warning = F, message = F}
+library(tidyverse)
+
+foxngeese_pp <- read_csv("data/foxngeese_pp.csv")
+
+glimpse(foxngeese_pp)
+```
+
+There are responses from 17 participants in these data.
+
+```{r}
+foxngeese_pp %>% 
+  distinct(id)
+```
+
+Here is our version of Figure 6.8.
+
+```{r, fig.width = 6, fig.height = 4}
+foxngeese_pp %>% 
+  filter(id %in% c("1", "4", "6", "7", "8", "11", "12", "15")) %>% 
+  mutate(id = if_else(id < 10, str_c("0", id), as.character(id))) %>% 
+  mutate(id = str_c("id #", id)) %>% 
+  
+  ggplot(aes(x = game, y = nmoves)) +
+  geom_point(size = 2/3) +
+  scale_y_continuous(breaks = 0:5 * 5, limits = c(0, 25)) +
+  theme(panel.grid = element_blank()) +
+  facet_wrap(~id, ncol = 4)
+```
+
+In these data, `nmoves` always lies between 1 and 20.
+
+The proposed logistic model of change follows the form
+
+$$
+\begin{align*}
+\text{nmoves}_{ij} & = 1 + \frac{19}{1 + \pi_{0i} e^{-(\pi_{1i} \text{game}_{ij})}} + \epsilon_{ij} \\
+\epsilon_{ij}      & \sim \operatorname{Normal} (0, \sigma_\epsilon^2).
+\end{align*}
+$$
+
+```{r}
+foxngeese_pp <-
+  foxngeese_pp %>% 
+  mutate(nmoves_19 = nmoves - 1)
+
+head(foxngeese_pp)
+```
+
+
+```{r, fig.width = 6.5, fig.height = 3.5}
+crossing(pi0 = c(1.5, 15, 150),
+         pi1 = c(0.1, 0.3, 0.5)) %>% 
+  expand(nesting(pi0, pi1),
+         game = 0:30) %>% 
+  mutate(y     = 1 + (19.0 / (1.0 + pi0 * exp(-1.0 * (pi1 * game)))),
+         pi0_f = factor(str_c("pi[0]==", pi0), 
+                        levels = c("pi[0]==150", "pi[0]==15", "pi[0]==1.5"))) %>%
+  
+  ggplot(aes(x = game, y = y, group = pi1)) +
+  geom_line(aes(size = pi1)) + 
+  scale_size_continuous(expression(pi[1]), range = c(1/3, 1), breaks = c(0.1, 0.3, 0.5)) +
+  scale_y_continuous("nmoves", limits = c(0, 25)) +
+  theme(panel.grid = element_blank()) +
+  facet_wrap(~pi0_f, labeller = label_parsed) 
+```
+
+
+
+
+```{r, warning = F, message = F}
+library(brms)
+```
+
+```{r}
+get_prior(data = foxngeese_pp, 
+      family = gaussian,
+      bf(nmoves ~ 1 + (19.0 / (1.0 + b0 * exp(-1.0 * (b1 * game)))),
+         b0 + b1 ~ 1 + (1 |i| id), nl = TRUE))
+```
+
+```{r}
+gamma_a_b_from_omega_sigma <- function(mode, sd) {
+  if (mode <= 0) stop("mode must be > 0")
+  if (sd   <= 0) stop("sd must be > 0")
+  rate <- (mode + sqrt(mode^2 + 4 * sd^2)) / (2 * sd^2)
+  shape <- 1 + mode * rate
+  return(list(shape = shape, rate = rate))
+}
+```
+
+```{r}
+gamma_a_b_from_omega_sigma(mode = 13.4005, sd = 1)
+```
+
+            
+```{r}
+fit0 <-
+  brm(data = foxngeese_pp, 
+      family = binomial(link = "identity"),
+      bf(nmoves ~ 1 + (19.0 / (1.0 + b0 * exp(-1.0 * (b1 * game)))),
+         b0 + b1 ~ 1 + (1 |i| id), nl = TRUE),
+      prior = c(prior(normal(13, 1), nlpar = b0),
+                prior(normal(0, 1), nlpar = b1),
+                prior(normal(0, 1), class = sd, nlpar = b0),
+                prior(normal(0, 1), class = sd, nlpar = b1),
+                prior(gamma(181.5679, 13.47471), class = sigma),
+                prior(lkj(4), class = cor)),
+      iter = 11000, warmup = 10000, cores = 4, chains = 4, 
+      control = list(adapt_delta = .999,
+                     max_treedepth = 12),
+      seed = 6)
+```
+
+```{r, fig.width = 6, fig.height = 6}
+plot(fit0)
+```
+
+
+
+```{r}
+fit1 <-
+  brm(data = foxngeese_pp, 
+      family = binomial,
+      nmoves_19 | trials(19) ~ 0 + Intercept + game + (1 + game | id),
+      prior = c(prior(normal(0, 3), class = b),
+                prior(normal(0, 2), class = sd),
+                prior(lkj(4), class = cor)),
+      iter = 2500, warmup = 500, cores = 4, chains = 4, 
+      seed = 6)
+```
+
+```{r}
+print(fit1)
+```
+
+
+
+```{r, fig.width = 3, fig.height = 4}
+conditional_effects(fit1) %>% 
+  plot() +
+  scale_y_continuous(breaks = 0:5 * 5, limits = c(0, 25))
+```
+
+```{r}
+foxngeese_pp <-
+  foxngeese_pp %>% 
+  mutate(read_gm = read - mean(read))
+
+head(foxngeese_pp)
+```
+
+
+Here we expand the level-2 equations from the previous model to
+
+$$
+\begin{align*}
+\pi_{0i} & = \gamma_{00} + \gamma_{01} (\text{read}_i - \overline{\text{read}}) + \zeta_{0i}\\
+\pi_{1i} & = \gamma_{10} + \gamma_{11} (\text{read}_i - \overline{\text{read}}) + \zeta_{1i}.
+\end{align*}
+$$
+
+Fit the model.
+
+```{r}
+fit2 <-
+  brm(data = foxngeese_pp, 
+      family = binomial,
+      nmoves_19 | trials(19) ~ 0 + Intercept + game + read_gm + game:read_gm + (1 + game | id),
+      prior = c(prior(normal(0, 3), class = b),
+                prior(normal(0, 2), class = sd),
+                prior(lkj(4), class = cor)),
+      iter = 2500, warmup = 500, cores = 4, chains = 4, 
+      seed = 6)
+```
+
+```{r}
+print(fit2)
+```
+
+```{r, warning = F}
+fit1 <- add_criterion(fit1, criterion = c("loo", "waic"))
+fit2 <- add_criterion(fit2, criterion = c("loo", "waic"))
+
+loo_compare(fit1, fit2, criterion = "loo")  %>% print(simplify = F)
+loo_compare(fit1, fit2, criterion = "waic") %>% print(simplify = F)
+```
+
+Because we have used a different likelihood, our LOO and WAIC values are quite different from the AIC and BIC values in the text. However, the overall pattern in the same. The second model containing $(\text{read}_i - \overline{\text{read}})$ as a level-2 predictor of $\pi_{0i}$ and $\pi_{1i}$ was not an improvement of the simpler model with out it.
+
+On pare 232, Singer and Willett reported their estimate for $\hat \gamma_{11}$ was 0.0405 ($p < .18$). Here's the posterior distribution for the corresponding parameter from our `fit2`.
+
+```{r, fig.width = 4, fig.height = 2.5}
+library(tidybayes)
+
+posterior_samples(fit2) %>% 
+  transmute(g = `b_game:read_gm`) %>% 
+  
+  ggplot(aes(x = g, y = 0)) +
+  geom_halfeyeh(.width = c(.5, .95)) +
+  scale_y_continuous(NULL, breaks = NULL) +
+  xlab(expression(gamma[11])) +
+  theme(panel.grid = element_blank())
+```
+
+Here's our version of the right panel of Figure 6.10.
+
+```{r, fig.width = 3.75, fig.height = 3.5}
+nd <- 
+  tibble(read = c(1.58, -1.58)) %>%
+  mutate(read_gm = read - mean(foxngeese_pp$read)) %>% 
+  expand(nesting(read, read_gm),
+         game = 0:30)
+
+fitted(fit2,
+       newdata = nd,
+       re_formula = NA) %>% 
+  data.frame() %>% 
+  bind_cols(nd) %>% 
+  mutate(read = factor(str_c("read = ", read))) %>% 
+  
+  ggplot(aes(x = game, y = Estimate, ymin = Q2.5, ymax = Q97.5, 
+             group = read, fill = read, color = read)) +
+  geom_ribbon(alpha = 1/2, size = 0) +
+  geom_line() +
+  scale_fill_viridis_d(NULL, option = "B", begin = .2, end = .75) +
+  scale_color_viridis_d(NULL, option = "B", begin = .2, end = .75) +
+  scale_y_continuous("nmoves", limits = c(0, 25)) +
+  theme(panel.grid = element_blank())
+```
+
+Notice how unimpressive the posterior means between the two conditions are when you include the 95% interval bands. Beware plots of fitted lines that do not include the 95% intervals!
+
+### A survey of truly nonlinear change trajectories.
+
+```{r, fig.width = 3, fig.height = 4}
+crossing(alpha = 100,
+         pi1   = c(0.01, 0.02, 0.1)) %>% 
+  expand(nesting(alpha, pi1),
+         time = seq(from = 0, to = 10, by = 0.01)) %>% 
+  mutate(y = alpha - (1 / (pi1 * time))) %>% 
+  
+  ggplot(aes(x = time, y = y, group = pi1)) +
+  geom_hline(yintercept = 100, color = "grey67", linetype = 2) +
+  geom_line() +
+  ggtitle("Hyperbola") +
+  coord_cartesian(ylim = 0:100) +
+  theme(panel.grid = element_blank())
+```
+
+```{r, fig.width = 3, fig.height = 4}
+crossing(alpha = 100,
+         pi1   =  0.02,
+         pi2   = c(0.015, 0, -0.0015)) %>% 
+  expand(nesting(alpha, pi1, pi2),
+         time = seq(from = 0, to = 10, by = 0.01)) %>% 
+  mutate(y = alpha - (1 / (pi1 * time + pi2 * time^2))) %>% 
+  
+  ggplot(aes(x = time, y = y, group = pi2)) +
+  geom_hline(yintercept = 100, color = "grey67", linetype = 2) +
+  geom_line() +
+  ggtitle("Inverse polynomial (quadratic)") +
+  coord_cartesian(ylim = 0:100) +
+  theme(panel.grid = element_blank())
+```
+
+```{r, fig.width = 3, fig.height = 4}
+crossing(pi0 = 5,
+         pi1 = c(0.1, 0.2, 0.3)) %>% 
+  expand(nesting(pi0, pi1),
+         time = seq(from = 0, to = 10, by = 0.01)) %>% 
+  mutate(y = pi0 * exp(pi1 * time)) %>% 
+  
+  ggplot(aes(x = time, y = y, group = pi1)) +
+  geom_line() +
+  ggtitle("Exponential (simple)") +
+  coord_cartesian(ylim = 0:100) +
+  theme(panel.grid = element_blank())
+```
+
+```{r, fig.width = 3, fig.height = 4}
+crossing(alpha = 100,
+         pi0   = 20,
+         pi1   = c(0.1, 0.2, 0.3)) %>% 
+  expand(nesting(alpha, pi0, pi1),
+         time = seq(from = 0, to = 10, by = 0.01)) %>% 
+  mutate(y = alpha - (alpha - pi0) * exp(-pi1 * time)) %>% 
+  
+  ggplot(aes(x = time, y = y, group = pi1)) +
+  geom_hline(yintercept = 100, color = "grey67", linetype = 2) +
+  geom_line() +
+  ggtitle("Negative exponential") +
+  coord_cartesian(ylim = 0:100) +
+  theme(panel.grid = element_blank())
+```
+
+Not in the text, the logistic trajectory
+
+```{r, fig.width = 3, fig.height = 4}
+crossing(alpha1 = 0,
+         alpha2 = 1,
+         pi0    = .5,
+         pi1    = c(0.5, 1, -2, -.5)) %>% 
+  expand(nesting(alpha1, alpha2, pi0, pi1),
+         time = seq(from = 0, to = 10, by = 0.01)) %>% 
+  mutate(y = alpha1 + ((alpha2 - alpha1) /  (1 + pi0 * exp(-pi1 * time)))) %>% 
+  
+  ggplot(aes(x = time, y = y, group = pi1)) +
+  geom_hline(yintercept = 0:1, color = "grey67", linetype = 2) +
+  geom_line() +
+  # coord_cartesian(xlim = 0:5) +
+  ggtitle("Logistic") +
+  theme(panel.grid = element_blank())
+```
+
+Here is an alternative paramaterization using `alpha = 10`.
+
+```{r, fig.width = 3, fig.height = 4}
+crossing(alpha1 = 0,
+         alpha2 = 10,
+         pi0    = 0,
+         pi1    = c(0.5, 1, -2, -.5)) %>% 
+  expand(nesting(alpha1, alpha2, pi0, pi1),
+         time = seq(from = 0, to = 10, by = 0.01)) %>% 
+  mutate(y = alpha1 + ((alpha2 - alpha1) / (1 + exp(-(pi0 + pi1 * time))))) %>% 
+  
+  ggplot(aes(x = time, y = y, group = pi1)) +
+  geom_hline(yintercept = 0:10, color = "grey67", linetype = 2) +
+  geom_line() +
+  ggtitle("Logistic") +
+  theme(panel.grid = element_blank())
+```
+
+```{r, fig.width = 3, fig.height = 4}
+crossing(alpha1 = 0,
+         alpha2 = 10,
+         pi0    = 0,
+         pi1    = c(0, -0.1, -0.5, -1)) %>% 
+  expand(nesting(alpha1, alpha2, pi0, pi1),
+         time = seq(from = 0, to = 10, by = 0.01)) %>% 
+  mutate(y = alpha1 + ((alpha2 - alpha1) / (1 + exp(-(pi0 + pi1 * time))))) %>% 
+  
+  ggplot(aes(x = time, y = y, group = pi1)) +
+  geom_hline(yintercept = c(0, 10), color = "grey67", linetype = 2) +
+  geom_line() +
+  ggtitle("Logistic") +
+  theme(panel.grid = element_blank())
+```
+
+And if we prefer to parameterize it in terms of gain $\gamma$ and threshold $\theta$, it'd be
+
+$$y = \operatorname{logistic}(x; \gamma, \theta) = \frac{1}{ \big (1 + \exp (-\gamma (x - \theta)) \big )}.$$
+
+```{r, fig.width = 3, fig.height = 4}
+crossing(alpha1 = 0,
+         alpha2 = 10,
+         gamma  = c(-1, -0.25),
+         theta  = c(3.5, 7)) %>% 
+  expand(nesting(alpha1, alpha2, gamma, theta),
+         time = seq(from = 0, to = 10, by = 0.01)) %>% 
+  mutate(y = alpha1 + ((alpha2 - alpha1) / (1 + exp(-gamma * (time - theta))))) %>% 
+  
+  ggplot(aes(x = time, y = y, group = interaction(gamma, theta))) +
+  geom_hline(yintercept = c(0, 10), color = "grey67", linetype = 2) +
+  geom_line() +
+  ggtitle("Logistic",
+          subtitle = expression(gamma~(gain)~and~theta~(threshold))) +
+  theme(panel.grid = element_blank())
+```
+
+
+
+## Reference {-}
+
+[Singer, J. D., & Willett, J. B. (2003). *Applied longitudinal data analysis: Modeling change and event occurrence*. New York, NY, US: Oxford University Press.](https://www.oxfordscholarship.com/view/10.1093/acprof:oso/9780195152968.001.0001/acprof-9780195152968)
+
+## Session info {-}
+
+```{r}
+sessionInfo()
+```
+
+```{r, echo = F, eval = F}
+# here we'll remove our objects
+rm()
+
+theme_set(theme_grey())
+```

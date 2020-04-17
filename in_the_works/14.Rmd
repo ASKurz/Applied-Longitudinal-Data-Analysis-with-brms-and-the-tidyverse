@@ -1,0 +1,561 @@
+---
+title: 'Chapter 14. Fitting Cox Regression Models'
+author: "A Solomon Kurz"
+date: "`r format(Sys.Date())`"
+output:
+  github_document
+---
+
+```{r, echo = FALSE, cache = FALSE}
+options(width = 100)
+```
+
+# Fitting Cox Regression Models
+
+> Having explored whether and, if so, when events occur in continuous time, as usual, we now examine whether variation in the risk of event occurrence varies systematically with predictors. In doing so, we focus exclusively on the post popular of possible methods: Cox regression analysis (often labeled the *proportional hazards model*).
+>
+> Our goal in this chapter is to describe the conceptual underpinnings of the Cox regression model and to demonstrate how to fit it to data. (p. 503, *emphasis* in the original)
+
+## Toward a statistical model for continuous-time hazard
+
+> We present the population relationship between continuous-time hazard and predictors in much the same way as we represent the population relationship between discrete-time hazard and predictors. But because continuous-time hazard is a *rate*, not a probability, we treat its logarithm, not its logit, as the dependent variable. As you might expect from our earlier presentation, the new continuous-time model expresses log hazard as the sum of two components:
+>
+> * *A baseline function*, the value of log hazard when the values of all predictors are 0.
+> * *A weighted linear combination of predictors*, whose parameters assess the shift in log hazard associated with unit differences in the corresponding predictor.
+>
+> Owing to its origins in D. R. Cox's 1972 seminal paper, "[Regression models and life tables](https://eclass.uoa.gr/modules/document/file.php/MATH394/Papers/%5BCox(1972)%5D%20Regression%20Models%20and%20Life%20Tables.pdf)," this representation is often known as the *Cox regression model*. (pp. 503--504, *emphasis* in the original)
+
+### Plots of within-group sample functions.
+
+Load the `rearrest` data.
+
+```{r, warning = F, message = F}
+library(tidyverse)
+
+rearrest <- 
+  read_csv("data/rearrest.csv") %>% 
+  mutate(censor_1 = 1 - censor)
+
+glimpse(rearrest)
+```
+
+We read about the data on page 504:
+
+> Our presentation uses data collected by Henning and Frueh (1996), who tracked the criminal histories of 194 inmates released from a medium security prison to determine--to the nearest day--whether and, if so, when the former inmates were re-arrested. During the period of data collection, which ranged from one day to three years, 106 former inmates (54.6%) were re-incarcerated. To develop the Cox regression model in a simple context, we first focus on the effect of a single dichotomous predictor, *PERSONAL*, which identifies the 61 former inmates (31.4%) with a history of person-related offenses such as simple assault, aggravated assault, or kidnapping). 
+
+In the data, the cases for which `censor == 0` are the ones who were re-incarcerated. Here are those counts and percentages.
+
+```{r}
+rearrest %>% 
+  count(censor) %>% 
+  mutate(percent = 100 * n / sum(n))
+```
+
+Here is a similar breakdown by `personal`.
+
+```{r}
+rearrest %>% 
+  count(personal) %>% 
+  mutate(percent = 100 * n / sum(n))
+```
+
+We can use teh **survival** package to fit the Kaplan-Meier curve. The `ggsurvplot()` function from the **survminer** package will make it easy to plot.
+
+```{r, warning = F, message = F}
+library(survival)
+library(survminer)
+```
+
+Fit the model.
+
+```{r}
+kap1 <-
+  survfit(data = rearrest,
+          type = "kaplan-meier",
+          Surv(months, censor_1) ~ personal)
+```
+
+Plot.
+
+```{r, fig.width = 8, fig.height = 4, warning = F}
+ggsurvplot(kap1, data = rearrest,
+           palette = c("orange", "purple"),
+           size = 1/2,
+           xlim = c(0, 36),
+           break.time.by = 6,
+           ggtheme = theme_gray() + 
+             theme(panel.grid = element_blank())) +
+  labs(x = "Months after release",
+       y = "Kaplan-Meier survivor function")
+```
+
+
+
+
+```{r, fig.width = 8, fig.height = 4, warning = F}
+broom::tidy(kap1) %>% 
+  mutate(chf = -log(estimate)) %>% 
+  
+  ggplot(aes(x = time, y = chf, color = strata)) +
+  geom_line() +
+  scale_x_continuous(breaks = 0:6 * 6) +
+  theme(legend.position = "top",
+        panel.grid = element_blank())
+```
+
+
+```{r}
+kap1$strata
+
+kap1$strata[1]
+```
+
+
+
+```{r}
+tibble(time = kap1$time,
+       surv = kap1$surv,
+       starta = rep(0:1, times = kap1$strata))
+```
+
+
+```{r}
+kap1 %>% str()
+```
+
+
+```{r}
+smooth <- function(width, time, survive) { 
+  
+  # from https://stats.idre.ucla.edu/r/examples/alda/r-applied-longitudinal-data-analysis-ch-14/
+  n   <- length(time) 
+  lo  <- time[1] + width 
+  hi  <- time[n] - width 
+  npt <- 50 
+  inc <- (hi - lo) / npt 
+  s   <- lo + t(c(1:npt)) * inc 
+  
+  slag   <- c(1, survive[1:n - 1]) 
+  h      <- 1 - survive / slag 
+  x1     <- as.vector(rep(1, npt)) %*% (t(time)) 
+  x2     <- t(s) %*% as.vector(rep(1, n)) 
+  x      <- (x1 - x2) / width 
+  k      <- .75 * (1 - x * x) * (abs(x) <= 1) 
+  lambda <- (k %*% h) / width 
+  
+  smoothed <- list(x = s, y = lambda) 
+  
+  return(smoothed) 
+  
+} 
+```
+
+Use our custom `smooth()` function, gather the results in a tibble, and plot!
+
+```{r, fig.width = 8, fig.height = 4, warning = F}
+s0 <-
+  smooth(width = 8, 
+         time = kap1$time[1:kap1$strata[1]], 
+         survive = kap1$surv[1:kap1$strata[1]])
+
+s1 <-
+  smooth(width = 8, 
+         time = kap1$time[(kap1$strata[1] + 1):(kap1$strata[1] + kap1$strata[2])], 
+         survive = kap1$surv[(kap1$strata[1] + 1):(kap1$strata[1] + kap1$strata[2])])
+
+
+
+tibble(time = c(s0$x %>% t(), s1$x %>% t()),
+       smooth = c(s0$y, s1$y)) %>% 
+  mutate(personal = factor(rep(0:1, each = n() / 2))) %>% 
+  
+  ggplot(aes(x = time, y = smooth, color = personal)) +
+  geom_line() +
+  scale_x_continuous(breaks = 0:6 * 6) +
+  labs(x = "months after release",
+       y = expression(widehat(italic(h)(italic(t[j]))))) +
+  coord_cartesian(xlim = c(0, 35),
+                  ylim = c(0, 0.08)) +
+  theme(legend.position = "top",
+        panel.grid = element_blank())
+```
+
+### 14.1.2 What type of statistical model do these graphs suggest?
+
+"It is difficult to move directly from the sub-sample graphs in figure 14.1 to an appropriate statistical model for hazard in the population because we even lack a full picture of the hazard’s values over time in the sample" (p. 507).
+
+```{r, fig.width = 8, fig.height = 4, warning = F}
+broom::tidy(kap1) %>% 
+  mutate(chf = log(1 - estimate)) %>% 
+  
+  ggplot(aes(x = time, y = chf, color = strata)) +
+  geom_hline(yintercept = 0, color = "white") +
+  geom_line() +
+  scale_x_continuous(breaks = 0:6 * 6, expand = c(0, 0)) +
+  ylim(-6, 1) +
+  theme(legend.position = "top",
+        panel.grid = element_blank())
+```
+
+```{r, fig.width = 8, fig.height = 4, warning = F}
+broom::tidy(kap1) %>% 
+  mutate(chf = log(1 - estimate)) %>% 
+  
+  ggplot(aes(x = time, y = chf, color = strata)) +
+  geom_hline(yintercept = 0, color = "white") +
+  geom_step() +
+  scale_x_continuous(breaks = 0:6 * 6, expand = c(0, 0)) +
+  ylim(-6, 1) +
+  theme(legend.position = "top",
+        panel.grid = element_blank())
+```
+
+
+```{r, fig.width = 8, fig.height = 4, warning = F}
+ggsurvplot(kap1, data = rearrest,
+           fun = "cumhaz",
+           palette = c("orange", "purple"),
+           size = 1/2,
+           xlim = c(0, 36),
+           break.time.by = 6,
+           ggtheme = theme_gray() + 
+             theme(panel.grid = element_blank())) +
+  labs(x = "Months after release",
+       y = "Kaplan-Meier survivor function")
+```
+
+```{r}
+ndf <- make_newdata(ped, tend = unique(tend)) %>% add_hazard(pam)
+```
+
+```{r}
+broom::tidy(kap1) %>% 
+  ggplot(aes(x = time, y = estimate, color = strata)) +
+  
+pammtools::geom_hazard()
+```
+
+
+
+
+## 14.3 Interpreting the results of fitting a Cox regression model to data
+
+"Most statistical packages include a routine for fitting the cox regression model to continuous-time event history data" (p. 523). This holds true for **brms**. Kinda. At the time of this writing (early 2020), **brms** does not officially support Cox regression. However, it does support them unofficially. You can learn all about the details in [issue #203](https://github.com/paul-buerkner/brms/issues/230) on the **brms** GitHub repo. In essence, you simply include a `family = brmsfamily("cox")` within the `brms::brm()` function. Fire up **brms**.
+
+```{r, warning = F, message = F}
+library(brms)
+library(tidybayes)
+```
+
+Let's fit the first model using default prior settings to see what happens.
+
+```{r fit14.1}
+fit14.1 <- 
+  brm(data = rearrest,
+      family = brmsfamily("cox"),
+      months | cens(censor) ~ 1 + personal,
+      iter = 2000, warmup = 1000, chains = 4, cores = 4,
+      seed = 14,
+      file = "fits/fit14.01")
+```
+
+Check the summary for `fit14.1`.
+
+```{r}
+print(fit14.1)
+```
+
+Note the second line in the output, "Links: mu = log." When fitting the discrete-time hazard models from earlier chapters, we primarily used the binomial likelihood with the logit link. Now we've switched to continuous-time Cox models, we've switched to using the log link. Keep that in mind when setting priors. Let's take a look at the default priors.
+
+```{r}
+get_prior(data = rearrest,
+          family = brmsfamily("cox"),
+          months | cens(censor) ~ 1 + personal)
+```
+
+For our predictor `personal`, we used the typical flat prior for when parameters are of `class = b`. For the model intercept, we had `student_t(3, 2, 10)`. We can use the `parse_dist()` and `stat_dist_halfeyeh()` functions from **tidybayes** to help us visualize that `student_t(3, 2, 10)` distribution.
+
+```{r, fig.width = 2.25, fig.height = 1}
+tibble(prior = "student_t(3, 2, 10)") %>% 
+  parse_dist(prior) %>% 
+  
+  ggplot(aes(y = prior, dist = .dist, args = .args)) +
+  geom_vline(xintercept = 0, color = "white") +
+  stat_dist_halfeyeh(.width = c(.5, .95)) +
+  labs(x = "Intercept prior",
+       y = NULL) +
+  coord_cartesian(xlim = c(-50, 50),
+                  ylim = c(1.5, 1.5)) +
+  theme(panel.grid = element_blank())
+```
+
+The mean is at 2 and the lower and upper limits of the 50% range are about -6 and 10. Since those values are all on the log scale, here they are after we transform them back to the natural scale (i.e., exponentiate).
+
+```{r}
+exp(-6)
+exp(2)
+exp(10)
+```
+
+The interquartile range for the prior covers a large parameter space and the 95% range covers a vaster space even still. If you don't know where your model intercept will be located, which we generally don't when fitting Cox models, this is a pretty decent prior to start with. Armed with that knowledge, we'll set explicitly set our intercept and predictor priors for the next three models.
+
+```{r fit14.2}
+fit14.2 <- 
+  brm(data = rearrest,
+      family = brmsfamily("cox"),
+      months | cens(censor) ~ 1 + property,
+      prior = c(prior(student_t(3, 2, 10), class = Intercept),
+                prior(normal(0, 2), class = b)),
+      iter = 2000, warmup = 1000, chains = 4, cores = 4,
+      seed = 14,
+      file = "fits/fit14.02")
+
+fit14.3 <- 
+  brm(data = rearrest,
+      family = brmsfamily("cox"),
+      months | cens(censor) ~ 1 + cage,
+      prior = c(prior(student_t(3, 2, 10), class = Intercept),
+                prior(normal(0, 2), class = b)),
+      iter = 2000, warmup = 1000, chains = 4, cores = 4,
+      seed = 14,
+      file = "fits/fit14.03")
+
+fit14.4 <- 
+  brm(data = rearrest,
+      family = brmsfamily("cox"),
+      months | cens(censor) ~ 1 + personal + property + cage,
+      prior = c(prior(student_t(3, 2, 10), class = Intercept),
+                prior(normal(0, 2), class = b)),
+      iter = 2000, warmup = 1000, chains = 4, cores = 4,
+      seed = 14,
+      file = "fits/fit14.04")
+```
+
+"Each raw parameter estimate [other than the intercept] assesses the estimated vertical separation--on a log hazard scale--associated with a one-unit difference in the associated predictor (controlling for all other predictors in the model)" (p. 525). However, 
+
+> as in discrete-time hazard modeling, it is also common to interpret parameter estimates by taking their antolog. For the Cox model, antilogged [i.e,. exponentiated] coefficients--shown in the second panel of table 14.1 are known as *hazard ratios*--the ratio of hazard functions that correspond to unit differences in the value of the associated predictor. This kind of transformation is so helpful that most statistical packages output the hazard ratios instead of the coefficients. (p. 526, *emphasis* in the original)
+
+Unlike some of the software packages alluded to in the text, **brms** does not automatically return the hazard ratios. Happily, the transformation is easy to compute. The hazard ratio for `personal` is simply the exponentiation of $\beta_\text{personal}$. Here we pull the posterior draws, convert those within the `b_personal` column with `exp()`, and summarize.
+
+```{r}
+post <- posterior_samples(fit14.1)
+
+post %>% 
+  transmute(`hazard ratio` = exp(b_personal)) %>% 
+  summarise(median = median(`hazard ratio`),
+            sd     = sd(`hazard ratio`),
+            ll     = quantile(`hazard ratio`, probs = .025),
+            ul     = quantile(`hazard ratio`, probs = .975)) %>% 
+  mutate_all(round, digits = 4)
+```
+
+Why not glance at the full posterior?
+
+```{r, fig.width = 4, fig.height = 2.5}
+post %>% 
+  transmute(`hazard ratio` = exp(b_personal)) %>% 
+  
+  ggplot(aes(x = `hazard ratio`, y = 0)) +
+  geom_vline(xintercept = 1, color = "white") +
+  stat_halfeyeh(.width = c(.5, .95)) +
+  scale_y_continuous(NULL, breaks = NULL) +
+  xlab("hazard ratio for personal") +
+  theme(panel.grid = element_blank())
+```
+
+Notice the right skew? This is why we summarized the hazard ratio with the median rather than the mean. Also, because hazard ratios are ratios, the critical comparison value is typically 1. That's why we have that `geom_vline()` line. 
+
+For the sake of space, I won't `print()` the summaries for `fit2` through `fit4`. The diagnostics suggest there were no problems with the chains. Here are their parameter summaries.
+
+```{r}
+fixef(fit14.2)
+fixef(fit14.3)
+fixef(fit14.4)
+```
+
+On page 527, we read:
+
+> Another way to interpret this relative difference is to convert it into a statement about the *percentage* difference in hazard associated with a one-unit difference in the value of the predictor. We obtain this interpretation by subtracting the hazard ratio from 1 and multiplying by 100 (that is, by computing 100*(hazard ratio – 1)). 
+
+Here that is for the `cage` coefficient from `fit14.3`.
+
+```{r, fig.width = 4, fig.height = 2.5}
+posterior_samples(fit14.3) %>% 
+  transmute(`percent change` = 100 * (exp(b_cage) - 1)) %>% 
+  
+  ggplot(aes(x = `percent change`, y = 0)) +
+  geom_vline(xintercept = 0, color = "white") +
+  stat_halfeyeh(.width = c(.5, .95)) +
+  scale_y_continuous(NULL, breaks = NULL) +
+  xlab("percentage change in hazard for age") +
+  theme(panel.grid = element_blank())
+```
+
+Here's how one might make a parameter summary like the top portion of Table 14.1.
+
+```{r}
+library(broom)
+
+tibble(name = str_c("fit14.", 1:4)) %>% 
+  mutate(tidy = map(name, ~get(.) %>% tidy())) %>% 
+  unnest(tidy) %>% 
+  filter(term %in% c("b_personal", "b_property", "b_cage")) %>% 
+  mutate(term = str_remove(term, "b_"),
+         b_sd = str_c(round(estimate, digits = 4), " (", round(std.error, digits = 4), ")")) %>% 
+  select(name, term, b_sd) %>% 
+  pivot_wider(names_from = name,
+              values_from = b_sd)
+```
+
+Somewhat similarly, here's how one might make an analogue to the hazard ratio portion of Table 14.1.
+
+```{r}
+bind_rows(
+  # fit14.1
+  posterior_samples(fit14.1) %>% 
+    transmute(fit   = "fit14.1",
+              param = "personal",
+              value = exp(b_personal)),
+  
+  # fit14.2
+  posterior_samples(fit14.2) %>% 
+    transmute(fit   = "fit14.2",
+              param = "property",
+              value = exp(b_property)),
+  
+  # fit14.3
+  posterior_samples(fit14.3) %>% 
+    transmute(fit   = "fit14.3",
+              param = "cage",
+              value = exp(b_cage)),
+  
+  # fit14.4
+  posterior_samples(fit14.4) %>% 
+    transmute(fit      = "fit14.4",
+              personal = exp(b_personal),
+              property = exp(b_property),
+              cage     = exp(b_cage)) %>% 
+    pivot_longer(-fit, names_to = "param")
+) %>% 
+  group_by(fit, param) %>% 
+  summarise(median = median(value),
+            sd     = sd(value)) %>% 
+  mutate(b_sd = str_c(round(median, digits = 4), " (", round(sd, digits = 4), ")")) %>% 
+  select(fit, param, b_sd) %>% 
+  pivot_wider(names_from = fit,
+              values_from = b_sd)
+```
+
+Before moving on, we should consider the limitations of the Cox regression approach:
+
+> Because we do not estimate the baseline hazard function, we can make only *comparative*, not *absolute*, statements about hazard. We can say that the hazard for one group is three times that of another, but we cannot say how high, or low, either function is. Even a large hazard ratio (like 3.30 for *PROPERTY*) could be potentially making statements about a small value of hazard because it only multiplies the risk of event occurrence from a infinitesimal level to a miniscule one.
+>
+> In essence, then, Cox's regression model and the method of partial likelihood invoke a compromise: we trade our ability to estimate the actual values of the baseline hazard function for the ability to estimate the effects of predictors on the baseline hazard function. Some investigators equate this tradeoff with a decision to treat the baseline hazard function as a "nuisance" parameter--a feature that is present but discarded as nonessential. Knowing how informative knowledge of the baseline hazard function can be, it is difficult for us to accept the notion that it is simply a "nuisance." Yet we are willing to accept this tradeoff for it allows us to model the effects of predictors without invoking potentially inappropriate and constraining parametric assumptions. (p. 528, *emphasis* in the original)
+
+### 14.3.2 Evaluating goodness-of-fit.
+
+Within our **brms** paradigm, we compare the fits by the LOO and the WAIC.
+
+```{r, message = F}
+fit14.1 <- add_criterion(fit14.1, criterion = c("loo", "waic"))
+fit14.2 <- add_criterion(fit14.2, criterion = c("loo", "waic"))
+fit14.3 <- add_criterion(fit14.3, criterion = c("loo", "waic"))
+fit14.4 <- add_criterion(fit14.4, criterion = c("loo", "waic"))
+
+loo_compare(fit14.1, fit14.2, fit14.3, fit14.4, criterion = "loo") %>% print(simplify = F)
+loo_compare(fit14.1, fit14.2, fit14.3, fit14.4, criterion = "waic") %>% print(simplify = F)
+```
+
+Similar to in the text, `fit14.4` (i.e., the model with all three predictors) seems to be the best fit to the data. Here are the LOO, WAIC, and stacking weights.
+
+```{r mw_14.1_to_14.4}
+model_weights(fit14.1, fit14.2, fit14.3, fit14.4, weights = "loo") %>% round(digits = 3)
+model_weights(fit14.1, fit14.2, fit14.3, fit14.4, weights = "waic") %>% round(digits = 3)
+model_weights(fit14.1, fit14.2, fit14.3, fit14.4, weights = "stacking") %>% round(digits = 3)
+```
+
+All three suggest the most weight should be placed on the multivariable model, `fit14.4`.
+
+### 14.3.3 Drawing inferences using asymptotic standard errors.
+
+As usual, we just summarize the posterior with percentile-based intervals. If you prefer, you can always use highest posterior density intervals. For kicks, here we compare the percentile-based and highest-posterior-density intervals for the `personal` variable across `fit14.1` and `fit14.4`.
+
+```{r}
+bind_rows(
+  posterior_samples(fit14.1) %>% median_qi(b_personal),
+  posterior_samples(fit14.1) %>% median_hdi(b_personal),
+  posterior_samples(fit14.4) %>% median_qi(b_personal),
+  posterior_samples(fit14.4) %>% median_hdi(b_personal)
+  ) %>% 
+  mutate(fit = rep(c("fit14.1", "fit14.4"), each = 2)) %>% 
+  rename(median = b_personal) %>% 
+  select(fit, median:.upper, .interval) %>% 
+  mutate_if(is.double, round, digits = 3) %>% 
+  knitr::kable()
+```
+
+They're similar and none contain zero within their bounds. Here's a look at all the marginal posteriors for all three predictors, across our four fits. For the sake of comparison, we'll mark off the zero point on the $x$-axis in each panel.
+
+```{r, fig.width = 8, fig.height = 4.5}
+bind_rows(
+  # fit14.1
+  posterior_samples(fit14.1) %>% 
+    transmute(fit   = "fit14.1",
+              param = "personal",
+              value = b_personal),
+  
+  # fit14.2
+  posterior_samples(fit14.2) %>% 
+    transmute(fit   = "fit14.2",
+              param = "property",
+              value = b_property),
+  
+  # fit14.3
+  posterior_samples(fit14.3) %>% 
+    transmute(fit   = "fit14.3",
+              param = "cage",
+              value = b_cage),
+  
+  # fit14.4
+  posterior_samples(fit14.4) %>% 
+    transmute(fit      = "fit14.4",
+              personal = b_personal,
+              property = b_property,
+              cage     = b_cage) %>% 
+    pivot_longer(-fit, names_to = "param")
+) %>% 
+  mutate(param = factor(param,
+                        levels = c("personal", "property", "cage"))) %>% 
+  
+  ggplot(aes(x = value, y = 0)) +
+  geom_vline(xintercept = 0, color = "white") +
+  stat_halfeyeh(.width = c(.5, .95),
+                normalize = "panels") +
+  scale_y_continuous(NULL, breaks = NULL) +
+  xlab("marginal posterior") +
+  theme(panel.grid = element_blank()) +
+  facet_grid(fit~param, scales = "free")
+```
+
+Of course, you could make a similar plot of marginal posteriors expressed as hazard ratios, instead. I'll leave that up to the interested reader. Either way, we have no need to worry about symmetric versus asymmetric intervals within our Bayesian paradigm. Whether you use percentile-based intervals or HDIs, neither presume symmetry.
+
+
+
+## Reference {-}
+
+[Singer, J. D., & Willett, J. B. (2003). *Applied longitudinal data analysis: Modeling change and event occurrence*. New York, NY, US: Oxford University Press.](https://www.oxfordscholarship.com/view/10.1093/acprof:oso/9780195152968.001.0001/acprof-9780195152968)
+
+## Session info {-}
+
+```{r}
+sessionInfo()
+```
+
+```{r, echo = F, eval = F}
+# here we'll remove our objects
+rm()
+
+theme_set(theme_grey())
+pacman::p_unload(pacman::p_loaded(), character.only = TRUE)
+```
+
