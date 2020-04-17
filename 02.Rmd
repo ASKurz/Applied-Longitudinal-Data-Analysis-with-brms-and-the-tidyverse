@@ -752,9 +752,10 @@ I have to protest. True, if we were working within a Classical Test Theory parad
 sessionInfo()
 ```
 
-```{r, echo = F}
+```{r, echo = F, message = F}
 # here we'll remove our objects
 rm(tolerance, tolerance_pp, by_id, fit2.1, fit2.2, models, mean_structure, residual_variance, r2, table, fit2.3, tol_fitted, fit2.4, tol_fitted_male, fit2.5, tol_fitted_exposure, p1, p2)
 
 theme_set(theme_grey())
+pacman::p_unload(pacman::p_loaded(), character.only = TRUE)
 ```
