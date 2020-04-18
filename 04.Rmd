@@ -14,7 +14,7 @@ options(width = 100)
 
 "We now delve deeper into the specification, estimation, and interpretation of the multilevel model for change" (p. 75).
 
-## 4.1 Example: Changes in adolescent alcohol use
+## Example: Changes in adolescent alcohol use
 
 Load the data.
 
@@ -40,15 +40,15 @@ library(tidyverse)
 
 Here's our version of Figure 4.1, using `stat_smooth()` to get the exploratory OLS trajectories.
 
-```{r, fig.width = 7, fig.height = 4}
+```{r, fig.width = 7, fig.height = 4, message = F}
 alcohol1_pp %>%
   filter(id %in% c(4, 14, 23, 32, 41, 56, 65, 82)) %>%
   
   ggplot(aes(x = age, y = alcuse)) +
   stat_smooth(method = "lm", se = F) +
   geom_point() +
-  coord_cartesian(xlim = 13:17,
-                  ylim = -1:4) +
+  coord_cartesian(xlim = c(13, 17),
+                  ylim = c(-1, 4)) +
   theme(panel.grid = element_blank()) +
   facet_wrap(~id, ncol = 4)
 ```
@@ -64,7 +64,7 @@ where $\pi_{0i}$ is the initial status of participant $i$, $\pi_{1i}$ is partici
 
 Singer and Willett made their Figure 4.2, "with a random sample of 32 of the adolescents" (p. 78). If we just wanted a random sample of rows, the `sample_n()` function would do the job. But since we're working with long data, we'll need some `group_by()` + `nest()` mojo. I got the trick from [Jenny Bryan](https://twitter.com/JennyBryan)'s [*Sample from groups, n varies by group*](https://jennybc.github.io/purrr-tutorial/ls12_different-sized-samples.html). Setting the seed makes the results from `sample_n()` reproducible. Here are the top panels.
 
-```{r, fig.width = 5, fig.height = 3}
+```{r, fig.width = 5, fig.height = 3, message = F}
 set.seed(4)
 
 alcohol1_pp %>% 
@@ -76,15 +76,15 @@ alcohol1_pp %>%
 
   ggplot(aes(x = age, y = alcuse, group = id)) +
   stat_smooth(method = "lm", se = F, size = 1/4) +
-  coord_cartesian(xlim = 13:17,
-                  ylim = -1:4) +
+  coord_cartesian(xlim = c(13, 17),
+                  ylim = c(-1, 4)) +
   theme(panel.grid = element_blank()) +
   facet_wrap(~coa)
 ```
 
 We have similar data wrangling needs for the bottom panels.
 
-```{r, fig.width = 5, fig.height = 3}
+```{r, fig.width = 5, fig.height = 3, message = F}
 set.seed(4)
 
 alcohol1_pp %>% 
@@ -98,8 +98,8 @@ alcohol1_pp %>%
 
   ggplot(aes(x = age, y = alcuse, group = id)) +
   stat_smooth(method = "lm", se = F, size = 1/4) +
-  coord_cartesian(xlim = 13:17,
-                  ylim = -1:4) +
+  coord_cartesian(xlim = c(13, 17),
+                  ylim = c(-1, 4)) +
   theme(panel.grid = element_blank()) +
   facet_wrap(~hp)
 ```
@@ -128,7 +128,7 @@ where $\gamma_{00}$ and $\gamma_{10}$ are the level-2 intercepts, the population
 \Bigg ).
 \end{align*}
 
-## 4.2 The composite specification of the multilevel model for change
+## The composite specification of the multilevel model for change
 
 With a little algebra, we can combine the level-1 and level-2 submodels into the composite multilevel model for change, which follows the form
 
@@ -146,11 +146,11 @@ With a little algebra, we can combine the level-1 and level-2 submodels into the
 
 where the brackets in the first line partition the structural model (i.e., the model for $\mu$) and the stochastic components (i.e., the $\sigma$ terms). We should note that this is the format that most closely mirrors what we use in the `formula` argument in `brms::brm()`. As long as `age` is not centered on the mean, our **brms** syntax would be: `formula = alcuse ~ 0 + intercept + age_c + coa + age_c:coa + (1 + age_c | id)`.
 
-### 4.2.1 The structural component of the composite model.
+### The structural component of the composite model.
 
 > Although their interpretation is identical, the $\gamma$s in the composite model describe patterns of change in a different way. Rather than postulating first how *ALCUSE* is related to *TIME* and the individual growth parameters, and second how the individual growth parameters are related to *COA*, the composite specification in equation 4.3 postulates that *ALCUSE* depends *simultaneously* on: (1) the level-1 predictor, *TIME*; (2) the level-2 predictor, *COA*; and (3) the *cross-level* interaction, *COA* by *TIME*. From this perspective, the composite model's structural portion strongly resembles a regular regression model with predictors, *TIME* and *COA*, appearing as main effects (associated with $\gamma_{10}$ and $\gamma_{01}$, respectively) and in a *cross-level* interaction (associated with $\gamma_{11}$). (p. 82, *emphasis* in the original)
 
-### 4.2.2 The stochastic component of the composite model.
+### The stochastic component of the composite model.
 
 > A distinctive feature of the composite multilevel model is its composite residual, the three terms in the second set of brackets on the right of equation 4.3 that combine together the level-1 residual and the two level-2 residuals:
 >
@@ -159,7 +159,7 @@ where the brackets in the first line partition the structural model (i.e., the m
 >
 > The mathematical form of the composite residual reveals two important properties about the occasion-specific residuals not readily apparent in the level-1/level-2 specification: they can be both *autocorrelated* and *heteroscedastic* within person. (p. 84, *emphasis* in the original)
 
-## 4.3 Methods of estimation, revisited
+## Methods of estimation, revisited
 
 In this section, the authors introduced generalized least squares (GLS) estimation and iterative generalized least squares (IGLS) estimation and then distinguished between full and restricted maximum likelihood estimation. Since our goal is to fit these models as Bayesians, we won't be using or discussing any of these in this project. There are, of course, different ways to approach Bayesian estimation. E.g., though we're using Hamiltonian Monte Carlo, we could use other algorithms, such as the Gibbs sampler. However, all that is outside of the scope of this project.
 
@@ -171,13 +171,13 @@ $$
 
 If you really want to dive into the details of this, I suggest referencing a proper introductory Bayesian textbook, such as McElreath ([2015](https://xcelab.net/rm/statistical-rethinking/)), Kruschke ([2015](http://www.indiana.edu/~kruschke/DoingBayesianDataAnalysis/)), or Gelman, Carlin, Stern, Dunson, Vehtari, and Rubin ([2013](http://www.stat.columbia.edu/~gelman/book/)). I haven't had time to check it out, but I've heard Labmert's ([2018](https://ben-lambert.com/a-students-guide-to-bayesian-statistics/)) text is good, too. And for details specific to Stan, and thus **brms**, you might check out the documentation resources at [https://mc-stan.org/users/documentation/](https://mc-stan.org/users/documentation/).
 
-## 4.4 First steps: Fitting two unconditional multilevel models for change
+## First steps: Fitting two unconditional multilevel models for change
 
 Singer and Willett recommended that before you fit your full theoretical multilevel model of change--the one with all the interesting covariates--you should fit two simpler preliminary models. The first is the *unconditional means model*. The second is the *unconditional growth model*. 
 
 I agree. In addition to the reasons they cover in the text, this is just good pragmatic data analysis. Start simple and build up to the more complicated models only after you're confident you understand what's going on with the simpler ones. And if you're new to them, you'll discover this is especially so with Bayesian methods. 
 
-### 4.4.1 The unconditional means model
+### The unconditional means model.
 
 The unconditional means model follows the formula
 
@@ -351,7 +351,7 @@ post %>%
   pivot_longer(everything())
 ```
 
-And one last bit before we move on to the next section. Remember how we discovered what the `brm()` default priors were for our model with the handy `get_prior()` function?. Let's refresh ourselves on how that worked.
+And one last bit before we move on to the next section. Remember how we discovered what the `brm()` default priors were for our model with the handy `get_prior()` function? Let's refresh ourselves on how that worked.
 
 ```{r}
 get_prior(data = alcohol1_pp, 
@@ -397,7 +397,7 @@ Recall that by **brms** default, the variance parameters have a lower-limit of 0
 
 *These priors look kinda silly*, you might say. *Anyone with a little common sense can do better*. Well, sure. Probably. Maybe. But keep in mind we're still getting the layout of the land. And plus, this was a pretty simple model. Selecting high-quality priors gets tricky as the models get more complicated. In other chapters, we'll explore other ways to specify priors for our multilevel models. But to keep things simple for now, let's keep practicing inspecting and using the defaults with `get_prior()` and so on.
 
-### 4.4.2 The unconditional growth model
+### The unconditional growth model.
 
 Using the composite formula, our next model, the unconditional growth model, follows the form
 
@@ -668,7 +668,7 @@ tibble(occasion = 1:3) %>%
   facet_wrap(~label, scales = "free_y", ncol = 1)
 ```
 
-### 4.4.3 Quantifying the proportion of outcome variation "explained"
+### Quantifying the proportion of outcome variation "explained."
 
 Because of the way the multilevel model partitions off variance into different sources (e.g., $sigma_0^2$, $sigma_1^2$, and $sigma_\epsilon^2$ in the unconditional growth model), the conventional $R^2$ is not applicable for evaluating models. Several pseudo $R^2$ statistics are frequently used instead.
 
@@ -708,8 +708,8 @@ tibble(age_14 = 0:2) %>%
   group_by(row) %>% 
   summarise(r2 = cor(fitted, alcuse)) %>% 
   summarise(mean = mean(r2),
-            ll = quantile(r2, prob = .025),
-            ul = quantile(r2, prob = .975))
+            ll   = quantile(r2, prob = .025),
+            ul   = quantile(r2, prob = .975))
 ```
 
 
@@ -752,8 +752,8 @@ cbind(VarCorr(fit4.1, summary = F)[[2]][[1]],
   ggplot(aes(x = r_2_epsilon)) +
   geom_vline(xintercept = 0, color = "white") +
   geom_density(fill = "grey25", color = "transparent") +
-  scale_y_continuous(NULL, breaks = NULL) +
   scale_x_continuous(expression(rho[0][1]), limits = c(-1, 1)) +
+  scale_y_continuous(NULL, breaks = NULL) +
   theme(panel.grid = element_blank())
 ```
 
@@ -775,7 +775,7 @@ If you look back up at the shape of the full posterior of $R_\epsilon^2$, you’
 
 > We suggest that you base decisions to enter, retain, and remove predictors on a combination of logic, theory, and prior research, supplemented by judicious [parameter evaluation] and comparison of model fit. At the outset, you might examine the effect of each predictor individually. You might then focus on predictors of primary interest (while including others whose effects you want to control). As in regular regression, you can add predictors singly or in groups and you can address issues of functional form using interactions and transformations. As you develop the taxonomy, you will progress toward a "final model" whose interpretation addresses your research questions. We place quotes around this term to emphasize that we believe no statistical model is *ever* final; it is simply a placeholder until a better model is found. (p. 105, *emphasis* in the original)
 
-### 4.5.2 Interpreting fitted models.
+### Interpreting fitted models.
 
 > You need not interpret every model you fit, especially those designed to guide interim decision making. When writing up findings for presentation and publication, we suggest that you identify a manageable subset of models that, taken together, tells a persuasive story parsimoniously. At a minimum, this includes the unconditional means model, the unconditional growth model, and a "final model". You may also want to present intermediate models that either provide important building blocks or tell interesting stories in their own right. (p. 106)
 
@@ -935,8 +935,8 @@ bind_cols(
   ggplot(aes(x = value)) +
   geom_vline(xintercept = 0, color = "white") +
   geom_density(fill = "grey25", color = "transparent") +
-  scale_y_continuous(NULL, breaks = NULL) +
   scale_x_continuous(NULL, limits = c(-5, 2)) +
+  scale_y_continuous(NULL, breaks = NULL) +
   theme(panel.grid = element_blank()) +
   facet_wrap(~name, labeller = label_parsed, ncol = 1)
 ```
@@ -1112,7 +1112,7 @@ v %>%
   mutate_if(is.double, round, digits = 3)
 ```
 
-### 4.5.3 Displaying prototypical change trajectories.
+### Displaying prototypical change trajectories.
 
 On page 111, Singer and Willett computed the various levels of the $\pi$s when `coa == 0` or `coa == 1`. To follow along, we’ll want to work directly with the posterior samples of `fit4.3`.
 
@@ -1195,7 +1195,7 @@ f %>%
               fill = "grey75", alpha = 3/4) +
   geom_line(aes(y = Estimate)) +
   scale_y_continuous("alcuse", breaks = 0:2, limits = c(0, 2)) +
-  coord_cartesian(xlim = 13:17) +
+  coord_cartesian(xlim = c(13, 17)) +
   theme(panel.grid = element_blank())
 ```  
 
@@ -1240,8 +1240,8 @@ f %>%
   scale_fill_manual(values = c("blue3", "red3")) +
   scale_color_manual(values = c("blue3", "red3")) +
   scale_y_continuous("alcuse", breaks = 0:2) +
-  coord_cartesian(xlim = 13:17) +
   labs(subtitle = "High peer values are in red;\nlow ones are in blue.") +
+  coord_cartesian(xlim = c(13, 17)) +
   theme(legend.position = "none",
         panel.grid = element_blank()) +
   facet_wrap(~coa)
@@ -1297,15 +1297,15 @@ fixef(fit4.7) %>% round(digits = 3)
 fixef(fit4.8) %>% round(digits = 3)
 ```
 
-## 4.6 Comparing models using deviance statistics
+## Comparing models using deviance statistics
 
 As you will see, we will also make use of deviance within our Bayesian Stan-based paradigm. But we'll do so a little differently than what Singer and Willett presented.
 
-### 4.6.1 The deviance statistic.
+### The deviance statistic.
 
-As it turns out, we Bayesians use the log-likelihood (LL), too. Recall how the numerator in the right-hand side of Bayes’ Theorem was $p(\text{data} | \theta) p(\theta)$? That first part, $p(\text{data} | \theta)$, is the likelihood. In words, the likelihood is the *probability of the data given the parameters*. And we take the log of the likelihood rather than the likelihood itself because it’s easier to work with statistically. 
+As it turns out, we Bayesians use the log-likelihood (LL), too. Recall how the numerator in the right-hand side of Bayes' Theorem was $p(\text{data} | \theta) p(\theta)$? That first part, $p(\text{data} | \theta)$, is the likelihood. In words, the likelihood is the *probability of the data given the parameters*. And we take the log of the likelihood rather than the likelihood itself because it's easier to work with statistically. 
 
-When you’re working with **brms**, you can extract the LL with the `log_lik()` function. Here's an example with `fit4.1`, our unconditional means model.
+When you're working with **brms**, you can extract the LL with the `log_lik()` function. Here's an example with `fit4.1`, our unconditional means model.
 
 ```{r}
 log_lik(fit4.1) %>% 
@@ -1345,17 +1345,17 @@ As do the frequentists, we Bayesian generally prefer models with smaller devianc
 
 The reasons frequentists multiply the LL by -2 is because after doing so, the difference in deviances between two models follows a $\chi^2$ distribution and the old $\chi^2$ difference test is widely-used in frequentist statistics. Bayesians often just go ahead and use the -2 multiplication, too. It's largely out of tradition. But as we'll see, some contemporary Bayesians are challenging that tradition.
 
-### 4.6.2. When and how can you compare deviance statistics?
+### When and how can you compare deviance statistics?
 
 As for the frequentists, deviance values in the Bayesian context are only meaningful in the relative sense. You cannot directly interpret single deviance values by their magnitudes or signs. But you can compare two or more models by their relative deviance values. When doing so, they must have been computed using the same data (i.e., no differences in missingness in the predictors) and the models must be nested.
 
 However, in contemporary Bayesian practice we don't tend to compare models with deviance. For details on why, check out Chapter 6 in McElreath's [*Statistical Rethinking*](https://xcelab.net/rm/statistical-rethinking/). McElreath also covered the topic in several online lectures (e.g., [here](https://www.youtube.com/watch?v=vSjL2Zc-gEQ&list=PLDcUM9US4XdMdZOhJWJJD4mDBMnbTWw_z&index=8) and [here](https://www.youtube.com/watch?v=gjrsYDJbRh0&list=PLDcUM9US4XdNM4Edgs7weiyIguLSToZRI&index=8)).
 
-### 4.6.3 Implementing deviance-based hypothesis tests.
+### Implementing deviance-based hypothesis tests.
 
 In this project, we are not going to practice comparing deviances using frequentist $\chi^2$ tests. We will, however, cover Bayesian information criteria.
 
-### 4.6.4 ~~AIC and BIC~~ WAIC and LOO statistics: Comparing nonnested models using information criteria [and cross validation].
+### ~~AIC and BIC~~ WAIC and LOO statistics: Comparing nonnested models using information criteria [and cross validation].
 
 We do not use the AIC or the BIC within the Stan ecosystem. The AIC is frequentist and cannot handle models with priors. The BIC is interesting is it's a double misnomer. It is neither Bayesian nor is it a proper information criterion--though it does scale like one. However, it might be useful for our purposes to walk out the AIC a bit. It'll ground our discussion of the WAIC and LOO. From [Spiegelhalter, Best, Carlin and van der Linde (2014)](https://www.jstor.org/stable/pdf/24774528.pdf?casa_token=cOkknddLwBsAAAAA:nwbGR1IDJtZHzGmhEUDJBLfELsSJUzgTR_r5j_gur7goLCihSBVdFhXeCZVxGKbj0B0Dr_4dZs52PsP4NEoFAM0M5OR7LusQSqGgGuyX147xIButrjzT), we read:
 
@@ -1570,7 +1570,7 @@ loo_compare(fit4.1, fit4.2, criterion = "loo") %>%
 
 We'll get more practice with these methods as we go along. But for your own edification, you might check out [the vignettes](https://CRAN.R-project.org/package=loo) put out by the **loo** team.
 
-## 4.7 Using Wald statistics to test composite hypotheses about fixed effects
+## Using Wald statistics to test composite hypotheses about fixed effects
 
 I’m not going to address issues of composite null-hypothesis tests using the Wald statistic. However, we can address some of these issues from a different more estimation-based perspective. Consider the initial question posed on page 123: 
 
@@ -1612,7 +1612,7 @@ f %>%
   geom_line(aes(y = Estimate)) +
   scale_y_continuous("alcuse", breaks = 0:2, limits = c(0, 2)) +
   labs(subtitle = "Zero is credible for neither\nthe intercept nor the slope.") +
-  coord_cartesian(xlim = 13:17) +
+  coord_cartesian(xlim = c(13, 17)) +
   theme(legend.position = "none",
         panel.grid = element_blank())
 ``` 
@@ -1657,7 +1657,7 @@ f %>%
   scale_y_continuous(NULL, breaks = NULL) +
   labs(subtitle = "Based on 4,000 posterior draws, not a single one\nsuggests the slope is even close to zero. Rather, the\nposterior mass is concentrated around 0.25.",
        x = expression(paste(gamma[0][1], " (i.e., the difference between the two time points)"))) +
-  coord_cartesian(xlim = 0:1) +
+  coord_cartesian(xlim = c(0, 1)) +
   theme(panel.grid = element_blank())
 ```
 
@@ -1713,7 +1713,7 @@ f <-
 head(f)
 ```
 
-For our final difference score, we’ll subtract the first difference score from the second.
+For our final difference score, we'll subtract the first difference score from the second.
 
 ```{r}
 # step 3
@@ -1752,11 +1752,11 @@ f %>%
 
 Our results contrast a bit from Singer and Willett's. Though the bulk of our posterior mass is concentrated around -0.22, zero is a credible value within the difference of differences density. Our best bet is the differences to begin to converge over time. However, that rate of that convergence is subtle and somewhat imprecise relative to the effect size. Interpret with caution.
 
-## 4.8 Evaluating the tenability of a model's assumptions
+## Evaluating the tenability of a model's assumptions
 
 "Whenever you fit a statistical model, you invoke assumptions" (p. 127). This is the case for multilevel Bayesian models, too.
 
-### 4.8.1 Checking functional form.
+### Checking functional form.
 
 We've already checked the functional form at level-1 with our version of Figure 4.1. When we made our version of Figure 4.1, we relied on `ggplot2::stat_smooth()` to compute the `id`-level OLS trajectories. To make our variants of Figure 4.4, we'll have to back up and compute them externally with `lm()`. Here we'll do so in bulk with a nested data frame. The **broom** package will help us extract the results.
 
@@ -1803,7 +1803,7 @@ o %>%
   mutate(r = map_dbl(data, ~cor(.)[2, 1] %>% round(digits = 2)))
 ```
 
-### 4.8.2 Checking normality.
+### Checking normality.
 
 The basic multilevel model of change yields three variance parameters, $\epsilon_{ij}$, $\zeta_0i$, and $\zeta_1i$. Each measurement occasion in the model receives a model-implied estimate for each. Singer and Willett referred to those estimates as $\hat{\epsilon}_{ij}$, $\hat{\zeta}_0i$, and $\hat{\zeta}_1i$. As with frequentist software, our Bayesian software **brms** will return these estimates.
 
@@ -1817,7 +1817,7 @@ str(e)
 head(e)
 ```
 
-For our `fit5`, the `residuals()` function returned a $246 \times 4$ numeric array. Each row corresponded to one of the rows of the original data set. The four vectors are the familiar summaries `Estimate`, `Est.Error`, `Q2.5`, and `Q97.5`. If we’d like to work with these in a **ggplot2**-made plot, we’ll have to convert our `e` object to a data frame. 
+For our `fit5`, the `residuals()` function returned a $246 \times 4$ numeric array. Each row corresponded to one of the rows of the original data set. The four vectors are the familiar summaries `Estimate`, `Est.Error`, `Q2.5`, and `Q97.5`. If we'd like to work with these in a **ggplot2**-made plot, we'll have to convert our `e` object to a data frame. 
 
 After we make the conversion, we then make the top left panel of Figure 4.5.
 
@@ -1836,7 +1836,7 @@ e %>%
   theme(panel.grid = element_blank())
 ```
 
-For the right plot on the top, we need to add an `id` index. That's as easy as appending the one from the original data. If you followed closely with the text, you may have also noticed this panel is of the standardized residuals. That just means we’ll have to hand-standardize ours before plotting.
+For the right plot on the top, we need to add an `id` index. That's as easy as appending the one from the original data. If you followed closely with the text, you may have also noticed this panel is of the standardized residuals. That just means we'll have to hand-standardize ours before plotting.
 
 ```{r, fig.width = 3.5, fig.height = 2.75, warning = F, message = F}
 e %>% 
@@ -1846,8 +1846,7 @@ e %>%
   ggplot(aes(x = id, y = z)) +
   geom_hline(yintercept = 0, color = "white") +
   geom_point() +
-  ylab(expression(italic(std)~hat(epsilon)[italic(ij)])) +
-  ylim(-2, 2) +
+  scale_y_continuous(expression(italic(std)~hat(epsilon)[italic(ij)]), limits = c(-2, 2)) +
   theme(panel.grid = element_blank())
 ```
 
@@ -1881,9 +1880,9 @@ z %>%
   ggplot(aes(sample = Estimate)) +
   geom_hline(yintercept = 0, color = "white") +
   geom_qq() +
+  ylim(-1, 1) +
   labs(x = "Normal score",
        y = NULL) +
-  ylim(-1, 1) +
   theme(panel.grid = element_blank()) +
   facet_wrap(~ranef, labeller = label_parsed, ncol = 1)
 ```
@@ -1932,9 +1931,9 @@ z %>%
 
 When you go Bayesian, even your residuals get full posterior distributions.
 
-### 4.8.3 Checking homoscedasticity.
+### Checking homoscedasticity.
 
-Here we examine the homoscedasticity assumption by plotting the residual estimates against our predictors. We’ll start with the upper left panel of Figure 4.6.
+Here we examine the homoscedasticity assumption by plotting the residual estimates against our predictors. We'll start with the upper left panel of Figure 4.6.
 
 ```{r, fig.width = 3.5, fig.height = 2.75}
 e %>% 
@@ -1944,8 +1943,8 @@ e %>%
   geom_hline(yintercept = 0, color = "white") +
   geom_point(alpha = 1/4) +
   ylab(expression(hat(epsilon)[italic(ij)])) +
-  coord_cartesian(xlim = 13:17,
-                  ylim = -2:2) +
+  coord_cartesian(xlim = c(13, 17),
+                  ylim = c(-2, 2)) +
   theme(panel.grid = element_blank())
 ```
 
@@ -1965,15 +1964,15 @@ z %>%
   ggplot(aes(x = value, y = Estimate)) +
   geom_hline(yintercept = 0, color = "white") +
   geom_point(alpha = 1/3) +
+  ylim(-1, 1) +
   labs(x = "covariate value",
        y = NULL) +
-  ylim(-1, 1) +
   theme(panel.grid = element_blank(),
         strip.text = element_text(size = 10)) +
   facet_grid(ranef~name, labeller = label_parsed, scales = "free")
 ```
 
-## 4.9 Model-based (Empirical Bayes) estimates of the individual growth parameters
+## Model-based (Empirical Bayes) estimates of the individual growth parameters
 
 In this section, the authors discussed two methods for constructing `id`-level trajectories: a) use a weighted average of the OLS and multilevel estimates and b) rely solely on the multilevel model by making use of the three sources of residual variation. Our method will be the latter. 
 
@@ -2127,7 +2126,7 @@ glimpse(f_gamma_only)
 
 Let's plot!
 
-```{r, fig.height = 5, fig.width = 8}  
+```{r, fig.height = 5, fig.width = 8, message = F}  
 f %>% 
   ggplot(aes(x = age)) +
   # `id`-specific lines
@@ -2139,9 +2138,9 @@ f %>%
             size = 1/2) +
   # OLS lines
   stat_smooth(data = nd,
-            aes(y = alcuse),
-            method = "lm", se = F,
-            color = "black", linetype = 2, size = 1/2) +
+              aes(y = alcuse),
+              method = "lm", se = F,
+              color = "black", linetype = 2, size = 1/2) +
   # data points
   geom_point(data = nd,
              aes(y = alcuse)) +
@@ -2234,6 +2233,6 @@ sessionInfo()
 rm(alcohol1_pp, fit4.1, post, v, fit4.2, make_s2rj, make_rho_rj_rjp, fit4.3, fit4.4, ce, fit4.5, fit4.6, nd, f, fit4.7, fit4.8, ll, l_fit4.1, ws, mu_peer, o, e, z, post_23, f_gamma_only, nd_expanded)
 
 theme_set(theme_grey())
-
 pacman::p_unload(pacman::p_loaded(), character.only = TRUE)
 ```
+
