@@ -51,7 +51,7 @@ reading_pp %>%
 
 But back to the book, here's how we might make our version of Figure 5.1.
 
-```{r, fig.width = 5.5, fig.height = 5}
+```{r, fig.width = 5.5, fig.height = 5, message = F}
 set.seed(5)
 
 # wrangle
@@ -69,8 +69,8 @@ reading_pp %>%
   stat_smooth(method = "lm", se = F, size = 1/2) +
   scale_color_viridis_d(NULL, option = "B", end = .5, direction = -1) +
   xlab("measure of age") +
-  coord_cartesian(xlim = 5:12,
-                  ylim = 0:80) +
+  coord_cartesian(xlim = c(5, 12),
+                  ylim = c(0, 80)) +
   theme(panel.grid = element_blank()) +
   facet_wrap(~id)
 ```
@@ -81,15 +81,14 @@ Since it wasn't clear which `id` values the authors used in the text, we just ra
 
 The composite formula for our first model is
 
-$$
 \begin{align*}
 \text{piat}_{ij} & = \gamma_{00} + \gamma_{10} (\text{agegrp}_{ij} - 6.5) + \zeta_{0i} + \zeta_{1i} (\text{agegrp}_{ij} - 6.5) + \epsilon_{ij} \\
 
-\epsilon_{ij}    & \sim \text{Normal} (0, \sigma_\epsilon) \\
+\epsilon_{ij}    & \sim \operatorname{Normal} (0, \sigma_\epsilon) \\
 
 \begin{bmatrix} 
 \zeta_{0i} \\ \zeta_{1i} 
-\end{bmatrix} & \sim \text{Normal} 
+\end{bmatrix} & \sim \operatorname{Normal} 
 \Bigg ( 
 \begin{bmatrix} 0 \\ 0 \end{bmatrix},
 \mathbf \Sigma
@@ -102,7 +101,6 @@ $$
 \mathbf{\Omega}  & = \begin{bmatrix} 1 & \rho_{01} \\ \rho_{01} & 1 \end{bmatrix}
 
 \end{align*}
-$$
 
 It's the same for the twin model using `age` rather than `agegrp`. Notice how we've switched from Singer and Willett's $\sigma^2$ parameterization to the $\sigma$ parameterization typical of **brms**.
 
@@ -343,14 +341,13 @@ Uneven for dayz.
 
 Here's the **brms** version of the composite formula for Model A, the unconditional growth model for `lnw`.
 
-$$
 \begin{align*}
 \text{lnw}_{ij} & = \gamma_{00} + \gamma_{10} \text{exper}_{ij} + \zeta_{0i} + \zeta_{1i} \text{exper}_{ij} + \epsilon_{ij} \\
-\epsilon_{ij} & \sim \text{Normal} (0, \sigma_\epsilon) \\
+\epsilon_{ij} & \sim \operatorname{Normal} (0, \sigma_\epsilon) \\
 
 \begin{bmatrix} 
 \zeta_{0i} \\ \zeta_{1i} 
-\end{bmatrix} & \sim \text{Normal} 
+\end{bmatrix} & \sim \operatorname{Normal} 
 \Bigg ( 
 \begin{bmatrix} 0 \\ 0 \end{bmatrix},
 \mathbf \Sigma
@@ -362,7 +359,6 @@ $$
 
 \mathbf{\Omega}  & = \begin{bmatrix} 1 & \rho_{01} \\ \rho_{01} & 1 \end{bmatrix}
 \end{align*}
-$$
 
 To attempt setting priors for this, we need to review what `lnw` is. From the text: "To adjust for inflation, each hourly wage is expressed in constant 1990 dollars. To address the skewness commonly found in wage data and to linearize the individual wage trajectories, we analyze the natural logarithm of wages, *LNW*" (p. 147). So it's the log of participant wages in 1990 dollars. From the official [US Social Secutiry website](https://www.ssa.gov/oact/cola/central.html), we learn the average yearly wage in 1990 was $20,172.11. Here's that natural log for that.
 
@@ -396,23 +392,21 @@ So then what about our variance parameters? Given these are all entry-level work
 
 So then here's how we might formally specify our model priors:
 
-$$
 \begin{align*}
-\gamma_{00}     & \sim \text{Normal}(1.335, 1) \\
-\gamma_{10}     & \sim \text{Normal}(0, 0.5) \\
-\sigma_\epsilon & \sim \text{Student-t} (3, 0, 1) \\
-\sigma_0        & \sim \text{Student-t} (3, 0, 1) \\
-\sigma_1        & \sim \text{Student-t} (3, 0, 1) \\
-\rho_{01}       & \sim \text{LKJ} (4)
+\gamma_{00}     & \sim \operatorname{Normal}(1.335, 1) \\
+\gamma_{10}     & \sim \operatorname{Normal}(0, 0.5) \\
+\sigma_\epsilon & \sim \operatorname{Student-t} (3, 0, 1) \\
+\sigma_0        & \sim \operatorname{Student-t} (3, 0, 1) \\
+\sigma_1        & \sim \operatorname{Student-t} (3, 0, 1) \\
+\rho_{01}       & \sim \operatorname{LKJ} (4)
 \end{align*}
-$$
 
 For a point of comparison, here are the `brms::brm()` default priors.
 
 ```{r}
 get_prior(data = wages_pp, 
           family = gaussian,
-          lnw ~ 0 + intercept + exper + (1 + exper | id))
+          lnw ~ 0 + Intercept + exper + (1 + exper | id))
 ```
 
 Even though our priors are still quite permissive on the scale of the data, they're much more informative than the defaults. And clearly, if we had formal backgrounds in the entry-level economy of the US in the early 1900s, we'd be able to specify much better priors. But hopefully this walk-through gives a sense of how to start thinking about model priors. 
@@ -501,16 +495,15 @@ sd(wages_pp$hgc_9)
 
 With a mean near 0 and an $SD$ near 1, `hgc_9` is almost in a standardized metric. If we wanted to keep with our weakly-regularizing approach, `normal(0, 1)` or even `normal(0, 0.5)` would be pretty permissive for both these variables. Recall that we're predicting wage on the log scale. A $\gamma$ value of 1 or even 0.5 would be humongous for the social sciences. Since we already have the $\gamma$ for `exper` set to `normal(0, 0.5)`, let's just keep with that. Here's how we might describe our model in statistical terms:
 
-$$
 \begin{align*}
 \text{lnw}_{ij} & = \gamma_{00} + \gamma_{01} (\text{hgc}_{i} - 9) + \gamma_{02} \text{black}_{i} \\
 & \;\;\; + \gamma_{10} \text{exper}_{ij} + \gamma_{11} \text{exper}_{ij} \times (\text{hgc}_{i} - 9) + \gamma_{12} \text{exper}_{ij} \times \text{black}_{i} \\
 & \;\;\; + \zeta_{0i} + \zeta_{1i} \text{exper}_{ij} + \epsilon_{ij} \\
-\epsilon_{ij} & \sim \text{Normal} (0, \sigma_\epsilon) \\
+\epsilon_{ij} & \sim \operatorname{Normal} (0, \sigma_\epsilon) \\
 
 \begin{bmatrix} 
 \zeta_{0i} \\ \zeta_{1i} 
-\end{bmatrix}   & \sim \text{Normal} 
+\end{bmatrix}   & \sim \operatorname{Normal} 
 \Bigg ( 
 \begin{bmatrix} 0 \\ 0 \end{bmatrix},
 \mathbf{D} \mathbf{\Omega} \mathbf{D}'
@@ -519,18 +512,11 @@ $$
 \mathbf{D}      & = \begin{bmatrix} \sigma_0 & 0 \\ 0 & \sigma_1 \end{bmatrix} \\ 
 \mathbf{\Omega} & = \begin{bmatrix} 1 & \rho_{01} \\ \rho_{01} & 1 \end{bmatrix} \\
 
-\gamma_{00}     & \sim \text{Normal}(1.335, 1) \\
-\gamma_{01}     & \sim \text{Normal}(0, 0.5) \\
-\gamma_{02}     & \sim \text{Normal}(0, 0.5) \\
-\gamma_{10}     & \sim \text{Normal}(0, 0.5) \\
-\gamma_{11}     & \sim \text{Normal}(0, 0.5) \\
-\gamma_{12}     & \sim \text{Normal}(0, 0.5) \\
-\sigma_\epsilon & \sim \text{Student-t} (3, 0, 1) \\
-\sigma_0        & \sim \text{Student-t} (3, 0, 1) \\
-\sigma_1        & \sim \text{Student-t} (3, 0, 1) \\
-\rho_{01}       & \sim \text{LKJ} (4).
+\gamma_{00}                                      & \sim \operatorname{Normal}(1.335, 1) \\
+\gamma_{01},..., \gamma_{12}                     & \sim \operatorname{Normal}(0, 0.5) \\
+\sigma_\epsilon, \sigma_0, \text{ and } \sigma_1 & \sim \operatorname{Student-t} (3, 0, 1) \\
+\rho_{01}                                        & \sim \operatorname{LKJ} (4).
 \end{align*}
-$$
 
 The top portion up through the $\mathbf{\Omega}$ line is the likelihood. Starting with $\gamma_{00} \sim \text{Normal}(1.335, 1)$ on down, we've listed our priors. Here's how to fit the model with **brms**.
 
@@ -1025,9 +1011,6 @@ tibble(x = c(0, 1)) %>%
 ```
 
 So this is much more informative than our `gamma(2, .1)` prior from before. But given the magnitude of the estimate from `fit5.3`, it's still fairly liberal. Let's practice using it.
-
-# 1 divergent transitions after warmup
-      control = list(adapt_delta = .9),
       
 ```{r fit5.10}
 fit5.10 <-
@@ -1233,7 +1216,7 @@ nr %>%
   geom_point(aes(y = n_eff)) +
   labs(y = "effective sample size",
        x = NULL) +
-  coord_flip(ylim = 0:4000) +
+  coord_flip(ylim = c(0, 4000)) +
   theme(panel.grid  = element_blank(),
         axis.text.y = element_text(hjust = 0))
 ```
@@ -1306,7 +1289,7 @@ We should also point out that the Stan team has found some deficiencies with the
 rm(fit5.3, fit5.4, fit5.5)
 ```
 
-### 5.2.3. Distinguishing among different types of missingness.
+### Distinguishing among different types of missingness.
 
 > Missingness, in and of itself, is not necessarily problematic. It all depends upon what statisticians call the type of missingness. In seminal work on this topic, Little ([1995](https://www.jstor.org/stable/pdf/2291350.pdf?casa_token=Ts4iGu8znj0AAAAA:oLHBuuTQhgh48v_7RwAMyuw6Qvc_H5JmPIP3R87k-fDyyZbHUHvFK5BvRBu8WRoBMojooLd8nUTtN5zclMJu4W8IdQQoKv6qNbvMwYqoqmb0ynj9yqTG)), refining earlier work with Rubin ([Little & Rubin, 1987](https://trove.nla.gov.au/work/19249375?q&sort=holdings+desc&_=1560698333380&versionId=207797429)), distinguished among three types of missingness: (1) *missing completely at random* (MCAR); (2) covariate-dependent dropout (CDD); and (3) *missing at random* (MAR) (see also [Schafer, 1997](https://www.crcpress.com/Analysis-of-Incomplete-Multivariate-Data/Schafer/p/book/9780412040610)).
 >
@@ -1318,11 +1301,11 @@ rm(fit5.3, fit5.4, fit5.5)
 
 For some more current introductions to missing data methods, I recommend Enders' (2010) [*Applied Missing Data Analysis*](http://www.appliedmissingdata.com), for which you can find a free sample chapter [here](http://www.appliedmissingdata.com/sample-chapter.pdf), and Little and Rubin's (2019) [*Statistical Analysis with Missing Data, 3rd Edition*](https://www.wiley.com/en-us/Statistical+Analysis+with+Missing+Data%2C+3rd+Edition-p-9780470526798). You might also check out van Burren's great online text [*Flexible Imputation of Missing Data. Second Edition*](https://stefvanbuuren.name/fimd/). And very happily, **brms** has several ways to handle missing data.
 
-## 5.3 Time-varying predictors
+## Time-varying predictors
 
 > A time-varying predictor is a variable whose *values* may differ over time. Unlike their time-invariant cousins, which record an individual's static status, time-varying predictors record an individual's potentially differing status on each associated measurement occasion. Some time-varying predictors have values that change naturally; others have values that change by design. (pp. 159--160, *emphasis* in the original)
 
-### 5.3.1. Including the main effect of a time-varying predictor.
+### Including the main effect of a time-varying predictor.
 
 You can find [Ginexi and colleagues' (2000)](https://www.researchgate.net/profile/Elizabeth_Ginexi/publication/12406334_Depression_and_control_beliefs_in_relation_to_reemployment_What_are_the_directions_of_effect/links/553e47930cf20184050e15ed/Depression-and-control-beliefs-in-relation-to-reemployment-What-are-the-directions-of-effect.pdf) unemployment study data in the `reading_pp.csv` file.
 
@@ -1408,14 +1391,13 @@ To help us pick our priors, [Brown and Gary (1985)](https://scholarworks.wmich.e
 
 Based the variables in the data set and the descriptions of it in the text, we don't have a good sense of the demographic backgrounds of the participants. But with the information we have in hand, a reasonable empirically-based but nonetheless noncommittal prior for baseline CES-D might be something like `normal(14.5, 20)`. A weakly-regularizing prior on change over 1 month might be `normal(0, 10)`. It'd be fair id you wanted to argue about these priors. Try your own! But if you are willing to go along with me, we might write the statistical formula for the unconditional growth model as
 
-$$
 \begin{align*}
 \text{cesd}_{ij} & = \gamma_{00} + \gamma_{10} \text{months}_{ij} + \zeta_{0i} + \zeta_{1i} \text{months}_{ij} + \epsilon_{ij} \\
-\epsilon_{ij}    & \sim \text{Normal} (0, \sigma_\epsilon) \\
+\epsilon_{ij}    & \sim \operatorname{Normal} (0, \sigma_\epsilon) \\
 
 \begin{bmatrix} 
 \zeta_{0i} \\ \zeta_{1i} 
-\end{bmatrix} & \sim \text{Normal} 
+\end{bmatrix} & \sim \operatorname{Normal} 
 \Bigg ( 
 \begin{bmatrix} 0 \\ 0 \end{bmatrix},
 \mathbf{D} \mathbf{\Omega} \mathbf{D}'
@@ -1425,15 +1407,11 @@ $$
 
 \mathbf{\Omega}  & = \begin{bmatrix} 1 & \rho_{01} \\ \rho_{01} & 1 \end{bmatrix} \\
 
-\gamma_{00}     & \sim \text{Normal}(14.5, 20) \\
-\gamma_{10}     & \sim \text{Normal}(0, 10) \\
-\sigma_\epsilon & \sim \text{Student-t} (3, 0, 10) \\
-\sigma_0        & \sim \text{Student-t} (3, 0, 10) \\
-\sigma_1        & \sim \text{Student-t} (3, 0, 10) \\
-\rho_{01}       & \sim \text{LKJ} (4).
-
+\gamma_{00}                                      & \sim \operatorname{Normal}(14.5, 20) \\
+\gamma_{10}                                      & \sim \operatorname{Normal}(0, 10) \\
+\sigma_\epsilon, \sigma_0, \text{ and } \sigma_1 & \sim \operatorname{Student-t} (3, 0, 10) \\
+\rho_{01}                                        & \sim \operatorname{LKJ} (4).
 \end{align*}
-$$
 
 Here's how we might fit that model.
 
@@ -1481,7 +1459,7 @@ We might use `conditional_effects()` to get a quick view on what that might look
 plot(conditional_effects(fit5.11),
        plot = FALSE)[[1]] +
   geom_hline(yintercept = 14.5, color = "grey50", linetype = 2) +
-  coord_cartesian(ylim = 0:20) +
+  coord_cartesian(ylim = c(0, 20)) +
   theme(panel.grid = element_blank())
 ```
 
@@ -1491,14 +1469,13 @@ For reference, the dashed grey line is the value we centered our prior for initi
 
 We might specify Model B, our first model with a time-varying covariate, like this:
 
-$$
 \begin{align*}
 \text{cesd}_{ij} & = \big [ \gamma_{00} + \gamma_{10} \text{months}_{ij} + \gamma_{20} \text{unemp}_{ij} \big ] + \big [  \zeta_{0i} + \zeta_{1i} \text{months}_{ij} + \epsilon_{ij} \big ]\\
-\epsilon_{ij}    & \sim \text{Normal} (0, \sigma_\epsilon) \\
+\epsilon_{ij}    & \sim \operatorname{Normal} (0, \sigma_\epsilon) \\
 
 \begin{bmatrix} 
 \zeta_{0i} \\ \zeta_{1i} 
-\end{bmatrix} & \sim \text{Normal} 
+\end{bmatrix} & \sim \operatorname{Normal} 
 \Bigg ( 
 \begin{bmatrix} 0 \\ 0 \end{bmatrix},
 \mathbf{D} \mathbf{\Omega} \mathbf{D}'
@@ -1508,16 +1485,11 @@ $$
 
 \mathbf{\Omega}  & = \begin{bmatrix} 1 & \rho_{01} \\ \rho_{01} & 1 \end{bmatrix} \\
 
-\gamma_{00}     & \sim \text{Normal}(14.5, 20) \\
-\gamma_{10}     & \sim \text{Normal}(0, 10) \\
-\gamma_{20}     & \sim \text{Normal}(0, 10) \\
-\sigma_\epsilon & \sim \text{Student-t} (3, 0, 10) \\
-\sigma_0        & \sim \text{Student-t} (3, 0, 10) \\
-\sigma_1        & \sim \text{Student-t} (3, 0, 10) \\
-\rho_{01}       & \sim \text{LKJ} (4).
-
+\gamma_{00}                                      & \sim \operatorname{Normal}(14.5, 20) \\
+\gamma_{10} \text{ and } \gamma_{20}             & \sim \operatorname{Normal}(0, 10) \\
+\sigma_\epsilon, \sigma_0, \text{ and } \sigma_1 & \sim \operatorname{Student-t} (3, 0, 10) \\
+\rho_{01}                                        & \sim \operatorname{LKJ} (4).
 \end{align*}
-$$
 
 Note a few things about the priors. First, we haven't changed any of the priors from the previous model. All we did was add $\gamma_{20} \sim \text{Normal}(0, 10)$ for our new parameter. Given how weakly-informative our other priors have been for these data, this isn't an unreasonable approach. However, the meaning for our intercept, $\gamma_{01}$, has changed. Now it's the initial status for someone who is *employed* at baseline. But remember that for Model A, we set that prior with unemployed people in mind. A careful researcher might want to dive back into the literature to see if some lower value than 14.5 would be more reasonable to set for the mean of that prior. However, since the standard deviations for our intercepts priors and the covariate priors are all rather wide and permissive, this just won’t be much of a problem, for us. Buy anyway, second, note that we've centered our prior for $\gamma_{20}$ on zero. This is a weakly-regularizing prior, slightly favoring smaller effects over larger ones. And like before, one could easily argue for different priors. 
 
@@ -1824,13 +1796,11 @@ $$
 
 Here's the corresponding level-2 model:
 
-$$
 \begin{align*}
 \pi_{0i} & = \gamma_{00} + \zeta_{0i} \\
 \pi_{1i} & = \gamma_{10} + \zeta_{1i} \\
 \pi_{2i} & = \gamma_{20}.
 \end{align*}
-$$
 
 If we wanted the effects of the time-varying covariate `unemp` to vary across individuals, then we'd expand the definition of $\pi_{2i}$ to be
 
@@ -1846,7 +1816,6 @@ $$
 
 it does change the model for the $\zeta$s. Within our Stan/**brms** paradigm, that would now be
 
-$$
 \begin{align*}
 \begin{bmatrix} 
 \zeta_{0i} \\ \zeta_{1i} \\ \zeta_{2i}
@@ -1861,22 +1830,15 @@ $$
 \mathbf{\Omega}  & = \begin{bmatrix} 1 & \rho_{01} & \rho_{02} \\ \rho_{01} & 1 & \rho_{12} \\ \rho_{02} & \rho_{12} & 1 \end{bmatrix}.
 
 \end{align*}
-$$
 
 Reworded slightly from the text (p. 169), by adding one residual parameter, $\zeta_{2i}$, we got an additional corresponding standard deviation parameter, $\sigma_2$, and two more correlation parameters, $\rho_{02}$ and $\rho_{12}$. Staying with our weakly-regularizing prior approach, the priors for the updated model might look like
 
-$$
 \begin{align*}
-\gamma_{00}     & \sim \text{Normal}(14.5, 20) \\
-\gamma_{10}     & \sim \text{Normal}(0, 10) \\
-\gamma_{20}     & \sim \text{Normal}(0, 10) \\
-\sigma_\epsilon & \sim \text{Student-t} (3, 0, 10) \\
-\sigma_0        & \sim \text{Student-t} (3, 0, 10) \\
-\sigma_1        & \sim \text{Student-t} (3, 0, 10) \\
-\sigma_2        & \sim \text{Student-t} (3, 0, 10) \\
-\Omega          & \sim \text{LKJ} (4).
+\gamma_{00}                          & \sim \operatorname{Normal}(14.5, 20) \\
+\gamma_{10} \text{ and } \gamma_{20} & \sim \operatorname{Normal}(0, 10) \\
+\sigma_\epsilon,..., \sigma_2        & \sim \operatorname{Student-t} (3, 0, 10) \\
+\Omega                               & \sim \operatorname{LKJ} (4).
 \end{align*}
-$$
 
 Singer and Willett then cautioned readers about hastily adding $\zeta$ parameters to their models, particularly in cases where you're likely to run into estimation issues, such as boundary constraints. Within our Stan/**brms** paradigm, we still have to be aware of these difficulties. However, with skillfully-chosen priors, I think you'll find we can fit more ambitious models than would typically be possible with frequentist estimators. But do beware that as you stretch your data further and further, your choices in likelihoods and priors more heavily influence the results. For more on the topic, check out [Michael Frank](https://twitter.com/mcxfrank?lang=en)'s blog post, [*Mixed effects models: Is it time to go Bayesian by default?*](http://babieslearninglanguage.blogspot.com/2018/02/mixed-effects-models-is-it-time-to-go.html). And make sure not to miss the action in the comments section.
 
@@ -1917,39 +1879,31 @@ v %>%
 
 When you go beyond point estimates and factor in full posterior uncertainty, it becomes clear how fragile ad hoc statistics like this can be. Interpret them with caution.
 
-### 5.3.2. Allowing the effect of a time-varying predictor to vary over time.
+### Allowing the effect of a time-varying predictor to vary over time.
 
 "Might unemployment status also affect the trajectory’s slope" (p. 171)? Here's the statistical model:
 
-$$
 \begin{align*}
 \text{cesd}_{ij} & = \big [ \gamma_{00} + \gamma_{10} \text{months}_{ij} + \gamma_{20} \text{unemp}_{ij} + \gamma_{30} \text{months}_{ij} \times \text{unemp}_{ij} \big ] + \big [  \zeta_{0i} + \zeta_{1i} \text{months}_{ij} + \epsilon_{ij} \big ] \\
 
-\epsilon_{ij}    & \sim \text{Normal} (0, \sigma_\epsilon) \\
+\epsilon_{ij}    & \sim \operatorname{Normal} (0, \sigma_\epsilon) \\
 
 \begin{bmatrix} 
 \zeta_{0i} \\ \zeta_{1i} 
-\end{bmatrix} & \sim \text{Normal} 
+\end{bmatrix} & \sim \operatorname{Normal} 
 \Bigg ( 
 \begin{bmatrix} 0 \\ 0 \end{bmatrix},
 \mathbf{D} \mathbf{\Omega} \mathbf{D}'
 \Bigg ) \\
 
-\mathbf{D}       & = \begin{bmatrix} \sigma_0 & 0 \\ 0 & \sigma_1 \end{bmatrix} \\ 
+\mathbf{D}      & = \begin{bmatrix} \sigma_0 & 0 \\ 0 & \sigma_1 \end{bmatrix} \\ 
+\mathbf{\Omega} & = \begin{bmatrix} 1 & \rho_{01} \\ \rho_{01} & 1 \end{bmatrix} \\
 
-\mathbf{\Omega}  & = \begin{bmatrix} 1 & \rho_{01} \\ \rho_{01} & 1 \end{bmatrix} \\
-
-\gamma_{00}     & \sim \text{Normal}(14.5, 20) \\
-\gamma_{10}     & \sim \text{Normal}(0, 10) \\
-\gamma_{20}     & \sim \text{Normal}(0, 10) \\
-\gamma_{30}     & \sim \text{Normal}(0, 10) \\
-\sigma_\epsilon & \sim \text{Student-t} (3, 0, 10) \\
-\sigma_0        & \sim \text{Student-t} (3, 0, 10) \\
-\sigma_1        & \sim \text{Student-t} (3, 0, 10) \\
-\rho_{01}       & \sim \text{LKJ} (4).
-
+\gamma_{00}                                        & \sim \operatorname{Normal}(14.5, 20) \\
+\gamma_{10}, \gamma_{20}, \text{ and } \gamma_{30} & \sim \operatorname{Normal}(0, 10) \\
+\sigma_\epsilon, \sigma_0, \text{ and } \sigma_1   & \sim \operatorname{Student-t} (3, 0, 10) \\
+\rho_{01}                                          & \sim \operatorname{LKJ} (4).
 \end{align*}
-$$
 
 Since $\gamma_{30}$ is an interaction term, it might make sense to give it an ever tighter prior, something like $\text{Normal}(0, 5)$. Here we'll just stay wide and loose.
 
@@ -2023,15 +1977,14 @@ It's quite uncertain and almost symmetrically straddles the parameter space betw
 
 The next model follows the form
 
-$$
 \begin{align*}
 \text{cesd}_{ij} & = \big [ \gamma_{00} + \gamma_{20} \text{unemp}_{ij} + \gamma_{30} \text{unemp}_{ij} \times \text{months}_{ij} \big ] + \big [  \zeta_{0i} + \zeta_{3i} \text{unemp}_{ij} \times \text{months}_{ij} + \epsilon_{ij} \big ] \\
 
-\epsilon_{ij}    & \sim \text{Normal} (0, \sigma_\epsilon) \\
+\epsilon_{ij}    & \sim \operatorname{Normal} (0, \sigma_\epsilon) \\
 
 \begin{bmatrix} 
 \zeta_{0i} \\ \zeta_{3i} 
-\end{bmatrix} & \sim \text{Normal} 
+\end{bmatrix} & \sim \operatorname{Normal} 
 \Bigg ( 
 \begin{bmatrix} 0 \\ 0 \end{bmatrix},
 \mathbf{D} \mathbf{\Omega} \mathbf{D}'
@@ -2041,16 +1994,12 @@ $$
 
 \mathbf{\Omega}  & = \begin{bmatrix} 1 & \rho_{03} \\ \rho_{03} & 1 \end{bmatrix} \\
 
-\gamma_{00}     & \sim \text{Normal}(14.5, 20) \\
-\gamma_{20}     & \sim \text{Normal}(0, 10) \\
-\gamma_{30}     & \sim \text{Normal}(0, 10) \\
-\sigma_\epsilon & \sim \text{Student-t} (3, 0, 10) \\
-\sigma_0        & \sim \text{Student-t} (3, 0, 10) \\
-\sigma_3        & \sim \text{Student-t} (3, 0, 10) \\
-\rho_{03}       & \sim \text{LKJ} (4).
+\gamma_{00}                                      & \sim \operatorname{Normal}(14.5, 20) \\
+\gamma_{20} \text{ and } \gamma_{30}             & \sim \operatorname{Normal}(0, 10) \\
+\sigma_\epsilon, \sigma_0, \text{ and } \sigma_3 & \sim \operatorname{Student-t} (3, 0, 10) \\
+\rho_{03}                                        & \sim \operatorname{LKJ} (4).
 
 \end{align*}
-$$
 
 Here's how to fit it with `brms::brm()`.
 
@@ -2058,8 +2007,8 @@ Here's how to fit it with `brms::brm()`.
 fit5.14 <-
   brm(data = unemployment_pp, 
       family = gaussian,
-      cesd ~ 0 + intercept + unemp + months:unemp + (1 + months:unemp | id),
-      prior = c(prior(normal(14.5, 20), class = b, coef = "intercept"),
+      cesd ~ 0 + Intercept + unemp + months:unemp + (1 + months:unemp | id),
+      prior = c(prior(normal(14.5, 20), class = b, coef = Intercept),
                 prior(normal(0, 10),   class = b),
                 prior(student_t(3, 0, 10), class = sd),
                 prior(student_t(3, 0, 10), class = sigma),
@@ -2093,15 +2042,14 @@ model_weights(fit5.11, fit5.12, fit5.13, fit5.14, weights = "waic") %>%
 
 Yep, it appears `fit5.14` is not an improvement on `fit5.13` (i.e., our analogue to Model C in the text). Here's our version of Model D:
 
-$$
 \begin{align*}
 \text{cesd}_{ij} & = \big [ \gamma_{00} + \gamma_{20} \text{unemp}_{ij} + \gamma_{30} \text{unemp}_{ij} \times \text{months}_{ij} \big ] + \big [  \zeta_{0i} + \zeta_{3i} \text{unemp}_{ij} \times \text{months}_{ij} + \epsilon_{ij} \big ] \\
 
-\epsilon_{ij}    & \sim \text{Normal} (0, \sigma_\epsilon) \\
+\epsilon_{ij}    & \sim \operatorname{Normal} (0, \sigma_\epsilon) \\
 
 \begin{bmatrix} 
 \zeta_{0i} \\ \zeta_{2i} \\ \zeta_{3i}
-\end{bmatrix} & \sim \text{Normal} 
+\end{bmatrix} & \sim \operatorname{Normal} 
 \Bigg ( 
 \begin{bmatrix} 0 \\ 0 \\ 0 \end{bmatrix},
 \mathbf{D} \mathbf{\Omega} \mathbf{D}'
@@ -2111,17 +2059,11 @@ $$
 
 \mathbf{\Omega}  & = \begin{bmatrix} 1 & \rho_{02} & \rho_{03} \\ \rho_{02} & 1 & \rho_{23} \\ \rho_{03} & \rho_{23} & 1 \end{bmatrix} \\
 
-\gamma_{00}     & \sim \text{Normal}(14.5, 20) \\
-\gamma_{20}     & \sim \text{Normal}(0, 10) \\
-\gamma_{30}     & \sim \text{Normal}(0, 10) \\
-\sigma_\epsilon & \sim \text{Student-t} (3, 0, 10) \\
-\sigma_0        & \sim \text{Student-t} (3, 0, 10) \\
-\sigma_2        & \sim \text{Student-t} (3, 0, 10) \\
-\sigma_3        & \sim \text{Student-t} (3, 0, 10) \\
-\mathbf\Omega       & \sim \text{LKJ} (4).
-
+\gamma_{00}                          & \sim \operatorname{Normal}(14.5, 20) \\
+\gamma_{20} \text{ and } \gamma_{30} & \sim \operatorname{Normal}(0, 10) \\
+\sigma_\epsilon,..., \sigma_3        & \sim \operatorname{Student-t} (3, 0, 10) \\
+\mathbf\Omega                        & \sim \operatorname{LKJ} (4).
 \end{align*}
-$$
 
 We'll call it `fit5.15`. Here's the `brm()` code.
 
@@ -2231,18 +2173,16 @@ It's a toss-up among `fit5.15`, `fit5.13`, and `fit5.12`.
 rm(fit5.11, fit5.12, fit5.13, fit5.14, fit5.15)
 ```
 
-### 5.3.3. Recentering time-varying predictors.
+### Recentering time-varying predictors.
 
 Back to the `wages_pp` data! Here's the generic statistical model we'll be fooling with:
 
-$$
 \begin{align*}
 \text{lnw}_{ij} & = \gamma_{00} + \gamma_{10} \text{exper}_{ij} + \gamma_{01} (\text{hgc}_i - 9) + \gamma_{12} \text{black}_i \times \text{exper}_{ij} \\
-& \;\;\; + \zeta_{0i} + \zeta_{1i} \text{exper}_{ij} + \epsilon_{ij}.
+                & \;\;\; + \zeta_{0i} + \zeta_{1i} \text{exper}_{ij} + \epsilon_{ij}.
 \end{align*}
-$$
 
-We’ll be fitting the model with three versions of `uerate`. If you execute `head(wages_pp)`, you'll discover they're already in the data. But it might be worth walking out how to compute those variables. First, centering `uerate` at 7 is easy enough. Just subtract.
+We will fit the model with three versions of `uerate`. If you execute `head(wages_pp)`, you'll discover they're already in the data. But it might be worth walking out how to compute those variables. First, centering `uerate` at 7 is easy enough. Just subtract.
 
 ```{r}
 wages_pp <-
@@ -2352,7 +2292,7 @@ Much like with the AIC and BIC values in the text, the WAIC estimates among our 
 rm(fit5.16, fit5.17, fit5.18)
 ```
 
-### 5.3.4. An important caveat: The problem of reciprocal causation.
+### An important caveat: The problem of reciprocal causation.
 
 In this section, Singer and Willett gave a typology for time-varying covariates. 
 
@@ -2361,7 +2301,7 @@ In this section, Singer and Willett gave a typology for time-varying covariates.
 * A variable is *contextual* if "it describes an 'external' stochastic process, but the connection between units is closer--between husbands and wives, parents and children, teachers and students, employers and employees. Because of this proximity, contextual predictors can be influenced by an individual’s contemporaneous outcome values; if so, they are susceptible to issues of reciprocal causation" (p. 179). 
 * A variable is *internal* if it describes an "individual's potentially changeable status over time" (p. 179). Examples include mood, psychiatric syndromes, and employment status.
 
-## 5.4. Recentering the effect of *TIME*
+## Recentering the effect of *TIME*
 
 Our version of the data from Tomarken, Shelton, Elkins, and Anderson (1997) is saved as `medication_pp.csv`. 
 
@@ -2404,13 +2344,11 @@ medication_pp %>%
 
 For this section, our basic model will be
 
-$$
 \begin{align*}
 \text{pos}_{ij} & = \pi_{0i} + \pi_{1i} (\text{time}_{ij} - c) + \epsilon_{ij} \\
 \pi_{0i}        & = \gamma_{00} + \gamma_{01} \text{treat}_i + \zeta_{0i} \\
 \pi_{1i}        & = \gamma_{10} + \gamma_{11} \text{treat}_i + \zeta_{1i},
 \end{align*}
-$$
 
 where $c$ is a generic constant. For our there variants of $\text{time}$, $c$ will be
 
@@ -2602,7 +2540,7 @@ tibble(name = str_c("fit5.", 19:21)) %>%
   geom_halfeyeh(.width = c(.5, .95)) +
   labs(x = expression(rho[0][1]),
        y = NULL) +
-  coord_cartesian(xlim = -1:1) +
+  coord_cartesian(xlim = c(-1, 1)) +
   theme(axis.ticks.y = element_blank(),
         panel.grid = element_blank())
 ```
@@ -2611,7 +2549,7 @@ tibble(name = str_c("fit5.", 19:21)) %>%
 
 Here are the WAIC comparisons.
 
-```{r, warning = F}
+```{r, warning = F, message = F}
 fit5.19 <- add_criterion(fit5.19, "waic")
 fit5.20 <- add_criterion(fit5.20, "waic")
 fit5.21 <- add_criterion(fit5.21, "waic")
@@ -2633,13 +2571,11 @@ glimpse(medication_pp)
 
 With this model
 
-$$
 \begin{align*}
 \text{pos}_{ij} & = \pi_{0i} \bigg (\frac{6.67 - \text{time}_{ij}}{6.67} \bigg ) + \pi_{1i} \bigg (\frac {\text{time}_{ij}}{6.67} \bigg ) + \epsilon_{ij} \\
 \pi_{0i}        & = \gamma_{00} + \gamma_{01} \text{treat}_i + \zeta_{0i} \\
 \pi_{1i}        & = \gamma_{10} + \gamma_{11} \text{treat}_i + \zeta_{1i}.
 \end{align*}
-$$
 
 Because of the parameterization, we'll use both variables simultaneously to indicate time. In the code, below, you'll notice we no longer have an intercept parameter. Rather, we just have `initial` and `final`. As such, both of those parameters get the same prior we've been using for the intercept in the previous models. 
 
@@ -2667,7 +2603,7 @@ print(fit5.22)
 
 Let's finish up with the WAIC.
 
-```{r, warning = F}
+```{r, warning = F, message = F}
 fit5.22 <- add_criterion(fit5.22, "waic")
 
 loo_compare(fit5.19, fit5.20, fit5.21, fit5.22, criterion = "waic") %>% 
@@ -2689,11 +2625,11 @@ All about the same.
 sessionInfo()
 ```
 
-```{r, echo = F, eval = F}
+```{r, echo = F, message = F}
 # here we'll remove our objects
-rm()
+rm(reading_pp, n, lkj, wages_pp, post, nd, f, wages_small_pp, fit5.6, v, fit5.7, fit5.8, fit5.9, fit5.10, nr, unemployment_pp, lines, arrow, medication_pp, fit5.19, text, fit5.20, fit5.21, fit5.22)
 
 theme_set(theme_grey())
-
 pacman::p_unload(pacman::p_loaded(), character.only = TRUE)
 ```
+
