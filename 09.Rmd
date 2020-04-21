@@ -6,7 +6,9 @@ output:
   github_document
 ---
 
-```{r, echo = FALSE, cache = FALSE}
+```{r, echo = F, cache = F}
+knitr::opts_chunk$set(fig.retina = 2.5)
+knitr::opts_chunk$set(fig.align = "center")
 options(width = 100)
 ```
 
@@ -66,7 +68,7 @@ Survival analyses share three common characteristics.
 
 ### Different types of censoring.
 
-"Methodologists make two major types of distinctions: first, between *non-informative* and *informative* censoring mechanisms, and second, between *right*- and *left*-censoring" (p. 318).
+"Methodologists make two major types of distinctions: first, between *non-informative* and *informative* censoring mechanisms, and second, between *right*- and *left*-censoring" (p. 318, *emphasis* in the original).
 
 #### Noninformative versus informative censoring.
 
@@ -84,7 +86,7 @@ Survival analyses share three common characteristics.
 
 ### How does censoring affect statistical analysis?
 
-Here we load the `teachers.csv` data.
+Here we load the `teachers.csv` data [(Singer, 1992)](https://journals.sagepub.com/doi/10.1177/001440299305900309).
 
 ```{r, warning = F, message = F}
 library(tidyverse)
@@ -148,9 +150,11 @@ teachers %>%
             sd     = sd(t))
 ```
 
-I have no idea where the 7.5 Singer and Willett presented came from. It's larger than both the mean and the median in the data. But anyway, this method is patently wrong, so it doesn't matter:
+I have no idea where the 7.5 value Singer and Willett presented came from. It's larger than both the mean and the median in the data. But anyway, this method is patently wrong, so it doesn't matter:
 
 > Imputing event times for censored cases simply changes all "nonevents" into "events" and further assumes that all these new "events" occur at the earliest time possible--that is, at the moment of censoring. Surely these decisions are most likely wrong. (p. 323) 
+
+Stay tuned for methods that are better than patently wrong.
 
 ## Reference {-}
 

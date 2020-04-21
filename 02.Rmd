@@ -6,6 +6,12 @@ output:
   github_document
 ---
 
+```{r, echo = F, cache = F}
+knitr::opts_chunk$set(fig.retina = 2.5)
+knitr::opts_chunk$set(fig.align = "center")
+options(width = 120)
+```
+
 # Exploring Longitudinal Data on Change
 
 > Wise researchers conduct descriptive exploratory analyses of their data before fitting statistical models. As when working with cross-sectional data, exploratory analyses of longitudinal data con reveal general patterns, provide insight into functional form, and identify individuals whose data do not conform to the general pattern. The exploratory analyses presented in this chapter are based on numerical and graphical strategies already familiar from cross-sectional work. Owing to the nature of longitudinal data, however, they are inevitably more complex in this new setting. (p. 16)
@@ -55,9 +61,7 @@ cor(tolerance[ , 2:6]) %>%
   round(digits = 2)
 ```
 
-We used `round()` to limit the number of decimal places in the output. Leave it off and you'll see `cor()` returns up to seven decimal places instead.
-
-It can be hard to see the patters within a matrix of numerals. It might be easier in a plot.
+We used `round()` to limit the number of decimal places in the output. Leave it off and you'll see `cor()` returns up to seven decimal places instead. It can be hard to see the patters within a matrix of numerals. It might be easier in a plot.
 
 ```{r, fig.width = 3.75, fig.height = 2.25}
 cor(tolerance[ , 2:6]) %>%
@@ -83,6 +87,8 @@ If all you wanted was the lower diagonal, you could use the `lowerCor()` functio
 ```{r}
 psych::lowerCor(tolerance[ , 2:6])
 ```
+
+For more ways to compute, organize, and visualize correlations within the **tidyverse** paradigm, check out the [**corr** package](https://tidymodels.github.io/corrr/).
 
 ### The person-period data set.
 
@@ -119,7 +125,7 @@ tolerance %>%
   slice(c(1:9, 76:80))
 ```
 
-You can learn more about using the `pivot_longer()` function this way [here](https://tidyr.tidyverse.org/reference/pivot_longer.html) and [here](https://tidyr.tidyverse.org/articles/pivot.html).
+You can learn more about the `pivot_longer()` function [here](https://tidyr.tidyverse.org/reference/pivot_longer.html) and [here](https://tidyr.tidyverse.org/articles/pivot.html).
 
 As hinted at in the above hyperlinks, the opposite of the `pivot_longer()` function is `pivot_wider()`. We can use `pivot_wider()` to convert the person-period `tolerance_pp` data to the same format as the person-level `tolerance` data.
 
@@ -204,7 +210,7 @@ You can get a sense of what we did with `head()`.
 by_id %>% head()
 ```
 
-As indexed by `id`, each participant now has their own data set stored in the `data` column. To get a better sense, we'll use our double-bracket subsetting skills to open up the first data set, the one for `id == 9`. If you're not familiar with this skill, you can learn more from [Chapter 9](https://bookdown.org/rdpeng/rprogdatascience/subsetting-r-objects.html) of [Roger Peng](https://twitter.com/rdpeng?lang=en)'s great online book, [*R Programming for Data Science*](https://bookdown.org/rdpeng/rprogdatascience/) or [Jenny Bryan](https://twitter.com/JennyBryan)'s fun and useful talk [*Behind every great plot there's a great deal of wrangling*](https://www.youtube.com/watch?v=4MfUCX_KpdE).
+As indexed by `id`, each participant now has their own data set stored in the `data` column. To get a better sense, we'll use our double-bracket subsetting skills to open up the first data set, the one for `id == 9`. If you're not familiar with this skill, you can learn more from [Chapter 9](https://bookdown.org/rdpeng/rprogdatascience/subsetting-r-objects.html) of [Roger Peng](https://twitter.com/rdpeng?lang=en)'s great online book, [*R Programming for Data Science*](https://bookdown.org/rdpeng/rprogdatascience/), or [Jenny Bryan](https://twitter.com/JennyBryan)'s fun and useful talk, [*Behind every great plot there's a great deal of wrangling*](https://www.youtube.com/watch?v=4MfUCX_KpdE).
 
 ```{r}
 by_id$data[[1]]
@@ -225,7 +231,7 @@ Singer and Willett used OLS to fit their exploratory models. We could do that to
 library(brms)
 ```
 
-Since this is our first Bayesian model, we should start slow. The primary model-fitting function in **brms** is `brm()`. The function is astonishingly general and includes a lot of arguments, most of which have sensible defaults. The primary two arguments are `data` and `formula`. I'm guessing they're self-explanatory. I'm not going to go into detail on the three arguments at the bottom of the code. We'll go over them later. For simple models like these, I would have omitted them entirely, but given the sparsity of the data (i.e., 5 data points per model), I wanted to make sure we gave the algorithm a good chance to arrive at reasonable estimates.
+Since this is our first Bayesian model, we should start slow. The primary model-fitting function in **brms** is `brm()`. The function is astonishingly general and includes numerous arguments, most of which have sensible defaults. The primary two arguments are `data` and `formula`. I'm guessing they're self-explanatory. I'm not going to go into detail on the three arguments at the bottom of the code. We'll go over them later. For simple models like these, I would have omitted them entirely, but given the sparsity of the data (i.e., 5 data points per model), I wanted to make sure we gave the algorithm a good chance to arrive at reasonable estimates.
 
 ```{r fit2.1}
 fit2.1 <-
@@ -243,7 +249,7 @@ We just fit a single-level Bayesian regression model for our first participant. 
 print(fit2.1)
 ```
 
-The 'Intercept' and 'time' coefficients are the primary regression parameters. Also notice 'sigma', which is our variant of the residual standard error you might from an OLS output (e.g., from base **R** `lm()`). Since we're Bayesians, we don't get $p$-values in the output summaries. But we do get posterior standard deviations (i.e., the 'Est.Error' column) and the upper- and lower-levels of the percentile-based 95% intervals.
+The 'Intercept' and 'time' coefficients are the primary regression parameters. Also notice 'sigma', which is our variant of the residual standard error you might get from an OLS output (e.g., from base **R** `lm()`). Since we're Bayesians, the output summaries do not contain $p$-values. But we do get posterior standard deviations (i.e., the 'Est.Error' column) and the upper- and lower-levels of the percentile-based 95% intervals.
 
 You probably heard somewhere that Bayesian statistics require priors. We can see what those were by pulling them out of our `fit2.1` object.
 
@@ -251,11 +257,11 @@ You probably heard somewhere that Bayesian statistics require priors. We can see
 fit2.1$prior
 ```
 
-The prior in the top line, `normal(0, 2)`, is for all parameters of `class = b`. We actually specified this in our `brm()` code, above, with the code line `prior = prior(normal(0, 2), class = b),`. At this stage in the project, my initial impulse was to leave this line blank and save the discussion of how to set priors by hand for later. However, the difficulty is that the first several models we’re fitting are all of $n = 5$. Bayesian statistics handle small-$n$ models just fine. However, when your $n$ gets small, the algorithms we use to implement our Bayesian models benefit from priors that are at least modestly informative. As it turns out, the **brms** default for priors of `class = b` are flat. They offer no information. To stave off algorithm problems, we used `normal(0, 2)` instead. In our model, the only parameter of `class = b` is the regression slope for `time`. On the scale of the data, `normal(0, 2)` is a vary-permissive prior for our `time` parameter.
+The prior in the top line, `normal(0, 2)`, is for all parameters of `class = b`. We actually specified this in our `brm()` code, above, with the code snip: `prior = prior(normal(0, 2), class = b)`. At this stage in the project, my initial impulse was to leave this line blank and save the discussion of how to set priors by hand for later. However, the difficulty is that the first several models we're fitting are all of $n = 5$. Bayesian statistics handle small-$n$ models just fine. However, when your $n$ gets small, the algorithms we use to implement our Bayesian models benefit from priors that are at least modestly informative. As it turns out, the **brms** default priors are flat for parameters of `class = b`. They offer no information beyond that contained in the likelihood. To stave off algorithm problems with our extremely-small-$n$ data subsets, we used `normal(0, 2)` instead. In our model, the only parameter of `class = b` is the regression slope for `time`. On the scale of the data, `normal(0, 2)` is a vary-permissive prior for our `time` slope.
 
-In addition to our `time` slope parameter, our model had an intercept and a residual variance, Form the `fit2.1$prior` output, we can see those were `student_t(3, 2, 10)` and `student_t(3, 0, 10)`, respectively. **brms** default priors are designed to be weakly informative. Given the data and the model, these priors have a minimal influence on the results. We'll focus more on priors later in the project. For now just recognize that even if you don't specify your priors, you can't escape using some priors when using `brm()`. This is a good thing.
+In addition to our `time` slope parameter, our model contained an intercept and a residual variance. From the `fit2.1$prior` output, we can see those were `student_t(3, 2, 10)` and `student_t(3, 0, 10)`, respectively. **brms** default priors are designed to be weakly informative. Given the data and the model, these priors have a minimal influence on the results. We'll focus more on priors later in the project. For now just recognize that even if you don't specify your priors, you can't escape using some priors when using `brm()`. This is a good thing.
 
-Okay, so that was the model for just one participant. We want to do that for all 16. Instead of repeating that code 15 times, let's work in bulk. With **brms**, you can reuse a model with the `update()` function. Here's how to do that for our second participant.
+Okay, so that was the model for just one participant. We want to do that for all 16. Instead of repeating that code 15 times, we can work in bulk. With **brms**, you can reuse a model with the `update()` function. Here's how to do that with the data from our second participant.
 
 ```{r fit2.2}
 fit2.2 <-
@@ -285,7 +291,7 @@ bayes_R2(fit2.2, summary = F) %>%
   str()
 ```
 
-This returns a numeric vector. If you'd like to plot the results with **ggplot2**, you'll need to convert it to a data frame.
+Our code returned a numeric vector. If you'd like to plot the results with **ggplot2**, you'll need to convert the vector to a data frame.
 
 ```{r, fit.width = 4, fig.height = 2}
 bayes_R2(fit2.2, summary = F) %>% 
@@ -310,14 +316,20 @@ bayes_R2(fit2.2, summary = F) %>%
 
 By default, `bayes_R2()` returns the mean. You can get the median with the `robust = T` argument. To pull the mode, you'll need to use `summary = F` and feed the results into a mode function, like `tidybayes::Mode()`.
 
-I should also point out the **brms** package did not get these $R^2$ values by traditional method used in, say, OLS estimation. To learn more about how the Bayesian $R^2$ sausage is made, check out the paper by [Gelman, Goodrich, Gabry, and Vehtari](https://www.tandfonline.com/doi/abs/10.1080/00031305.2018.1549100?journalCode=utas20).
+I should also point out the **brms** package did not get these $R^2$ values by traditional method used in, say, OLS estimation. To learn more about how the Bayesian $R^2$ sausage is made, check out Gelman, Goodrich, Gabry, and Vehtari's (2017) paper, [*R-squared for Bayesian regression models*](https://www.tandfonline.com/doi/abs/10.1080/00031305.2018.1549100?journalCode=utas20).
 
 With a little tricky programing, we can use the `purrr::map()` function to serially fit this model to each of our participant-level data sets. We'll save the results as `models`.
 
-```{r models, cache = T, warning = F, message = F, results = "hide"}
+```{r, eval = F}
 models <- 
   by_id %>%
   mutate(model = map(data, ~update(fit2.1, newdata = ., seed = 2)))
+```
+
+```{r models, echo = F}
+# save a little time
+# save(models, file = "fits/02.models.rda")
+load(file = "fits/02.models.rda")
 ```
 
 Let's walk through what we did. The `map()` function takes two primary arguments, `.x` and `.f`, respectively. We set `.x = data`, which meant we wanted to iterate over the contents in our `data` vector. Recall that each row of `data` itself contained an entire data set--one for each of the 16 participants. It's with the second argument `.f` that we indicated what we wanted to do with our rows of `data`. We set that to `.f = ~update(fit2.1, newdata = ., seed = 2)`. With the `~` syntax, we entered in a formula, which was `update(fit2.1, newdata = ., seed = 2)`. Just like we did with `fit2.2`, above, we reused the model formula and other technical specs from `fit2.1`. Now notice the middle part of the formula, `newdata = .`. That little `.` refers to the element we specified in the `.x` argument. What this combination means is that for each of the 16 rows of our nested `by_id` tibble, we plugged in the `id`-specific data set into `update(fit, newdata[[i]])` where `i` is simply meant as a row index. The new column, `model`, contains the output of each of the 16 iterations.
@@ -326,7 +338,7 @@ Let's walk through what we did. The `map()` function takes two primary arguments
 print(models)
 ```
 
-Next, we'll want to extract the necessary summary information from our `models` to remake our version of Table 2.2. There's a lot of info in that table. So let's take it step by step. First we'll extract the posterior means (i.e., "Estimate") and standard deviations (i.e., "se") for the initial status and rate of change of each model. We'll also do the same for sigma (i.e., the square of the "Residual variance").
+Next, we'll want to extract the necessary summary information from our `models` to remake our version of Table 2.2. There's a lot of info in that table, so let's take it step by step. First, we'll extract the posterior means (i.e., "Estimate") and standard deviations (i.e., "se") for the initial status and rate of change of each model. We'll also do the same for sigma (i.e., the square of the "Residual variance").
 
 ```{r, message = F}
 mean_structure <-
@@ -340,7 +352,7 @@ mean_structure <-
   pivot_wider(names_from = coefficients,
               values_from = temp) %>% 
   separate(b_Intercept, into = c("init_stat_est", "init_stat_sd"), sep = "_") %>% 
-  separate(b_time, into = c("rate_chante_est", "rate_chante_sd"), sep = "_") %>% 
+  separate(b_time, into = c("rate_change_est", "rate_change_sd"), sep = "_") %>% 
   mutate_if(is.character, ~ as.double(.) %>% round(digits = 2)) %>% 
   ungroup()
 
@@ -383,6 +395,7 @@ table <-
   left_join(mean_structure,    by = "id") %>% 
   left_join(residual_variance, by = "id") %>% 
   left_join(r2,                by = "id") %>% 
+  rename(residual_var = residual_variance) %>% 
   select(id, init_stat_est:r2, everything()) %>% 
   ungroup()
 
@@ -400,12 +413,12 @@ table %>%
 
 # fitted rate of change
 table %>% 
-  pull(rate_chante_est) %>% 
+  pull(rate_change_est) %>% 
   stem(scale = 2)
 
 # residual variance
 table %>% 
-  pull(residual_variance) %>% 
+  pull(residual_var) %>% 
   stem(scale = 2)
 
 # r2 statistic
@@ -414,7 +427,7 @@ table %>%
   stem(scale = 2)
 ```
 
-To make Figure 2.5, we'll combine information from the original data and the Estimates (i.e., posterior means) from our Bayesian models we've encoded in `mean_structure`.
+To make Figure 2.5, we'll combine information from the original data and the 'Estimates' (i.e., posterior means) from our Bayesian models we've encoded in `mean_structure`.
 
 ```{r, fig.width = 4.5, fig.height = 5, message = F, warning = F}
 by_id %>% 
@@ -424,7 +437,7 @@ by_id %>%
   geom_point() +
   geom_abline(data = mean_structure,
               aes(intercept = init_stat_est,
-                  slope = rate_chante_est, group = id),
+                  slope = rate_change_est, group = id),
               color = "blue") +
   scale_x_continuous(breaks = 0:4, labels = 0:4 + 11) +
   coord_cartesian(ylim = c(0, 4)) +
@@ -452,7 +465,7 @@ tolerance_pp %>%
 
 To get the linear OLS trajectories, just switch `method = "loess"` `to method = "lm"`.
 
-```{r, fig.width = 2.5, fig.height = 3.25}
+```{r, fig.width = 2.5, fig.height = 3.25, message = F, warning = F}
 tolerance_pp %>%
   ggplot(aes(x = age, y = tolerance)) +
   stat_smooth(method = "lm", se = F, span = .9, size = 2) +
@@ -483,14 +496,14 @@ Before, we used `posterior_summary()` to isolate the posterior means and $SD$s. 
 fixef(fit2.3)
 ```
 
-And with subsetting, we can extract just the means from each.
+With a little subsetting, we can extract just the means from each.
 
 ```{r}
 fixef(fit2.3)[1, 1]
 fixef(fit2.3)[2, 1]
 ```
 
-For this plot, we'll work more directly with the model formulas to plot the trajectories. We can use `init_stat_est` and `rate_chante_est` from the `mean_structure` object as stand-ins for $\beta_{0i}$ and $\beta_{1i}$ from our model equation,
+For this plot, we'll work more directly with the model formulas to plot the trajectories. We can use `init_stat_est` and `rate_change_est` from the `mean_structure` object as stand-ins for $\beta_{0i}$ and $\beta_{1i}$ from our model equation,
 
 $$\text{tolerance}_{ij} = \beta_{0i} + \beta_{1i} \cdot \text{time}_{ij} + \epsilon_{ij},$$
 
@@ -499,8 +512,8 @@ where $i$ indexes children and $j$ indexes time points. All we need to do is plu
 ```{r}
 tol_fitted <-
   mean_structure %>% 
-  mutate(`11` = init_stat_est + rate_chante_est * 0,
-         `15` = init_stat_est + rate_chante_est * 4) %>% 
+  mutate(`11` = init_stat_est + rate_change_est * 0,
+         `15` = init_stat_est + rate_change_est * 4) %>% 
   select(id, `11`, `15`) %>% 
   pivot_longer(-id, 
                names_to = "age", 
@@ -546,7 +559,7 @@ Here's how to get the Pearson's correlation coefficient.
 
 ```{r}
 mean_structure %>% 
-  select(init_stat_est, rate_chante_est) %>% 
+  select(init_stat_est, rate_change_est) %>% 
   cor() %>% 
   round(digits = 2)
 ```
@@ -720,7 +733,7 @@ p2 <-
 p2
 ```
 
-Did you notice how we saved those last two plots as `p1` and `p2`. We can use syntax from the [**patchwork** package](https://github.com/thomasp85/patchwork) to combine them into one compound plot.
+Did you notice how we saved those last two plots as `p1` and `p2`? We can use syntax from the [**patchwork** package](https://github.com/thomasp85/patchwork) to combine them into one compound plot.
 
 ```{r, fig.width = 5, fig.height = 5}
 library(patchwork)

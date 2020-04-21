@@ -6,7 +6,9 @@ output:
   github_document
 ---
 
-```{r, echo = FALSE, cache = FALSE}
+```{r, echo = F, cache = F}
+knitr::opts_chunk$set(fig.retina = 2.5)
+knitr::opts_chunk$set(fig.align = "center")
 options(width = 100)
 ```
 
@@ -195,9 +197,9 @@ d %>%
 
 Using a simple descriptive approach, we'd just say the median lifetime was between years 6 and 7. We could also follow [Miller (1981)](https://books.google.com/books/about/Survival_Analysis.html?id=cttQAAAAMAAJ) and linearly interpolate between the two values of $S(t_j)$ bracketing .5. If we let $m$ be the time interval just before the median lifetime, $\hat S(t_m)$ be the value of the survivor function in that $m^\text{th}$ interval, and $\hat S(t_{m + 1})$ be the survival value in the next interval, the can write
 
-$$\text{Estimated median lifetime} = m + \Bigg [\frac{\hat S(t_m) - .5}{\hat S(t_m) - \hat S(t_{m + 1})} \Bigg ] ((m + 1) - m).$$
+$$\text{Estimated median lifetime} = m + \Bigg [\frac{\hat S(t_m) - .5}{\hat S(t_m) - \hat S(t_{m + 1})} \Bigg ] \big ((m + 1) - m \big).$$
 
-We can compute that by hand like so:
+We can compute that by hand like so.
 
 ```{r}
 m        <- 6
@@ -333,7 +335,7 @@ lt_suicide  <- make_lt(fit10.4)
 lt_congress <- make_lt(fit10.5)
 ```
 
-You'll note that the four survival curve plots in Figure 10.2 all show the medial lifetime using the interpolation method. Here we'll save the necessary steps to compute that for each model as the `make_iml()` function.
+You'll note that the four survival-curve plots in Figure 10.2 all show the median lifetime using the interpolation method. Here we'll save the necessary steps to compute that for each model as the `make_iml()` function.
 
 ```{r}
 make_iml <- function(lt) {
@@ -607,7 +609,7 @@ crossing(n_j   = c(100, 1000, 10000),
 
 ### Standard error of the estimated survival probabilities.
 
-Computing the standard errors for estimated survival probabilities is more difficult because these are the products of (1 - hazard) for the current and all previous survival probabilities. Computing them is such a pain, Singer and Willett recommend you rely on Greenwood's ([1926](https://www.cabdirect.org/cabdirect/abstract/19272700028)) approximation. This follows the form
+Computing the frequentist standard errors for estimated survival probabilities is more difficult because these are the products of (1 - hazard) for the current and all previous survival probabilities. Computing them is such a pain, Singer and Willett recommend you rely on Greenwood's ([1926](https://www.cabdirect.org/cabdirect/abstract/19272700028)) approximation. This follows the form
 
 $$se \big (\hat S(t_j) \big) = \hat S(t_j)  \sqrt{\frac{\hat h(t_1)}{n_1 \big (1 - \hat h(t_1) \big)} + \frac{\hat h(t_2)}{n_2 \big (1 - \hat h(t_2) \big)} + \cdots + \frac{\hat h(t_j)}{n_j \big (1 - \hat h(t_j) \big)}}.$$
 
@@ -666,7 +668,7 @@ options(scipen = 0)
 
 > How can you construct a life table for *your* data set? For preliminary analyses, it is easy to use the prepackaged routines available in the major statistical packages. If you choose this approach, be sure to check whether your package allows you to: (1) select the partition of time; and (2) ignore any actuarial corrections invoked due to continuous-time assumptions (that do not hold in discrete time). When event times have been measured using a discrete-time scale, actuarial corrections (discussed in chapter13) are inappropriate. Although most packages clearly document the algorithm being used, we suggest that you double-check by comparing results with one or two estimates computed by hand. (p. 351, *emphasis* in the original)
 
-For more information about the methods we've been using via the **survival** package, browse through the documentation listed on the CRAN page, [https://CRAN.R-project.org/package=survival](https://CRAN.R-project.org/package=survival), with a paticular emphasis on the [reference manual](https://CRAN.R-project.org/package=survival/survival.pdf) and [*A package for survival analysis in R*](https://CRAN.R-project.org/package=survival/vignettes/survival.pdf).
+For more information about the methods we've been using via the **survival** package, browse through the documentation listed on the CRAN page, [https://CRAN.R-project.org/package=survival](https://CRAN.R-project.org/package=survival), with a paticular emphasis on the [reference manual](https://CRAN.R-project.org/package=survival/survival.pdf) and [*A package for survival analysis in R*](https://CRAN.R-project.org/package=survival/vignettes/survival.pdf). But back to the text:
 
 > Despite the simplicity of preprogrammed algorithms, [Singer and Willett] prefer an alternative approach for life table construction. This approach requires construction of a person-period data set, much like the period-period data set used for growth modeling. Once you create the person-period data set, you can compute descriptive statistics sing any standard cross-tabulation routine. (p. 351)
 
@@ -726,6 +728,8 @@ teachers_pp %>%
 
 ### Using the person-period data set to construct the life table.
 
+"All the life table's essential elements can be computed through cross-tabulation of *PERIOD* and *EVENT* in the person-period data set" (p. 354, *emphasis* in the original). Here's how we might use the **tidyverse** do that with `teachers_pp`.
+
 ```{r}
 teachers_lt <-
   teachers_pp %>% 
@@ -753,34 +757,19 @@ teachers_lt  %>%
               values_from = total)
 ```
 
-```{r}
-teachers_pp %>% 
-  # change the coding for `event` in anticipation of the final format
-  mutate(event = str_c("event = ", event)) %>% 
-  group_by(period) %>% 
-  count(event) %>% 
-  ungroup() %>% 
-  pivot_wider(names_from = event,
-              values_from = n) %>% 
-  mutate(total = `event = 0` + `event = 1`) %>% 
-  pivot_longer(`event = 0`:total) %>% 
-  group_by(name) %>% 
-  summarise(total = sum(value)) %>% 
-  pivot_wider(names_from = name,
-              values_from = total)
-```
+> The ability to construct a life table using the person-period data set provides a simple strategy for conducting the descriptive analyses outlined in this chapter. This strategy yields appropriate statistics regardless of the amount, or pattern, of censoring. Perhaps even more important, the person-period data set is the fundamental tool for fitting discrete-time hazard models to data, using methods that we describe in the next chapter. (p. 356)
 
-### Bonus: Fit the discrete survival models with brms
+## Bonus: Fit the discrete-time hazard models with brms
 
-The frequentists aren't the only ones who can discrete survival models. Us Bayesians can get in on the fun, too. The first step is to decide on an appropriate likelihood function. Why? Because Bayes' formula requires we define the likelihood and the priors. As all the parameters in the model are seen through the lens of the likelihood, it's important we consider it with care. 
+The frequentists aren't the only ones who can discrete-time hazard models. Bayesians can get in on the fun, too. The first step is to decide on an appropriate likelihood function. Why? Because Bayes' formula requires that we define the likelihood and the priors. As all the parameters in the model are seen through the lens of the likelihood, it's important we consider it with care. 
 
 Happily, the exercises in the last section did a great job preparing us for the task. In Table 10.3, Singer and Willett hand computed the discrete hazards (i.e., the values in the "Proportion *EVENT* = 1" column) by dividing the valued in the "*EVENT* = 1" column by those in the "Total" column. Discrete hazards are proportions. Proportions have two important characteristics; they are continuous and necessarily range between 0 and 1. You know what else has those characteristics? Probabilities. 
 
-So far in this text, we have primarily focused on models using the Gaussian likelihood. Though it's a workhorse, the Gaussian is inappropriate for modeling proportions/probabilities. Though good old Gauss is great at modeling unbounded continuous data, it can fail miserably when working with bounded data and our proportions/probabilities are most certainly bounded. The binomial likelihood, however, is well-suited for handling probabilities. Imagine you have data that can take on values of 0 and 1, such as failures/successes, no's/yesses, fails/passes, and no-events/events. If you sum up all the 1's and divide them by the total cases, you get a proportion/probability. The simple binomial model take just that kind of data—the number of 1's and the number of total cases. The formula for the binomial likelihood follows the form
+So far in this text, we have primarily focused on models using the Gaussian likelihood. Though it's a workhorse, the Gaussian is inappropriate for modeling proportions/probabilities. Good old Gauss is great at modeling unbounded continuous data, but it can fail miserably when working with bounded data and our proportions/probabilities are most certainly bounded. The binomial likelihood, however, is well-suited for handling probabilities. Imagine you have data that can take on values of 0 and 1, such as failures/successes, no's/yesses, fails/passes, and no-events/events. If you sum up all the 1's and divide them by the total cases, you get a proportion/probability. The simple binomial model takes just that kind of data—the number of 1's and the number of total cases. The formula for the binomial likelihood is
 
 $$\operatorname{Pr} (z | n, p) = \frac{n!}{z!(n - z)!} p^z (1 - p)^{n - z},$$
 
-where $z$ is the number of cases for which the value is 1, $n$ is the total number of cases, and $p$ is the constant chance of a 1 across cases. As the data provide us with $z$ and $n$, we end up estimating $p$. And if we're willing to use what's called a *link function*, we can estimate $p$ with a linear model with any number of predictors. When fitting binomial regression models, you can take your choice among several link functions. The most popular is the logit link. This will be our approach. As you may have guesses, using the logit link to fit a binomial model is often termed *logistic regression*. Welcome to the generalized linear model. 
+where $z$ is the number of cases for which the value is 1, $n$ is the total number of cases, and $p$ is the probability of a 1 across cases. As the data provide us with $z$ and $n$, we end up estimating $p$. If we're willing to use what's called a *link function*, we can estimate $p$ with a linear model with any number of predictors. When fitting binomial regression models, you can take your choice among several link functions, the most popular of which is the logit. This will be our approach. As you may have guesses, using the logit link to fit a binomial model is often termed *logistic regression*. Welcome to the generalized linear model. 
 
 Let's fire up **brms**.
 
@@ -816,7 +805,7 @@ Check the summary.
 print(fit10.6)
 ```
 
-Because we used the `0 + Intercept` syntax in the presence of a factor predictor, `period`, we suppressed the default intercept. Instead, we have separate "intercepts" for each of the 12 levels `period`. Because we used the confentinal logit link, the parameters are all on the log-odds scale. Happily, we can use the `brms::inv_logit_scaled()` function to convert them back into the probability metric. Here's a quick and dirty conversion using the output from `fixef()`.
+Because we used the `0 + Intercept` syntax in the presence of a factor predictor, `period`, we suppressed the default intercept. Instead, we have separate "intercepts" for each of the 12 levels `period`. Because we used the conventional logit link, the parameters are all on the log-odds scale. Happily, we can use the `brms::inv_logit_scaled()` function to convert them back into the probability metric. Here's a quick and dirty conversion using the output from `fixef()`.
 
 ```{r}
 fixef(fit10.6) %>% inv_logit_scaled()
@@ -851,9 +840,9 @@ posterior_samples(fit10.6) %>%
         panel.grid = element_blank())
 ```
 
-For comparison sake, those violet dots in the foreground are the hazard estimates from the frequentist `survival::survfit()` function. Happily, our Bayesian results are very similar to the requentist ones. Hopefully this isn't a surprise. There was a lot of data and we used fairly weak priors. For simple models under those conditions, frequentist and Bayesian results should be pretty close.
+For comparison sake, those violet dots in the foreground are the hazard estimates from the frequentist `survival::survfit()` function. Turns out our Bayesian results are very similar to the frequentist ones. Hopefully this isn't a surprise. There was a lot of data and we used fairly weak priors. For simple models under those conditions, frequentist and Bayesian results should be pretty close.
 
-Remember that awful $se \big (\hat h(t_j) \big)$ formula from back in section 10.4.1? That doesn't quite apply to the posterior standard deviations from our Bayesian model. Even so, our posterior $SD$s will be very similar to the ML standard errors. Let's compare those in a plot, too.
+Remember that $se \big (\hat h(t_j) \big)$ formula from back in section 10.4.1? That doesn't quite apply to the posterior standard deviations from our Bayesian model. Even so, our posterior $SD$s will be very similar to the ML standard errors. Let's compare those in a plot, too.
 
 ```{r, fig.width = 6, fig.height = 3}
 posterior_samples(fit10.6) %>% 
@@ -918,7 +907,7 @@ post <-
 glimpse(post)
 ```
 
-Now we can make our Bayesian version of the lower panel of Figure 10.1.
+We'll learn how to simplify that syntax with help from the `cumprod()` function in the next chapter. Now we have our survival estimates, we can make our Bayesian version of the lower panel of Figure 10.1.
 
 ```{r, fig.width = 6, fig.height = 3}
 # this will help us depict the median lifetime
@@ -947,7 +936,7 @@ post %>%
   theme(panel.grid = element_blank())
 ```
 
-As with before, we superimposed the frequentist estimates as violet dots atop the Bayesian posterior means and intervals. Because of how narrow the posteriors were, we only showed the 95% intervals, here. As with the hazard estimates, our Bayesian survival estimates are very close to the ones we computed with ML.
+Like we did with our hazard plot above, we superimposed the frequentist estimates as violet dots atop the Bayesian posterior means and intervals. Because of how narrow the posteriors were, we only showed the 95% intervals, here. As with the hazard estimates, our Bayesian survival estimates are very close to the ones we computed with ML.
 
 ## Reference {-}
 

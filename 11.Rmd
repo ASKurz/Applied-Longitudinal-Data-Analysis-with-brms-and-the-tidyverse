@@ -6,7 +6,9 @@ output:
   github_document
 ---
 
-```{r, echo = FALSE, cache = FALSE}
+```{r, echo = F, cache = F}
+knitr::opts_chunk$set(fig.retina = 2.5)
+knitr::opts_chunk$set(fig.align = "center")
 options(width = 110)
 ```
 
@@ -264,7 +266,7 @@ Log-odds is a minor extension; you simply take the log of the odds, which we can
 
 $$\text{log-odds} = \log \Bigg (\frac{p}{1 - p} \Bigg ).$$
 
-To make the conversions easy, we'll define a couple convenience functions: `odds()` and `log_odds()`.
+To make the conversions easy, we'll define[^1] a couple convenience functions: `odds()` and `log_odds()`.
 
 ```{r}
 odds <- function(p) {
@@ -367,7 +369,7 @@ sex_pp <- read_csv("data/firstsex_pp.csv")
 glimpse(sex_pp)
 ```
 
-Now we'll compute the necessary summary values and wrangle a bit.
+Now we'll compute the desired summary values and wrangle a bit.
 
 ```{r}
 sex_aggregated <-
@@ -389,7 +391,7 @@ sex_aggregated
 Note how we saved the grade values in three columns: 
 
 * `period` has them as continuous values, which will be hand for plotting; 
-* `period_center` has them as mean-centered continuous values, wich will make fitting the linear model in the middle panel easier; and 
+* `period_center` has them as mean-centered continuous values, which will make fitting the linear model in the middle panel easier; and 
 * `period_factor` has them saved as a factor, which will help us fit the model in the bottom panel.
 
 Fire up **brms**.
@@ -398,7 +400,7 @@ Fire up **brms**.
 library(brms)
 ```
 
-Before we fit the models, it might be good to acknowledge we’re jumping ahead of the authors, a bit. Singer and Willett didn’t discuss fitting discrete time hazard models until section 11.3.2. Sure, their focus was on the frequentist approach using maximum likelihood. But the point still stands. So it this these model fitting details feel a bit rushed, they are. 
+Before we fit the models, it might be good to acknowledge we’re jumping ahead of the authors, a bit. Singer and Willett didn’t discuss fitting discrete time hazard models until section 11.3.2. Sure, their focus was on the frequentist approach using maximum likelihood. But the point still stands. If these model fitting details feel a bit rushed, they are. 
 
 Any anxious feelings aside, now fit the three binomial models. We continue to use weakly-regularizing priors for each.
 
@@ -539,11 +541,11 @@ model_weights(fit11.4, fit11.5, fit11.6, weights = "loo") %>% round(digits = 3)
 
 ## formal representation of the population discrete-time hazard model
 
-Earlier equations for the hazard function omitted substantive predictors. Now consider the case where $X_{1ij}, X_{2ij}, . . ., X_{Pij}$ stand for the $P$ predictors which may or may not vary across individuals $i$ and time periods $j$. Thus $x_{pij}$ is the $i^\text{th}$ individuals' score on the $p^\text{th}$ variable during the $j^\text{th}$ period. We can use this to define the conditional hazard function as
+Earlier equations for the hazard function omitted substantive predictors. Now consider the case where $X_{1ij}, X_{2ij}, . . ., X_{Pij}$ stand for the $P$ predictors which may or may not vary across individuals $i$ and time periods $j$. Thus $x_{pij}$ is the value for the $i^\text{th}$ individual on the $p^\text{th}$ variable during the $j^\text{th}$ period. We can use this to define the conditional hazard function as
 
 $$h(t_{ij}) = \text{Pr} [T_i = j | T \geq j \text{ and } X_{1ij} = x_{1ij}, X_{2ij} = x_{2ij}, ..., X_{Pij} = x_{pij}].$$
 
-Building further, keeping the baseline shape of the discrete hazard function flexible, we want a method that allows each of the $j$ time periods to have its own value. Imagine a set of $J$ dummy variables, $D_1, D_2, ..., D_J$, marking off each of the time periods. For example, say $J = 6$, we could depict this in a tibble like so.
+Building further and keeping the baseline shape of the discrete hazard function flexible, we want a method that allows each of the $j$ time periods to have its own value. Imagine a set of $J$ dummy variables, $D_1, D_2, ..., D_J$, marking off each of the time periods. For example, say $J = 6$, we could depict this in a tibble like so.
 
 ```{r}
 tibble(period = 1:6) %>% 
@@ -555,13 +557,11 @@ tibble(period = 1:6) %>%
          d6 = if_else(period == 6, 1, 0))
 ```
 
-If we were to use a set of dummies of this kind in a model, we would omit the conventional regression intercept, replacing it with the $J$ dummies.
-
-Now presume we're fitting a hazard model using the logit link, $\operatorname{logit} h(t_{ij})$. We can express the discrete conditional hazard model with a general functional form with respect to time as
+If we were to use a set of dummies of this kind in a model, we would omit the conventional regression intercept, replacing it with the $J$ dummies. Now presume we're fitting a hazard model using the logit link, $\operatorname{logit} h(t_{ij})$. We can express the discrete conditional hazard model with a general functional form with respect to time as
 
 $$\operatorname{logit} h(t_{ij}) = [\alpha_1 D_{1ij} + \alpha_2 D_{2ij} + \cdots + \alpha_J D_{Jij}] + [\beta_1 X_{1ij} + \beta_2 X_{2ij} + \cdots + \beta_P X_{Pij}],$$
 
-where the $\alpha$ parameters are the $J$ time-period dummies and the $\beta$ parameters are for other time-varying or time-invariant predictors. This is just the type of model we used to fit `fit6. For that model, the basic equation was
+where the $\alpha$ parameters are the $J$ time-period dummies and the $\beta$ parameters are for other time-varying or time-invariant predictors. This is just the type of model we used to fit `fit116`. For that model, the basic equation was
 
 $$\operatorname{logit} h(t_{ij}) = [\alpha_7 D_{7ij} + \alpha_8 D_{8ij} + \cdots + \alpha_{12} D_{12ij}] + [\beta_1 \text{PT}_i ],$$
 
@@ -686,7 +686,7 @@ tibble(`original scale` = c("logit", "odds", "logit"),
   knitr::kable()
 ```
 
-We accomplished the transformation in the bottom row with the `inv_logit_scaled()` function.
+We accomplished the transformation in the bottom row with the `brms::inv_logit_scaled()` function.
 
 ## Fitting a discrete-time hazard model to data
 
@@ -1310,7 +1310,7 @@ p2 <-
 
 Combine the subplots to make our version of Figure 11.7.
 
-```{r, fig.width = 8, fig.height = 5, warning = F}
+```{r, fig.width = 8, fig.height = 5.5, warning = F}
 ((p1 / p2) &
   scale_fill_viridis_d(NULL, option = "D", end = .8, direction = -1) &
   scale_color_viridis_d(NULL, option = "D", end = .8, direction = -1) &
@@ -1332,6 +1332,8 @@ Also, please don't confuse plots of fitted values with descriptive sample-based 
 ## Comparing models using ~~deviance statistics and~~ information criteria
 
 > We now introduce two important questions that we usually address before interpreting parameters and displaying results: Which of the alternative models fits better: Might a predictor's observed effect be the result of nothing more than sampling variation? (p. 397)
+
+Much of the material in this section will be a refresher from the material we covered in Section 4.6.
 
 ### The deviance statistic.
 
@@ -1477,7 +1479,7 @@ Model D has the best showing across the three weighting schemes.
 
 I generally take a model-based approach to Bayesian statistics and I prefer to scrutinize marginal posteriors, consider effect sizes, and use graphical depictions of my models (e.g., posterior predictive checks) over hypothesis testing. Further extending that approach, here, puts us at further odds with the content in the test. In addition, the authors spent some time discussing the asymptotic properties of ML standard errors. Our Bayesian approach is not based on asymptotic theory and we just don’t need to concern ourselves with whether our marginal posteriors are Gaussian. They often are, which is nice. But we summarize our posteriors with percentile-based 95% intervals, we are not presuming they are symmetric or Gaussian. 
 
-### The Wald chi-square statistic.
+### The ~~Wald chi-square statistic~~.
 
 This will not be our approach. On page 404, Singer and Willett wrote: "The logistic regression analysis routines in all major statistical packages routinely output asymptotic standard errors." This comment presumes we're focusing on frequentist packages. Our rough analogue to frequentist standard errors is our Bayesian posterior standard deviations. The authors focused on the two substantive predictors from Model D (i.e., `fit11.10`). Here's another look at the **brms** summary.
 
@@ -1504,7 +1506,7 @@ post %>%
 
 If we'd like to keep with the NHST perspective, zero is not a particularly credible value for either parameter. But neither are negative values in generals. In terms of uncertainty, look how much wider the posterior for `pt` is when compared with `pas`. And don't forget that these are on the log-odds scale.
 
-Looking at those densities might lead one to ask *Exactly what proportion of the posterior draws for each is zero or below*? You can compute that like this.
+Looking at those densities might lead one to ask, *Exactly what proportion of the posterior draws for each is zero or below*? You can compute that like this.
 
 ```{r}
 post %>% 
@@ -1573,4 +1575,8 @@ rm(sex, fit11.1, fit11.2, fit11.3, make_lt, lt, p1, p2, make_iml, odds, log_odds
 
 pacman::p_unload(pacman::p_loaded(), character.only = TRUE)
 ```
+
+## Footnote {-}
+
+[^1]: **R** already has a built-in function to convert probabilities to the log-odds scale. Somewhat confusingly, it's called `qlogis()`. You can learn more by executing `?qlogis` or by browsing through [this great blog post](https://ro-che.info/articles/2018-08-11-logit-logistic-r) by Roman Cheplyaka. It’s generally a good idea to stick to the functions in base **R** rather than make your own, like we did earlier in this chapter (see [this twitter thread](https://twitter.com/tjmahr/status/1248228130256453632)). Since the name of `qlogis()` isn’t the easiest to remember, you can always execute something like `log_odds <- qlogis` or `logit <- qlogis` at the beginning of your scripts and then use one of those as a thin wrapper for `qlogis()`.
 

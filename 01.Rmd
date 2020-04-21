@@ -35,11 +35,11 @@ Within the hierarchical framework, we often speak about two levels of change. We
 
 ### Multiple waves of data.
 
-Singer and Willett criticize two-waves data on two grounds.
+Singer and Willett criticized two-waves data on two grounds.
 
 > First, it cannot tell us about the *shape* of each person's individual growth trajectory, the focus of our level-1 question. Did all the change occur immediately after the first assessment? Was progress steady or delayed? Second, it cannot distinguish true change from measurement error. If measurement error renders pretest scores too low and posttest scores too high, you might conclude erroneously that scores increase over time when a longer temporal view would suggest the opposite. In statistical terms, two-waves studies cannot describe individual trajectories of change and they confound true change with measurement error (see Rogosa, Brandt, & Zimowski, 1982). (p. 10, *emphasis* in the original)
 
-I am not a fan of this 'true change/measurement error' way of speaking. I'd rather speak in terms of systemic and [seemingly] un-systemic means and variances. Otherwise put, I'd rather speak in terms of trait and state. Two waves of data do not allow us to disentangle systemic mean differences from stable means and substantial variances for those means. Two waves of data do not allow us to disentangle changes in traits from stable traits but important differences in states. For an introduction to this way of thinking, check out Nezlek's (2007) [*A multilevel framework for understanding relationships among traits, states, situations and behaviors*](https://www.researchgate.net/publication/228079300_A_Multilevel_Framework_for_Understanding_Relationships_Among_Traits_States_Situations_and_Behaviours).
+I am not a fan of this 'true change/measurement error' way of speaking and would rather speak in terms of systemic and [seemingly] un-systemic changes among means and variances. Otherwise put, I'd rather speak in terms of trait and state. Two waves of data do not allow us to disentangle systemic mean differences from stable means and substantial variances for those means. Two waves of data do not allow us to disentangle changes in traits from stable traits but important differences in states. For an introduction to this way of thinking, check out Nezlek's (2007) [*A multilevel framework for understanding relationships among traits, states, situations and behaviors*](https://www.researchgate.net/publication/228079300_A_Multilevel_Framework_for_Understanding_Relationships_Among_Traits_States_Situations_and_Behaviours).
 
 ### A sensible metric for time.
 

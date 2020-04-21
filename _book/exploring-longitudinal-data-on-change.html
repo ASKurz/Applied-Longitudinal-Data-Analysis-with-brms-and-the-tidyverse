@@ -1,0 +1,1586 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+<head>
+
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <title>2 Exploring Longitudinal Data on Change | Applied Longitudinal Data Analysis in brms and the tidyverse</title>
+  <meta name="description" content="This project is a reworking of Singer and Willett’s classic (2003) text within a contemporary Bayesian framework with emphasis of the brms and tidyverse packages within the R computational framework." />
+  <meta name="generator" content="bookdown 0.18 and GitBook 2.6.7" />
+
+  <meta property="og:title" content="2 Exploring Longitudinal Data on Change | Applied Longitudinal Data Analysis in brms and the tidyverse" />
+  <meta property="og:type" content="book" />
+  
+  
+  <meta property="og:description" content="This project is a reworking of Singer and Willett’s classic (2003) text within a contemporary Bayesian framework with emphasis of the brms and tidyverse packages within the R computational framework." />
+  <meta name="github-repo" content="ASKurz/Applied-Longitudinal-Data-Analysis-with-brms-and-the-tidyverse" />
+
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="2 Exploring Longitudinal Data on Change | Applied Longitudinal Data Analysis in brms and the tidyverse" />
+  <meta name="twitter:site" content="@SolomonKurz" />
+  <meta name="twitter:description" content="This project is a reworking of Singer and Willett’s classic (2003) text within a contemporary Bayesian framework with emphasis of the brms and tidyverse packages within the R computational framework." />
+  
+
+<meta name="author" content="A Solomon Kurz" />
+
+
+<meta name="date" content="2020-04-21" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+  
+  
+<link rel="prev" href="a-framework-for-investigating-change-over-time.html"/>
+<link rel="next" href="introducing-the-multilevel-model-for-change.html"/>
+<script src="libs/jquery-2.2.3/jquery.min.js"></script>
+<link href="libs/gitbook-2.6.7/css/style.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-table.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-bookdown.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-highlight.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-search.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-fontsettings.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-clipboard.css" rel="stylesheet" />
+
+
+
+
+
+
+
+
+
+
+
+<style type="text/css">
+a.sourceLine { display: inline-block; line-height: 1.25; }
+a.sourceLine { pointer-events: none; color: inherit; text-decoration: inherit; }
+a.sourceLine:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode { white-space: pre; position: relative; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+code.sourceCode { white-space: pre-wrap; }
+a.sourceLine { text-indent: -1em; padding-left: 1em; }
+}
+pre.numberSource a.sourceLine
+  { position: relative; left: -4em; }
+pre.numberSource a.sourceLine::before
+  { content: attr(data-line-number);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; pointer-events: all; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {  }
+@media screen {
+a.sourceLine::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+</style>
+
+</head>
+
+<body>
+
+
+
+  <div class="book without-animation with-summary font-size-2 font-family-1" data-basepath=".">
+
+    <div class="book-summary">
+      <nav role="navigation">
+
+<ul class="summary">
+<li class="chapter" data-level="" data-path="index.html"><a href="index.html"><i class="fa fa-check"></i>What and why</a><ul>
+<li class="chapter" data-level="" data-path="index.html"><a href="index.html#caution-work-in-progress"><i class="fa fa-check"></i>Caution: Work in progress</a></li>
+</ul></li>
+<li class="chapter" data-level="1" data-path="a-framework-for-investigating-change-over-time.html"><a href="a-framework-for-investigating-change-over-time.html"><i class="fa fa-check"></i><b>1</b> A Framework for Investigating Change over Time</a><ul>
+<li class="chapter" data-level="1.1" data-path="a-framework-for-investigating-change-over-time.html"><a href="a-framework-for-investigating-change-over-time.html#when-might-you-study-change-over-time"><i class="fa fa-check"></i><b>1.1</b> When might you study change over time?</a></li>
+<li class="chapter" data-level="1.2" data-path="a-framework-for-investigating-change-over-time.html"><a href="a-framework-for-investigating-change-over-time.html#distinguishing-between-two-types-of-questions-about-change"><i class="fa fa-check"></i><b>1.2</b> Distinguishing between two types of questions about change</a></li>
+<li class="chapter" data-level="1.3" data-path="a-framework-for-investigating-change-over-time.html"><a href="a-framework-for-investigating-change-over-time.html#three-important-features-of-a-study-of-change"><i class="fa fa-check"></i><b>1.3</b> Three important features of a study of change</a><ul>
+<li class="chapter" data-level="1.3.1" data-path="a-framework-for-investigating-change-over-time.html"><a href="a-framework-for-investigating-change-over-time.html#multiple-waves-of-data."><i class="fa fa-check"></i><b>1.3.1</b> Multiple waves of data.</a></li>
+<li class="chapter" data-level="1.3.2" data-path="a-framework-for-investigating-change-over-time.html"><a href="a-framework-for-investigating-change-over-time.html#a-sensible-metric-for-time."><i class="fa fa-check"></i><b>1.3.2</b> A sensible metric for time.</a></li>
+<li class="chapter" data-level="1.3.3" data-path="a-framework-for-investigating-change-over-time.html"><a href="a-framework-for-investigating-change-over-time.html#a-continuous-outcome-that-changes-systematically-over-time."><i class="fa fa-check"></i><b>1.3.3</b> A continuous outcome that changes systematically over time.</a></li>
+</ul></li>
+<li class="chapter" data-level="" data-path="a-framework-for-investigating-change-over-time.html"><a href="a-framework-for-investigating-change-over-time.html#reference"><i class="fa fa-check"></i>Reference</a></li>
+<li class="chapter" data-level="" data-path="a-framework-for-investigating-change-over-time.html"><a href="a-framework-for-investigating-change-over-time.html#session-info"><i class="fa fa-check"></i>Session info</a></li>
+</ul></li>
+<li class="chapter" data-level="2" data-path="exploring-longitudinal-data-on-change.html"><a href="exploring-longitudinal-data-on-change.html"><i class="fa fa-check"></i><b>2</b> Exploring Longitudinal Data on Change</a><ul>
+<li class="chapter" data-level="2.1" data-path="exploring-longitudinal-data-on-change.html"><a href="exploring-longitudinal-data-on-change.html#creating-a-longitudinal-data-set"><i class="fa fa-check"></i><b>2.1</b> Creating a longitudinal data set</a><ul>
+<li class="chapter" data-level="2.1.1" data-path="exploring-longitudinal-data-on-change.html"><a href="exploring-longitudinal-data-on-change.html#the-person-level-data-set."><i class="fa fa-check"></i><b>2.1.1</b> The person-level data set.</a></li>
+<li class="chapter" data-level="2.1.2" data-path="exploring-longitudinal-data-on-change.html"><a href="exploring-longitudinal-data-on-change.html#the-person-period-data-set."><i class="fa fa-check"></i><b>2.1.2</b> The person-period data set.</a></li>
+</ul></li>
+<li class="chapter" data-level="2.2" data-path="exploring-longitudinal-data-on-change.html"><a href="exploring-longitudinal-data-on-change.html#descriptive-analysis-of-individual-change-over-time"><i class="fa fa-check"></i><b>2.2</b> Descriptive analysis of individual change over time</a><ul>
+<li class="chapter" data-level="2.2.1" data-path="exploring-longitudinal-data-on-change.html"><a href="exploring-longitudinal-data-on-change.html#empirical-growth-plots."><i class="fa fa-check"></i><b>2.2.1</b> Empirical growth plots.</a></li>
+<li class="chapter" data-level="2.2.2" data-path="exploring-longitudinal-data-on-change.html"><a href="exploring-longitudinal-data-on-change.html#using-a-trajectory-to-summarize-each-persons-empirical-growth-record."><i class="fa fa-check"></i><b>2.2.2</b> Using a trajectory to summarize each person’s empirical growth record.</a></li>
+</ul></li>
+<li class="chapter" data-level="2.3" data-path="exploring-longitudinal-data-on-change.html"><a href="exploring-longitudinal-data-on-change.html#exploring-differences-in-change-across-people"><i class="fa fa-check"></i><b>2.3</b> Exploring differences in change across people</a><ul>
+<li class="chapter" data-level="2.3.1" data-path="exploring-longitudinal-data-on-change.html"><a href="exploring-longitudinal-data-on-change.html#examining-the-entire-set-of-smooth-trajectories."><i class="fa fa-check"></i><b>2.3.1</b> Examining the entire set of smooth trajectories.</a></li>
+<li class="chapter" data-level="2.3.2" data-path="exploring-longitudinal-data-on-change.html"><a href="exploring-longitudinal-data-on-change.html#using-the-results-of-model-fitting-to-frame-questions-about-change."><i class="fa fa-check"></i><b>2.3.2</b> Using the results of model fitting to frame questions about change.</a></li>
+<li class="chapter" data-level="2.3.3" data-path="exploring-longitudinal-data-on-change.html"><a href="exploring-longitudinal-data-on-change.html#exploring-the-relationship-between-change-and-time-invariant-predictors."><i class="fa fa-check"></i><b>2.3.3</b> Exploring the relationship between change and time-invariant predictors.</a></li>
+</ul></li>
+<li class="chapter" data-level="2.4" data-path="exploring-longitudinal-data-on-change.html"><a href="exploring-longitudinal-data-on-change.html#improving-the-precision-and-reliability-of-ols-single-level-bayesian-estimated-rates-of-change-lessons-for-research-design"><i class="fa fa-check"></i><b>2.4</b> Improving the precision and reliability of <del>OLS</del> single-level-Bayesian-estimated rates of change: Lessons for research design</a></li>
+<li class="chapter" data-level="" data-path="exploring-longitudinal-data-on-change.html"><a href="exploring-longitudinal-data-on-change.html#reference-1"><i class="fa fa-check"></i>Reference</a></li>
+<li class="chapter" data-level="" data-path="exploring-longitudinal-data-on-change.html"><a href="exploring-longitudinal-data-on-change.html#session-info-1"><i class="fa fa-check"></i>Session info</a></li>
+</ul></li>
+<li class="chapter" data-level="3" data-path="introducing-the-multilevel-model-for-change.html"><a href="introducing-the-multilevel-model-for-change.html"><i class="fa fa-check"></i><b>3</b> Introducing the Multilevel Model for Change</a><ul>
+<li class="chapter" data-level="3.1" data-path="introducing-the-multilevel-model-for-change.html"><a href="introducing-the-multilevel-model-for-change.html#what-is-the-purpose-of-the-multilevel-model-for-change"><i class="fa fa-check"></i><b>3.1</b> What is the purpose of the multilevel model for change?</a></li>
+<li class="chapter" data-level="3.2" data-path="introducing-the-multilevel-model-for-change.html"><a href="introducing-the-multilevel-model-for-change.html#the-level-1-submodel-for-individual-change"><i class="fa fa-check"></i><b>3.2</b> The level-1 submodel for individual change</a><ul>
+<li class="chapter" data-level="3.2.1" data-path="introducing-the-multilevel-model-for-change.html"><a href="introducing-the-multilevel-model-for-change.html#the-structural-part-of-the-level-1-submodel."><i class="fa fa-check"></i><b>3.2.1</b> The structural part of the level-1 submodel.</a></li>
+<li class="chapter" data-level="3.2.2" data-path="introducing-the-multilevel-model-for-change.html"><a href="introducing-the-multilevel-model-for-change.html#the-stochastic-part-of-the-level-1-submodel."><i class="fa fa-check"></i><b>3.2.2</b> The stochastic part of the level-1 submodel.</a></li>
+<li class="chapter" data-level="3.2.3" data-path="introducing-the-multilevel-model-for-change.html"><a href="introducing-the-multilevel-model-for-change.html#relating-the-level-1-submodel-to-the-ols-exploratory-methods-of-chapter-2."><i class="fa fa-check"></i><b>3.2.3</b> Relating the level-1 submodel to the OLS exploratory methods of chapter 2.</a></li>
+</ul></li>
+<li class="chapter" data-level="3.3" data-path="introducing-the-multilevel-model-for-change.html"><a href="introducing-the-multilevel-model-for-change.html#the-level-2-submodel-for-systematic-interindividual-differences-in-change"><i class="fa fa-check"></i><b>3.3</b> The level-2 submodel for systematic interindividual differences in change</a><ul>
+<li class="chapter" data-level="3.3.1" data-path="introducing-the-multilevel-model-for-change.html"><a href="introducing-the-multilevel-model-for-change.html#structural-components-of-the-level-2-submodel."><i class="fa fa-check"></i><b>3.3.1</b> Structural components of the level-2 submodel.</a></li>
+<li class="chapter" data-level="3.3.2" data-path="introducing-the-multilevel-model-for-change.html"><a href="introducing-the-multilevel-model-for-change.html#stochastic-components-of-the-level-2-submodel."><i class="fa fa-check"></i><b>3.3.2</b> Stochastic components of the level-2 submodel.</a></li>
+</ul></li>
+<li class="chapter" data-level="3.4" data-path="introducing-the-multilevel-model-for-change.html"><a href="introducing-the-multilevel-model-for-change.html#fitting-the-multilevel-model-for-change-to-data"><i class="fa fa-check"></i><b>3.4</b> Fitting the multilevel model for change to data</a><ul>
+<li class="chapter" data-level="3.4.1" data-path="introducing-the-multilevel-model-for-change.html"><a href="introducing-the-multilevel-model-for-change.html#the-advantages-of-maximum-likelihood-bayesian-estimation."><i class="fa fa-check"></i><b>3.4.1</b> The advantages of <del>maximum likelihood</del> Bayesian estimation.</a></li>
+<li class="chapter" data-level="3.4.2" data-path="introducing-the-multilevel-model-for-change.html"><a href="introducing-the-multilevel-model-for-change.html#using-maximum-likelihood-modern-bayesian-methods-to-fit-a-multilevel-model."><i class="fa fa-check"></i><b>3.4.2</b> Using <del>maximum likelihood</del> modern Bayesian methods to fit a multilevel model.</a></li>
+</ul></li>
+<li class="chapter" data-level="3.5" data-path="introducing-the-multilevel-model-for-change.html"><a href="introducing-the-multilevel-model-for-change.html#examining-estimated-fixed-effects"><i class="fa fa-check"></i><b>3.5</b> Examining estimated fixed effects</a><ul>
+<li class="chapter" data-level="3.5.1" data-path="introducing-the-multilevel-model-for-change.html"><a href="introducing-the-multilevel-model-for-change.html#interpreting-estimated-fixed-effects."><i class="fa fa-check"></i><b>3.5.1</b> Interpreting estimated fixed effects.</a></li>
+<li class="chapter" data-level="3.5.2" data-path="introducing-the-multilevel-model-for-change.html"><a href="introducing-the-multilevel-model-for-change.html#single-parameter-tests-for-the-fixed-effects."><i class="fa fa-check"></i><b>3.5.2</b> Single parameter tests for the fixed effects.</a></li>
+</ul></li>
+<li class="chapter" data-level="3.6" data-path="introducing-the-multilevel-model-for-change.html"><a href="introducing-the-multilevel-model-for-change.html#examining-estimated-variance-components"><i class="fa fa-check"></i><b>3.6</b> Examining estimated variance components</a><ul>
+<li class="chapter" data-level="3.6.1" data-path="introducing-the-multilevel-model-for-change.html"><a href="introducing-the-multilevel-model-for-change.html#interpreting-the-estimated-variance-components."><i class="fa fa-check"></i><b>3.6.1</b> Interpreting the estimated variance components.</a></li>
+<li class="chapter" data-level="3.6.2" data-path="introducing-the-multilevel-model-for-change.html"><a href="introducing-the-multilevel-model-for-change.html#single-parameter-tests-for-the-variance-components."><i class="fa fa-check"></i><b>3.6.2</b> Single parameter tests for the variance components.</a></li>
+</ul></li>
+<li class="chapter" data-level="3.7" data-path="introducing-the-multilevel-model-for-change.html"><a href="introducing-the-multilevel-model-for-change.html#bonus-how-did-you-simulate-that-data"><i class="fa fa-check"></i><b>3.7</b> Bonus: How did you simulate that data?</a></li>
+<li class="chapter" data-level="" data-path="introducing-the-multilevel-model-for-change.html"><a href="introducing-the-multilevel-model-for-change.html#reference-2"><i class="fa fa-check"></i>Reference</a></li>
+<li class="chapter" data-level="" data-path="introducing-the-multilevel-model-for-change.html"><a href="introducing-the-multilevel-model-for-change.html#session-info-2"><i class="fa fa-check"></i>Session info</a></li>
+</ul></li>
+<li class="chapter" data-level="4" data-path="doing-data-analysis-with-the-multilevel-model-for-change.html"><a href="doing-data-analysis-with-the-multilevel-model-for-change.html"><i class="fa fa-check"></i><b>4</b> Doing Data Analysis with the Multilevel Model for Change</a><ul>
+<li class="chapter" data-level="4.1" data-path="doing-data-analysis-with-the-multilevel-model-for-change.html"><a href="doing-data-analysis-with-the-multilevel-model-for-change.html#example-changes-in-adolescent-alcohol-use"><i class="fa fa-check"></i><b>4.1</b> Example: Changes in adolescent alcohol use</a></li>
+<li class="chapter" data-level="4.2" data-path="doing-data-analysis-with-the-multilevel-model-for-change.html"><a href="doing-data-analysis-with-the-multilevel-model-for-change.html#the-composite-specification-of-the-multilevel-model-for-change"><i class="fa fa-check"></i><b>4.2</b> The composite specification of the multilevel model for change</a><ul>
+<li class="chapter" data-level="4.2.1" data-path="doing-data-analysis-with-the-multilevel-model-for-change.html"><a href="doing-data-analysis-with-the-multilevel-model-for-change.html#the-structural-component-of-the-composite-model."><i class="fa fa-check"></i><b>4.2.1</b> The structural component of the composite model.</a></li>
+<li class="chapter" data-level="4.2.2" data-path="doing-data-analysis-with-the-multilevel-model-for-change.html"><a href="doing-data-analysis-with-the-multilevel-model-for-change.html#the-stochastic-component-of-the-composite-model."><i class="fa fa-check"></i><b>4.2.2</b> The stochastic component of the composite model.</a></li>
+</ul></li>
+<li class="chapter" data-level="4.3" data-path="doing-data-analysis-with-the-multilevel-model-for-change.html"><a href="doing-data-analysis-with-the-multilevel-model-for-change.html#methods-of-estimation-revisited"><i class="fa fa-check"></i><b>4.3</b> Methods of estimation, revisited</a></li>
+<li class="chapter" data-level="4.4" data-path="doing-data-analysis-with-the-multilevel-model-for-change.html"><a href="doing-data-analysis-with-the-multilevel-model-for-change.html#first-steps-fitting-two-unconditional-multilevel-models-for-change"><i class="fa fa-check"></i><b>4.4</b> First steps: Fitting two unconditional multilevel models for change</a><ul>
+<li class="chapter" data-level="4.4.1" data-path="doing-data-analysis-with-the-multilevel-model-for-change.html"><a href="doing-data-analysis-with-the-multilevel-model-for-change.html#the-unconditional-means-model."><i class="fa fa-check"></i><b>4.4.1</b> The unconditional means model.</a></li>
+<li class="chapter" data-level="4.4.2" data-path="doing-data-analysis-with-the-multilevel-model-for-change.html"><a href="doing-data-analysis-with-the-multilevel-model-for-change.html#the-unconditional-growth-model."><i class="fa fa-check"></i><b>4.4.2</b> The unconditional growth model.</a></li>
+<li class="chapter" data-level="4.4.3" data-path="doing-data-analysis-with-the-multilevel-model-for-change.html"><a href="doing-data-analysis-with-the-multilevel-model-for-change.html#quantifying-the-proportion-of-outcome-variation-explained."><i class="fa fa-check"></i><b>4.4.3</b> Quantifying the proportion of outcome variation “explained.”</a></li>
+</ul></li>
+<li class="chapter" data-level="4.5" data-path="doing-data-analysis-with-the-multilevel-model-for-change.html"><a href="doing-data-analysis-with-the-multilevel-model-for-change.html#practical-data-analytic-strategies-for-model-building"><i class="fa fa-check"></i><b>4.5</b> Practical data analytic strategies for model building</a><ul>
+<li class="chapter" data-level="4.5.1" data-path="doing-data-analysis-with-the-multilevel-model-for-change.html"><a href="doing-data-analysis-with-the-multilevel-model-for-change.html#a-taxonomy-of-statistical-models."><i class="fa fa-check"></i><b>4.5.1</b> A taxonomy of statistical models.</a></li>
+<li class="chapter" data-level="4.5.2" data-path="doing-data-analysis-with-the-multilevel-model-for-change.html"><a href="doing-data-analysis-with-the-multilevel-model-for-change.html#interpreting-fitted-models."><i class="fa fa-check"></i><b>4.5.2</b> Interpreting fitted models.</a></li>
+<li class="chapter" data-level="4.5.3" data-path="doing-data-analysis-with-the-multilevel-model-for-change.html"><a href="doing-data-analysis-with-the-multilevel-model-for-change.html#displaying-prototypical-change-trajectories."><i class="fa fa-check"></i><b>4.5.3</b> Displaying prototypical change trajectories.</a></li>
+<li class="chapter" data-level="4.5.4" data-path="doing-data-analysis-with-the-multilevel-model-for-change.html"><a href="doing-data-analysis-with-the-multilevel-model-for-change.html#recentering-predictors-to-improve-interpretation."><i class="fa fa-check"></i><b>4.5.4</b> Recentering predictors to improve interpretation.</a></li>
+</ul></li>
+<li class="chapter" data-level="4.6" data-path="doing-data-analysis-with-the-multilevel-model-for-change.html"><a href="doing-data-analysis-with-the-multilevel-model-for-change.html#comparing-models-using-deviance-statistics"><i class="fa fa-check"></i><b>4.6</b> Comparing models using deviance statistics</a><ul>
+<li class="chapter" data-level="4.6.1" data-path="doing-data-analysis-with-the-multilevel-model-for-change.html"><a href="doing-data-analysis-with-the-multilevel-model-for-change.html#the-deviance-statistic."><i class="fa fa-check"></i><b>4.6.1</b> The deviance statistic.</a></li>
+<li class="chapter" data-level="4.6.2" data-path="doing-data-analysis-with-the-multilevel-model-for-change.html"><a href="doing-data-analysis-with-the-multilevel-model-for-change.html#when-and-how-can-you-compare-deviance-statistics"><i class="fa fa-check"></i><b>4.6.2</b> When and how can you compare deviance statistics?</a></li>
+<li class="chapter" data-level="4.6.3" data-path="doing-data-analysis-with-the-multilevel-model-for-change.html"><a href="doing-data-analysis-with-the-multilevel-model-for-change.html#implementing-deviance-based-hypothesis-tests."><i class="fa fa-check"></i><b>4.6.3</b> Implementing deviance-based hypothesis tests.</a></li>
+<li class="chapter" data-level="4.6.4" data-path="doing-data-analysis-with-the-multilevel-model-for-change.html"><a href="doing-data-analysis-with-the-multilevel-model-for-change.html#aic-and-bic-waic-and-loo-statistics-comparing-nonnested-models-using-information-criteria-and-cross-validation."><i class="fa fa-check"></i><b>4.6.4</b> <del>AIC and BIC</del> WAIC and LOO statistics: Comparing nonnested models using information criteria [and cross validation].</a></li>
+</ul></li>
+<li class="chapter" data-level="4.7" data-path="doing-data-analysis-with-the-multilevel-model-for-change.html"><a href="doing-data-analysis-with-the-multilevel-model-for-change.html#using-wald-statistics-to-test-composite-hypotheses-about-fixed-effects"><i class="fa fa-check"></i><b>4.7</b> Using Wald statistics to test composite hypotheses about fixed effects</a></li>
+<li class="chapter" data-level="4.8" data-path="doing-data-analysis-with-the-multilevel-model-for-change.html"><a href="doing-data-analysis-with-the-multilevel-model-for-change.html#evaluating-the-tenability-of-a-models-assumptions"><i class="fa fa-check"></i><b>4.8</b> Evaluating the tenability of a model’s assumptions</a><ul>
+<li class="chapter" data-level="4.8.1" data-path="doing-data-analysis-with-the-multilevel-model-for-change.html"><a href="doing-data-analysis-with-the-multilevel-model-for-change.html#checking-functional-form."><i class="fa fa-check"></i><b>4.8.1</b> Checking functional form.</a></li>
+<li class="chapter" data-level="4.8.2" data-path="doing-data-analysis-with-the-multilevel-model-for-change.html"><a href="doing-data-analysis-with-the-multilevel-model-for-change.html#checking-normality."><i class="fa fa-check"></i><b>4.8.2</b> Checking normality.</a></li>
+<li class="chapter" data-level="4.8.3" data-path="doing-data-analysis-with-the-multilevel-model-for-change.html"><a href="doing-data-analysis-with-the-multilevel-model-for-change.html#checking-homoscedasticity."><i class="fa fa-check"></i><b>4.8.3</b> Checking homoscedasticity.</a></li>
+</ul></li>
+<li class="chapter" data-level="4.9" data-path="doing-data-analysis-with-the-multilevel-model-for-change.html"><a href="doing-data-analysis-with-the-multilevel-model-for-change.html#model-based-empirical-bayes-estimates-of-the-individual-growth-parameters"><i class="fa fa-check"></i><b>4.9</b> Model-based (Empirical Bayes) estimates of the individual growth parameters</a></li>
+<li class="chapter" data-level="" data-path="doing-data-analysis-with-the-multilevel-model-for-change.html"><a href="doing-data-analysis-with-the-multilevel-model-for-change.html#reference-3"><i class="fa fa-check"></i>Reference</a></li>
+<li class="chapter" data-level="" data-path="doing-data-analysis-with-the-multilevel-model-for-change.html"><a href="doing-data-analysis-with-the-multilevel-model-for-change.html#session-info-3"><i class="fa fa-check"></i>Session info</a></li>
+</ul></li>
+<li class="chapter" data-level="5" data-path="treating-time-more-flexibly.html"><a href="treating-time-more-flexibly.html"><i class="fa fa-check"></i><b>5</b> Treating Time More Flexibly</a><ul>
+<li class="chapter" data-level="5.1" data-path="treating-time-more-flexibly.html"><a href="treating-time-more-flexibly.html#variably-spaced-measurement-occasions"><i class="fa fa-check"></i><b>5.1</b> Variably spaced measurement occasions</a><ul>
+<li class="chapter" data-level="5.1.1" data-path="treating-time-more-flexibly.html"><a href="treating-time-more-flexibly.html#the-structure-of-variably-spaced-data-sets."><i class="fa fa-check"></i><b>5.1.1</b> The structure of variably spaced data sets.</a></li>
+<li class="chapter" data-level="5.1.2" data-path="treating-time-more-flexibly.html"><a href="treating-time-more-flexibly.html#postulating-and-fitting-multilevel-models-with-variably-spaced-waves-of-data."><i class="fa fa-check"></i><b>5.1.2</b> Postulating and fitting multilevel models with variably spaced waves of data.</a></li>
+</ul></li>
+<li class="chapter" data-level="5.2" data-path="treating-time-more-flexibly.html"><a href="treating-time-more-flexibly.html#varying-numbers-of-measurement-occasions"><i class="fa fa-check"></i><b>5.2</b> Varying numbers of measurement occasions</a><ul>
+<li class="chapter" data-level="5.2.1" data-path="treating-time-more-flexibly.html"><a href="treating-time-more-flexibly.html#analyzing-data-sets-in-which-the-number-of-waves-per-person-varies."><i class="fa fa-check"></i><b>5.2.1</b> Analyzing data sets in which the number of waves per person varies.</a></li>
+<li class="chapter" data-level="5.2.2" data-path="treating-time-more-flexibly.html"><a href="treating-time-more-flexibly.html#practical-problems-that-may-arise-when-analyzing-unbalanced-data-sets."><i class="fa fa-check"></i><b>5.2.2</b> Practical problems that may arise when analyzing unbalanced data sets.</a></li>
+<li class="chapter" data-level="5.2.3" data-path="treating-time-more-flexibly.html"><a href="treating-time-more-flexibly.html#distinguishing-among-different-types-of-missingness."><i class="fa fa-check"></i><b>5.2.3</b> Distinguishing among different types of missingness.</a></li>
+</ul></li>
+<li class="chapter" data-level="5.3" data-path="treating-time-more-flexibly.html"><a href="treating-time-more-flexibly.html#time-varying-predictors"><i class="fa fa-check"></i><b>5.3</b> Time-varying predictors</a><ul>
+<li class="chapter" data-level="5.3.1" data-path="treating-time-more-flexibly.html"><a href="treating-time-more-flexibly.html#including-the-main-effect-of-a-time-varying-predictor."><i class="fa fa-check"></i><b>5.3.1</b> Including the main effect of a time-varying predictor.</a></li>
+<li class="chapter" data-level="5.3.2" data-path="treating-time-more-flexibly.html"><a href="treating-time-more-flexibly.html#allowing-the-effect-of-a-time-varying-predictor-to-vary-over-time."><i class="fa fa-check"></i><b>5.3.2</b> Allowing the effect of a time-varying predictor to vary over time.</a></li>
+<li class="chapter" data-level="5.3.3" data-path="treating-time-more-flexibly.html"><a href="treating-time-more-flexibly.html#recentering-time-varying-predictors."><i class="fa fa-check"></i><b>5.3.3</b> Recentering time-varying predictors.</a></li>
+<li class="chapter" data-level="5.3.4" data-path="treating-time-more-flexibly.html"><a href="treating-time-more-flexibly.html#an-important-caveat-the-problem-of-reciprocal-causation."><i class="fa fa-check"></i><b>5.3.4</b> An important caveat: The problem of reciprocal causation.</a></li>
+</ul></li>
+<li class="chapter" data-level="5.4" data-path="treating-time-more-flexibly.html"><a href="treating-time-more-flexibly.html#recentering-the-effect-of-time"><i class="fa fa-check"></i><b>5.4</b> Recentering the effect of <em>TIME</em></a></li>
+<li class="chapter" data-level="" data-path="treating-time-more-flexibly.html"><a href="treating-time-more-flexibly.html#reference-4"><i class="fa fa-check"></i>Reference</a></li>
+<li class="chapter" data-level="" data-path="treating-time-more-flexibly.html"><a href="treating-time-more-flexibly.html#session-info-4"><i class="fa fa-check"></i>Session info</a></li>
+</ul></li>
+<li class="chapter" data-level="6" data-path="modeling-discontinuous-and-nonlinear-change.html"><a href="modeling-discontinuous-and-nonlinear-change.html"><i class="fa fa-check"></i><b>6</b> Modeling Discontinuous and Nonlinear Change</a><ul>
+<li class="chapter" data-level="" data-path="modeling-discontinuous-and-nonlinear-change.html"><a href="modeling-discontinuous-and-nonlinear-change.html#reference-5"><i class="fa fa-check"></i>Reference</a></li>
+<li class="chapter" data-level="" data-path="modeling-discontinuous-and-nonlinear-change.html"><a href="modeling-discontinuous-and-nonlinear-change.html#session-info-5"><i class="fa fa-check"></i>Session info</a></li>
+</ul></li>
+<li class="chapter" data-level="7" data-path="examining-the-multilevel-models-error-covariance-structure.html"><a href="examining-the-multilevel-models-error-covariance-structure.html"><i class="fa fa-check"></i><b>7</b> Examining the Multilevel Model’s Error Covariance Structure</a><ul>
+<li class="chapter" data-level="" data-path="examining-the-multilevel-models-error-covariance-structure.html"><a href="examining-the-multilevel-models-error-covariance-structure.html#reference-6"><i class="fa fa-check"></i>Reference</a></li>
+<li class="chapter" data-level="" data-path="examining-the-multilevel-models-error-covariance-structure.html"><a href="examining-the-multilevel-models-error-covariance-structure.html#session-info-6"><i class="fa fa-check"></i>Session info</a></li>
+</ul></li>
+<li class="chapter" data-level="8" data-path="modeling-change-using-covariance-structure-analysis.html"><a href="modeling-change-using-covariance-structure-analysis.html"><i class="fa fa-check"></i><b>8</b> Modeling Change Using Covariance Structure Analysis</a><ul>
+<li class="chapter" data-level="" data-path="modeling-change-using-covariance-structure-analysis.html"><a href="modeling-change-using-covariance-structure-analysis.html#reference-7"><i class="fa fa-check"></i>Reference</a></li>
+<li class="chapter" data-level="" data-path="modeling-change-using-covariance-structure-analysis.html"><a href="modeling-change-using-covariance-structure-analysis.html#session-info-7"><i class="fa fa-check"></i>Session info</a></li>
+</ul></li>
+<li class="chapter" data-level="9" data-path="a-framework-for-investigating-event-occurrence.html"><a href="a-framework-for-investigating-event-occurrence.html"><i class="fa fa-check"></i><b>9</b> A Framework for Investigating Event Occurrence</a><ul>
+<li class="chapter" data-level="9.1" data-path="a-framework-for-investigating-event-occurrence.html"><a href="a-framework-for-investigating-event-occurrence.html#should-you-conduct-a-survival-analysis-the-whether-and-when-test"><i class="fa fa-check"></i><b>9.1</b> Should you conduct a survival analysis? The “whether” and “when” test</a><ul>
+<li class="chapter" data-level="9.1.1" data-path="a-framework-for-investigating-event-occurrence.html"><a href="a-framework-for-investigating-event-occurrence.html#time-to-relapse-among-recently-treated-alcoholics."><i class="fa fa-check"></i><b>9.1.1</b> Time to relapse among recently treated alcoholics.</a></li>
+<li class="chapter" data-level="9.1.2" data-path="a-framework-for-investigating-event-occurrence.html"><a href="a-framework-for-investigating-event-occurrence.html#length-of-stay-in-teaching."><i class="fa fa-check"></i><b>9.1.2</b> Length of stay in teaching.</a></li>
+<li class="chapter" data-level="9.1.3" data-path="a-framework-for-investigating-event-occurrence.html"><a href="a-framework-for-investigating-event-occurrence.html#age-at-first-suicide-ideation."><i class="fa fa-check"></i><b>9.1.3</b> Age at first suicide ideation.</a></li>
+</ul></li>
+<li class="chapter" data-level="9.2" data-path="a-framework-for-investigating-event-occurrence.html"><a href="a-framework-for-investigating-event-occurrence.html#framing-a-research-question-about-event-occurrence"><i class="fa fa-check"></i><b>9.2</b> Framing a research question about event occurrence</a><ul>
+<li class="chapter" data-level="9.2.1" data-path="a-framework-for-investigating-event-occurrence.html"><a href="a-framework-for-investigating-event-occurrence.html#defining-event-occurrence."><i class="fa fa-check"></i><b>9.2.1</b> Defining event occurrence.</a></li>
+<li class="chapter" data-level="9.2.2" data-path="a-framework-for-investigating-event-occurrence.html"><a href="a-framework-for-investigating-event-occurrence.html#identifying-the-beginning-of-time."><i class="fa fa-check"></i><b>9.2.2</b> Identifying the “beginning of time.”</a></li>
+<li class="chapter" data-level="9.2.3" data-path="a-framework-for-investigating-event-occurrence.html"><a href="a-framework-for-investigating-event-occurrence.html#specifying-a-metric-for-time."><i class="fa fa-check"></i><b>9.2.3</b> Specifying a metric for time.</a></li>
+</ul></li>
+<li class="chapter" data-level="9.3" data-path="a-framework-for-investigating-event-occurrence.html"><a href="a-framework-for-investigating-event-occurrence.html#censoring-how-complete-are-the-data-on-event-occurrence"><i class="fa fa-check"></i><b>9.3</b> Censoring: How complete are the data on event occurrence?</a><ul>
+<li class="chapter" data-level="9.3.1" data-path="a-framework-for-investigating-event-occurrence.html"><a href="a-framework-for-investigating-event-occurrence.html#how-and-why-does-censoring-arise"><i class="fa fa-check"></i><b>9.3.1</b> How and why does censoring arise?</a></li>
+<li class="chapter" data-level="9.3.2" data-path="a-framework-for-investigating-event-occurrence.html"><a href="a-framework-for-investigating-event-occurrence.html#different-types-of-censoring."><i class="fa fa-check"></i><b>9.3.2</b> Different types of censoring.</a></li>
+<li class="chapter" data-level="9.3.3" data-path="a-framework-for-investigating-event-occurrence.html"><a href="a-framework-for-investigating-event-occurrence.html#how-does-censoring-affect-statistical-analysis"><i class="fa fa-check"></i><b>9.3.3</b> How does censoring affect statistical analysis?</a></li>
+</ul></li>
+<li class="chapter" data-level="" data-path="a-framework-for-investigating-event-occurrence.html"><a href="a-framework-for-investigating-event-occurrence.html#reference-8"><i class="fa fa-check"></i>Reference</a></li>
+<li class="chapter" data-level="" data-path="a-framework-for-investigating-event-occurrence.html"><a href="a-framework-for-investigating-event-occurrence.html#session-info-8"><i class="fa fa-check"></i>Session info</a></li>
+</ul></li>
+<li class="chapter" data-level="10" data-path="describing-discrete-time-event-occurrence-data.html"><a href="describing-discrete-time-event-occurrence-data.html"><i class="fa fa-check"></i><b>10</b> Describing Discrete-Time Event Occurrence Data</a><ul>
+<li class="chapter" data-level="10.1" data-path="describing-discrete-time-event-occurrence-data.html"><a href="describing-discrete-time-event-occurrence-data.html#the-life-table"><i class="fa fa-check"></i><b>10.1</b> The life table</a></li>
+<li class="chapter" data-level="10.2" data-path="describing-discrete-time-event-occurrence-data.html"><a href="describing-discrete-time-event-occurrence-data.html#a-framework-for-characterizing-the-distribution-of-discrete-time-event-occurrence-data"><i class="fa fa-check"></i><b>10.2</b> A framework for characterizing the distribution of discrete-time event occurrence data</a><ul>
+<li class="chapter" data-level="10.2.1" data-path="describing-discrete-time-event-occurrence-data.html"><a href="describing-discrete-time-event-occurrence-data.html#survivor-function."><i class="fa fa-check"></i><b>10.2.1</b> Survivor function.</a></li>
+<li class="chapter" data-level="10.2.2" data-path="describing-discrete-time-event-occurrence-data.html"><a href="describing-discrete-time-event-occurrence-data.html#median-lifetime."><i class="fa fa-check"></i><b>10.2.2</b> Median lifetime.</a></li>
+</ul></li>
+<li class="chapter" data-level="10.3" data-path="describing-discrete-time-event-occurrence-data.html"><a href="describing-discrete-time-event-occurrence-data.html#developing-intuition-about-hazard-functions-survivor-functions-and-median-lifetimes"><i class="fa fa-check"></i><b>10.3</b> Developing intuition about hazard functions, survivor functions, and median lifetimes</a><ul>
+<li class="chapter" data-level="10.3.1" data-path="describing-discrete-time-event-occurrence-data.html"><a href="describing-discrete-time-event-occurrence-data.html#identifying-periods-of-high-and-low-risk-using-hazard-functions."><i class="fa fa-check"></i><b>10.3.1</b> Identifying periods of high and low risk using hazard functions.</a></li>
+<li class="chapter" data-level="10.3.2" data-path="describing-discrete-time-event-occurrence-data.html"><a href="describing-discrete-time-event-occurrence-data.html#survivor-functions-as-a-context-for-evaluating-the-magnitude-of-hazard."><i class="fa fa-check"></i><b>10.3.2</b> Survivor functions as a context for evaluating the magnitude of hazard.</a></li>
+<li class="chapter" data-level="10.3.3" data-path="describing-discrete-time-event-occurrence-data.html"><a href="describing-discrete-time-event-occurrence-data.html#strengths-and-limitations-of-estimated-median-lifetimes."><i class="fa fa-check"></i><b>10.3.3</b> Strengths and limitations of estimated median lifetimes.</a></li>
+</ul></li>
+<li class="chapter" data-level="10.4" data-path="describing-discrete-time-event-occurrence-data.html"><a href="describing-discrete-time-event-occurrence-data.html#quantifying-the-effects-of-sampling-variation"><i class="fa fa-check"></i><b>10.4</b> Quantifying the effects of sampling variation</a><ul>
+<li class="chapter" data-level="10.4.1" data-path="describing-discrete-time-event-occurrence-data.html"><a href="describing-discrete-time-event-occurrence-data.html#the-standard-error-of-the-estimated-hazard-probabilities."><i class="fa fa-check"></i><b>10.4.1</b> The standard error of the estimated hazard probabilities.</a></li>
+<li class="chapter" data-level="10.4.2" data-path="describing-discrete-time-event-occurrence-data.html"><a href="describing-discrete-time-event-occurrence-data.html#standard-error-of-the-estimated-survival-probabilities."><i class="fa fa-check"></i><b>10.4.2</b> Standard error of the estimated survival probabilities.</a></li>
+</ul></li>
+<li class="chapter" data-level="10.5" data-path="describing-discrete-time-event-occurrence-data.html"><a href="describing-discrete-time-event-occurrence-data.html#a-simple-and-useful-strategy-for-constructing-the-life-table"><i class="fa fa-check"></i><b>10.5</b> A simple and useful strategy for constructing the life table</a><ul>
+<li class="chapter" data-level="10.5.1" data-path="describing-discrete-time-event-occurrence-data.html"><a href="describing-discrete-time-event-occurrence-data.html#the-person-period-data-set.-1"><i class="fa fa-check"></i><b>10.5.1</b> The person-period data set.</a></li>
+<li class="chapter" data-level="10.5.2" data-path="describing-discrete-time-event-occurrence-data.html"><a href="describing-discrete-time-event-occurrence-data.html#using-the-person-period-data-set-to-construct-the-life-table."><i class="fa fa-check"></i><b>10.5.2</b> Using the person-period data set to construct the life table.</a></li>
+</ul></li>
+<li class="chapter" data-level="10.6" data-path="describing-discrete-time-event-occurrence-data.html"><a href="describing-discrete-time-event-occurrence-data.html#bonus-fit-the-discrete-time-hazard-models-with-brms"><i class="fa fa-check"></i><b>10.6</b> Bonus: Fit the discrete-time hazard models with brms</a></li>
+<li class="chapter" data-level="" data-path="describing-discrete-time-event-occurrence-data.html"><a href="describing-discrete-time-event-occurrence-data.html#reference-9"><i class="fa fa-check"></i>Reference</a></li>
+<li class="chapter" data-level="" data-path="describing-discrete-time-event-occurrence-data.html"><a href="describing-discrete-time-event-occurrence-data.html#session-info-9"><i class="fa fa-check"></i>Session info</a></li>
+</ul></li>
+<li class="chapter" data-level="11" data-path="fitting-basic-discrete-time-hazard-models.html"><a href="fitting-basic-discrete-time-hazard-models.html"><i class="fa fa-check"></i><b>11</b> Fitting Basic Discrete-Time Hazard Models</a><ul>
+<li class="chapter" data-level="11.1" data-path="fitting-basic-discrete-time-hazard-models.html"><a href="fitting-basic-discrete-time-hazard-models.html#toward-a-statistical-model-for-discrete-time-hazard"><i class="fa fa-check"></i><b>11.1</b> Toward a statistical model for discrete-time hazard</a><ul>
+<li class="chapter" data-level="11.1.1" data-path="fitting-basic-discrete-time-hazard-models.html"><a href="fitting-basic-discrete-time-hazard-models.html#plots-of-within-group-hazard-functions-and-survivor-functions."><i class="fa fa-check"></i><b>11.1.1</b> Plots of within-group hazard functions and survivor functions.</a></li>
+<li class="chapter" data-level="11.1.2" data-path="fitting-basic-discrete-time-hazard-models.html"><a href="fitting-basic-discrete-time-hazard-models.html#what-kind-of-statistical-model-do-these-graphs-suggest"><i class="fa fa-check"></i><b>11.1.2</b> What kind of statistical model do these graphs suggest?</a></li>
+</ul></li>
+<li class="chapter" data-level="11.2" data-path="fitting-basic-discrete-time-hazard-models.html"><a href="fitting-basic-discrete-time-hazard-models.html#formal-representation-of-the-population-discrete-time-hazard-model"><i class="fa fa-check"></i><b>11.2</b> formal representation of the population discrete-time hazard model</a><ul>
+<li class="chapter" data-level="11.2.1" data-path="fitting-basic-discrete-time-hazard-models.html"><a href="fitting-basic-discrete-time-hazard-models.html#what-do-the-parameters-represent"><i class="fa fa-check"></i><b>11.2.1</b> What do the parameters represent?</a></li>
+<li class="chapter" data-level="11.2.2" data-path="fitting-basic-discrete-time-hazard-models.html"><a href="fitting-basic-discrete-time-hazard-models.html#an-alternative-representation-of-the-model."><i class="fa fa-check"></i><b>11.2.2</b> An alternative representation of the model.</a></li>
+</ul></li>
+<li class="chapter" data-level="11.3" data-path="fitting-basic-discrete-time-hazard-models.html"><a href="fitting-basic-discrete-time-hazard-models.html#fitting-a-discrete-time-hazard-model-to-data"><i class="fa fa-check"></i><b>11.3</b> Fitting a discrete-time hazard model to data</a><ul>
+<li class="chapter" data-level="11.3.1" data-path="fitting-basic-discrete-time-hazard-models.html"><a href="fitting-basic-discrete-time-hazard-models.html#adding-predictors-to-the-person-period-data-set."><i class="fa fa-check"></i><b>11.3.1</b> Adding predictors to the person-period data set.</a></li>
+<li class="chapter" data-level="11.3.2" data-path="fitting-basic-discrete-time-hazard-models.html"><a href="fitting-basic-discrete-time-hazard-models.html#maximum-likelihood-estimates-and-bayesian-posteriors-for-the-discrete-time-hazard-model."><i class="fa fa-check"></i><b>11.3.2</b> Maximum likelihood estimates [and Bayesian posteriors] for the discrete-time hazard model.</a></li>
+<li class="chapter" data-level="11.3.3" data-path="fitting-basic-discrete-time-hazard-models.html"><a href="fitting-basic-discrete-time-hazard-models.html#fitting-the-discrete-time-hazard-model-to-data."><i class="fa fa-check"></i><b>11.3.3</b> Fitting the discrete-time hazard model to data.</a></li>
+</ul></li>
+<li class="chapter" data-level="11.4" data-path="fitting-basic-discrete-time-hazard-models.html"><a href="fitting-basic-discrete-time-hazard-models.html#interpreting-parameter-estimates"><i class="fa fa-check"></i><b>11.4</b> Interpreting parameter estimates</a><ul>
+<li class="chapter" data-level="11.4.1" data-path="fitting-basic-discrete-time-hazard-models.html"><a href="fitting-basic-discrete-time-hazard-models.html#the-time-indicators."><i class="fa fa-check"></i><b>11.4.1</b> The time indicators.</a></li>
+<li class="chapter" data-level="11.4.2" data-path="fitting-basic-discrete-time-hazard-models.html"><a href="fitting-basic-discrete-time-hazard-models.html#dichotomous-substantive-predictors."><i class="fa fa-check"></i><b>11.4.2</b> Dichotomous substantive predictors.</a></li>
+<li class="chapter" data-level="11.4.3" data-path="fitting-basic-discrete-time-hazard-models.html"><a href="fitting-basic-discrete-time-hazard-models.html#continuous-substantive-predictors."><i class="fa fa-check"></i><b>11.4.3</b> Continuous substantive predictors.</a></li>
+<li class="chapter" data-level="11.4.4" data-path="fitting-basic-discrete-time-hazard-models.html"><a href="fitting-basic-discrete-time-hazard-models.html#polytomous-substantive-predictors."><i class="fa fa-check"></i><b>11.4.4</b> Polytomous substantive predictors.</a></li>
+</ul></li>
+<li class="chapter" data-level="11.5" data-path="fitting-basic-discrete-time-hazard-models.html"><a href="fitting-basic-discrete-time-hazard-models.html#displaying-fitted-hazard-and-survivor-functions"><i class="fa fa-check"></i><b>11.5</b> Displaying fitted hazard and survivor functions</a><ul>
+<li class="chapter" data-level="11.5.1" data-path="fitting-basic-discrete-time-hazard-models.html"><a href="fitting-basic-discrete-time-hazard-models.html#a-strategy-for-a-single-categorical-substantive-predictor."><i class="fa fa-check"></i><b>11.5.1</b> A strategy for a single categorical substantive predictor.</a></li>
+<li class="chapter" data-level="11.5.2" data-path="fitting-basic-discrete-time-hazard-models.html"><a href="fitting-basic-discrete-time-hazard-models.html#extending-this-strategy-to-multiple-predictors-some-of-which-are-continuous."><i class="fa fa-check"></i><b>11.5.2</b> Extending this strategy to multiple predictors (some of which are continuous).</a></li>
+<li class="chapter" data-level="11.5.3" data-path="fitting-basic-discrete-time-hazard-models.html"><a href="fitting-basic-discrete-time-hazard-models.html#two-cautions-when-interpreting-fitted-hazard-and-survivor-functions."><i class="fa fa-check"></i><b>11.5.3</b> Two cautions when interpreting fitted hazard and survivor functions.</a></li>
+</ul></li>
+<li class="chapter" data-level="11.6" data-path="fitting-basic-discrete-time-hazard-models.html"><a href="fitting-basic-discrete-time-hazard-models.html#comparing-models-using-deviance-statistics-and-information-criteria"><i class="fa fa-check"></i><b>11.6</b> Comparing models using <del>deviance statistics and</del> information criteria</a><ul>
+<li class="chapter" data-level="11.6.1" data-path="fitting-basic-discrete-time-hazard-models.html"><a href="fitting-basic-discrete-time-hazard-models.html#the-deviance-statistic.-1"><i class="fa fa-check"></i><b>11.6.1</b> The deviance statistic.</a></li>
+<li class="chapter" data-level="11.6.2" data-path="fitting-basic-discrete-time-hazard-models.html"><a href="fitting-basic-discrete-time-hazard-models.html#deviance-based-hypothesis-tests-for-individual-predictors."><i class="fa fa-check"></i><b>11.6.2</b> Deviance-based hypothesis tests for individual predictors.</a></li>
+<li class="chapter" data-level="11.6.3" data-path="fitting-basic-discrete-time-hazard-models.html"><a href="fitting-basic-discrete-time-hazard-models.html#deviance-based-hypothesis-tests-for-groups-of-predictors."><i class="fa fa-check"></i><b>11.6.3</b> Deviance-based hypothesis tests for groups of predictors.</a></li>
+<li class="chapter" data-level="11.6.4" data-path="fitting-basic-discrete-time-hazard-models.html"><a href="fitting-basic-discrete-time-hazard-models.html#comparing-nonnested-models-using-waic-and-loo."><i class="fa fa-check"></i><b>11.6.4</b> Comparing nonnested models using [WAIC and LOO].</a></li>
+</ul></li>
+<li class="chapter" data-level="11.7" data-path="fitting-basic-discrete-time-hazard-models.html"><a href="fitting-basic-discrete-time-hazard-models.html#statistical-inference-using-uncertainty-in-the-bayesian-posterior"><i class="fa fa-check"></i><b>11.7</b> Statistical inference using [uncertainty in the Bayesian posterior]</a><ul>
+<li class="chapter" data-level="11.7.1" data-path="fitting-basic-discrete-time-hazard-models.html"><a href="fitting-basic-discrete-time-hazard-models.html#the-wald-chi-square-statistic."><i class="fa fa-check"></i><b>11.7.1</b> The <del>Wald chi-square statistic</del>.</a></li>
+<li class="chapter" data-level="11.7.2" data-path="fitting-basic-discrete-time-hazard-models.html"><a href="fitting-basic-discrete-time-hazard-models.html#asymmetric-credible-intervals-for-parameters-and-odds-ratios."><i class="fa fa-check"></i><b>11.7.2</b> [Asymmetric credible intervals] for parameters and odds ratios.</a></li>
+</ul></li>
+<li class="chapter" data-level="" data-path="fitting-basic-discrete-time-hazard-models.html"><a href="fitting-basic-discrete-time-hazard-models.html#reference-10"><i class="fa fa-check"></i>Reference</a></li>
+<li class="chapter" data-level="" data-path="fitting-basic-discrete-time-hazard-models.html"><a href="fitting-basic-discrete-time-hazard-models.html#session-info-10"><i class="fa fa-check"></i>Session info</a></li>
+<li class="chapter" data-level="" data-path="fitting-basic-discrete-time-hazard-models.html"><a href="fitting-basic-discrete-time-hazard-models.html#footnote"><i class="fa fa-check"></i>Footnote</a></li>
+</ul></li>
+<li class="chapter" data-level="12" data-path="extending-the-discrete-time-hazard-model.html"><a href="extending-the-discrete-time-hazard-model.html"><i class="fa fa-check"></i><b>12</b> Extending the Discrete-Time Hazard Model</a><ul>
+<li class="chapter" data-level="12.1" data-path="extending-the-discrete-time-hazard-model.html"><a href="extending-the-discrete-time-hazard-model.html#alternative-specification-for-the-main-effect-of-time"><i class="fa fa-check"></i><b>12.1</b> Alternative specification for the “main effect” of <em>TIME</em></a><ul>
+<li class="chapter" data-level="12.1.1" data-path="extending-the-discrete-time-hazard-model.html"><a href="extending-the-discrete-time-hazard-model.html#an-ordered-series-of-polynomial-specifications-for-time."><i class="fa fa-check"></i><b>12.1.1</b> An ordered series of polynomial specifications for <em>TIME</em>.</a></li>
+<li class="chapter" data-level="12.1.2" data-path="extending-the-discrete-time-hazard-model.html"><a href="extending-the-discrete-time-hazard-model.html#criteria-for-comparing-alternative-specification."><i class="fa fa-check"></i><b>12.1.2</b> Criteria for comparing alternative specification.</a></li>
+<li class="chapter" data-level="12.1.3" data-path="extending-the-discrete-time-hazard-model.html"><a href="extending-the-discrete-time-hazard-model.html#interpreting-parameters-from-linear-quadratic-and-cubic-specifications."><i class="fa fa-check"></i><b>12.1.3</b> Interpreting parameters from linear, quadratic, and cubic specifications.</a></li>
+</ul></li>
+<li class="chapter" data-level="12.2" data-path="extending-the-discrete-time-hazard-model.html"><a href="extending-the-discrete-time-hazard-model.html#using-the-complementary-log-log-link-to-specify-a-discrete-time-hazard-model"><i class="fa fa-check"></i><b>12.2</b> Using the complementary log-log link to specify a discrete-time hazard model</a><ul>
+<li class="chapter" data-level="12.2.1" data-path="extending-the-discrete-time-hazard-model.html"><a href="extending-the-discrete-time-hazard-model.html#the-clog-log-transformation-when-and-why-it-is-useful."><i class="fa fa-check"></i><b>12.2.1</b> The clog-log transformation: When and why it is useful.</a></li>
+<li class="chapter" data-level="12.2.2" data-path="extending-the-discrete-time-hazard-model.html"><a href="extending-the-discrete-time-hazard-model.html#a-discrete-time-hazard-model-using-the-complementary-log-log-link."><i class="fa fa-check"></i><b>12.2.2</b> A discrete-time hazard model using the complementary log-log link.</a></li>
+<li class="chapter" data-level="12.2.3" data-path="extending-the-discrete-time-hazard-model.html"><a href="extending-the-discrete-time-hazard-model.html#choosing-between-logit-and-clog-log-links-for-discrete-time-hazard-models."><i class="fa fa-check"></i><b>12.2.3</b> Choosing between logit and clog-log links for discrete-time hazard models.</a></li>
+</ul></li>
+<li class="chapter" data-level="12.3" data-path="extending-the-discrete-time-hazard-model.html"><a href="extending-the-discrete-time-hazard-model.html#time-varying-predictors-1"><i class="fa fa-check"></i><b>12.3</b> Time-varying predictors</a><ul>
+<li class="chapter" data-level="12.3.1" data-path="extending-the-discrete-time-hazard-model.html"><a href="extending-the-discrete-time-hazard-model.html#assumptions-underlying-a-model-with-time-varying-predictors."><i class="fa fa-check"></i><b>12.3.1</b> Assumptions underlying a model with time-varying predictors.</a></li>
+<li class="chapter" data-level="12.3.2" data-path="extending-the-discrete-time-hazard-model.html"><a href="extending-the-discrete-time-hazard-model.html#interpreting-and-displaying-time-varying-predictors-effects."><i class="fa fa-check"></i><b>12.3.2</b> Interpreting and displaying time-varying predictors’ effects.</a></li>
+<li class="chapter" data-level="12.3.3" data-path="extending-the-discrete-time-hazard-model.html"><a href="extending-the-discrete-time-hazard-model.html#two-caveats-the-problems-of-state-and-rate-dependence."><i class="fa fa-check"></i><b>12.3.3</b> Two caveats: The problems of state and rate dependence.</a></li>
+</ul></li>
+<li class="chapter" data-level="12.4" data-path="extending-the-discrete-time-hazard-model.html"><a href="extending-the-discrete-time-hazard-model.html#the-linear-additivity-assumption-uncovering-violations-and-simple-solutions"><i class="fa fa-check"></i><b>12.4</b> The linear additivity assumption: Uncovering violations and simple solutions</a><ul>
+<li class="chapter" data-level="12.4.1" data-path="extending-the-discrete-time-hazard-model.html"><a href="extending-the-discrete-time-hazard-model.html#interactions-between-substantive-predictors."><i class="fa fa-check"></i><b>12.4.1</b> Interactions between substantive predictors.</a></li>
+<li class="chapter" data-level="12.4.2" data-path="extending-the-discrete-time-hazard-model.html"><a href="extending-the-discrete-time-hazard-model.html#nonlinear-effects."><i class="fa fa-check"></i><b>12.4.2</b> Nonlinear effects.</a></li>
+</ul></li>
+<li class="chapter" data-level="12.5" data-path="extending-the-discrete-time-hazard-model.html"><a href="extending-the-discrete-time-hazard-model.html#the-proportionality-assumption-uncovering-violations-and-simple-solutions"><i class="fa fa-check"></i><b>12.5</b> The proportionality assumption: Uncovering violations and simple solutions</a><ul>
+<li class="chapter" data-level="12.5.1" data-path="extending-the-discrete-time-hazard-model.html"><a href="extending-the-discrete-time-hazard-model.html#discrete-time-hazard-models-that-do-not-invoke-a-proportionality-assumption."><i class="fa fa-check"></i><b>12.5.1</b> Discrete-time hazard models that do not invoke a proportionality assumption.</a></li>
+<li class="chapter" data-level="12.5.2" data-path="extending-the-discrete-time-hazard-model.html"><a href="extending-the-discrete-time-hazard-model.html#investigating-the-proportionality-assumption-in-practice."><i class="fa fa-check"></i><b>12.5.2</b> Investigating the proportionality assumption in practice.</a></li>
+</ul></li>
+<li class="chapter" data-level="12.6" data-path="extending-the-discrete-time-hazard-model.html"><a href="extending-the-discrete-time-hazard-model.html#the-no-unobserved-heterogeneity-assumption-no-simple-solution"><i class="fa fa-check"></i><b>12.6</b> The no unobserved heterogeneity assumption: No simple solution</a></li>
+<li class="chapter" data-level="12.7" data-path="extending-the-discrete-time-hazard-model.html"><a href="extending-the-discrete-time-hazard-model.html#residual-analysis"><i class="fa fa-check"></i><b>12.7</b> Residual analysis</a></li>
+<li class="chapter" data-level="" data-path="extending-the-discrete-time-hazard-model.html"><a href="extending-the-discrete-time-hazard-model.html#reference-11"><i class="fa fa-check"></i>Reference</a></li>
+<li class="chapter" data-level="" data-path="extending-the-discrete-time-hazard-model.html"><a href="extending-the-discrete-time-hazard-model.html#session-info-11"><i class="fa fa-check"></i>Session info</a></li>
+<li class="chapter" data-level="" data-path="extending-the-discrete-time-hazard-model.html"><a href="extending-the-discrete-time-hazard-model.html#footnote-1"><i class="fa fa-check"></i>Footnote</a></li>
+</ul></li>
+</ul>
+
+      </nav>
+    </div>
+
+    <div class="book-body">
+      <div class="body-inner">
+        <div class="book-header" role="navigation">
+          <h1>
+            <i class="fa fa-circle-o-notch fa-spin"></i><a href="./"><em>Applied Longitudinal Data Analysis</em> in brms and the tidyverse</a>
+          </h1>
+        </div>
+
+        <div class="page-wrapper" tabindex="-1" role="main">
+          <div class="page-inner">
+
+            <section class="normal" id="section-">
+<div id="exploring-longitudinal-data-on-change" class="section level1">
+<h1><span class="header-section-number">2</span> Exploring Longitudinal Data on Change</h1>
+<blockquote>
+<p>Wise researchers conduct descriptive exploratory analyses of their data before fitting statistical models. As when working with cross-sectional data, exploratory analyses of longitudinal data con reveal general patterns, provide insight into functional form, and identify individuals whose data do not conform to the general pattern. The exploratory analyses presented in this chapter are based on numerical and graphical strategies already familiar from cross-sectional work. Owing to the nature of longitudinal data, however, they are inevitably more complex in this new setting. (p. 16)</p>
+</blockquote>
+<div id="creating-a-longitudinal-data-set" class="section level2">
+<h2><span class="header-section-number">2.1</span> Creating a longitudinal data set</h2>
+<blockquote>
+<p>In longitudinal work, data-set organization is less straightforward because you can use two very different arrangements:</p>
+<blockquote>
+<ul>
+<li><em>A person-level data set</em>, in which each person has one record and multiple variables contain the data from each measurement occasion</li>
+</ul>
+</blockquote>
+<blockquote>
+<ul>
+<li><em>A person-period data set</em>, in which each person has multiple records—one for each measurement occasion (p. 17, <em>emphasis</em> in the original)</li>
+</ul>
+</blockquote>
+</blockquote>
+<p>These are also sometimes referred to as the wide and long data formats, respectively.</p>
+<p>As you will see, we will use two primary functions from the <strong>tidyverse</strong> to convert data from one format to another.</p>
+<div id="the-person-level-data-set." class="section level3">
+<h3><span class="header-section-number">2.1.1</span> The person-level data set.</h3>
+<p>Here we load the person-level data from <a href="https://stats.idre.ucla.edu/r/examples/alda/r-applied-longitudinal-data-analysis-ch-2/">this UCLA web site</a>. These are the NLY data (see <a href="https://journals.sagepub.com/doi/10.1177/0022427892029004001">Raudenbush &amp; Chan, 1992</a>) shown in the top of Figure 2.1.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb3-1" data-line-number="1"><span class="kw">library</span>(tidyverse)</a>
+<a class="sourceLine" id="cb3-2" data-line-number="2"></a>
+<a class="sourceLine" id="cb3-3" data-line-number="3">tolerance &lt;-<span class="st"> </span><span class="kw">read_csv</span>(<span class="st">&quot;https://stats.idre.ucla.edu/wp-content/uploads/2016/02/tolerance1.txt&quot;</span>, <span class="dt">col_names =</span> T)</a>
+<a class="sourceLine" id="cb3-4" data-line-number="4"></a>
+<a class="sourceLine" id="cb3-5" data-line-number="5"><span class="kw">head</span>(tolerance, <span class="dt">n =</span> <span class="dv">16</span>)</a></code></pre></div>
+<pre><code>## # A tibble: 16 x 8
+##       id tol11 tol12 tol13 tol14 tol15  male exposure
+##    &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;    &lt;dbl&gt;
+##  1     9  2.23  1.79  1.9   2.12  2.66     0     1.54
+##  2    45  1.12  1.45  1.45  1.45  1.99     1     1.16
+##  3   268  1.45  1.34  1.99  1.79  1.34     1     0.9 
+##  4   314  1.22  1.22  1.55  1.12  1.12     0     0.81
+##  5   442  1.45  1.99  1.45  1.67  1.9      0     1.13
+##  6   514  1.34  1.67  2.23  2.12  2.44     1     0.9 
+##  7   569  1.79  1.9   1.9   1.99  1.99     0     1.99
+##  8   624  1.12  1.12  1.22  1.12  1.22     1     0.98
+##  9   723  1.22  1.34  1.12  1     1.12     0     0.81
+## 10   918  1     1     1.22  1.99  1.22     0     1.21
+## 11   949  1.99  1.55  1.12  1.45  1.55     1     0.93
+## 12   978  1.22  1.34  2.12  3.46  3.32     1     1.59
+## 13  1105  1.34  1.9   1.99  1.9   2.12     1     1.38
+## 14  1542  1.22  1.22  1.99  1.79  2.12     0     1.44
+## 15  1552  1     1.12  2.23  1.55  1.55     0     1.04
+## 16  1653  1.11  1.11  1.34  1.55  2.12     0     1.25</code></pre>
+<p>With person-level data, each participant has a single row. In these data, participants are indexed by their <code>id</code> number. To see how many participants are in these data, just <code>count()</code> the rows.</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb5-1" data-line-number="1">tolerance <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb5-2" data-line-number="2"><span class="st">  </span><span class="kw">count</span>()</a></code></pre></div>
+<pre><code>## # A tibble: 1 x 1
+##       n
+##   &lt;int&gt;
+## 1    16</code></pre>
+<p>The <code>nrow()</code> function will work, too.</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb7-1" data-line-number="1">tolerance <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb7-2" data-line-number="2"><span class="st">  </span><span class="kw">nrow</span>()</a></code></pre></div>
+<pre><code>## [1] 16</code></pre>
+<p>With the base <strong>R</strong> <code>cor()</code> function, you can get the Pearson’s correlation matrix shown in Table 2.1.</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb9-1" data-line-number="1"><span class="kw">cor</span>(tolerance[ , <span class="dv">2</span><span class="op">:</span><span class="dv">6</span>]) <span class="op">%&gt;%</span></a>
+<a class="sourceLine" id="cb9-2" data-line-number="2"><span class="st">  </span><span class="kw">round</span>(<span class="dt">digits =</span> <span class="dv">2</span>)</a></code></pre></div>
+<pre><code>##       tol11 tol12 tol13 tol14 tol15
+## tol11  1.00  0.66  0.06  0.14  0.26
+## tol12  0.66  1.00  0.25  0.21  0.39
+## tol13  0.06  0.25  1.00  0.59  0.57
+## tol14  0.14  0.21  0.59  1.00  0.83
+## tol15  0.26  0.39  0.57  0.83  1.00</code></pre>
+<p>We used <code>round()</code> to limit the number of decimal places in the output. Leave it off and you’ll see <code>cor()</code> returns up to seven decimal places instead. It can be hard to see the patters within a matrix of numerals. It might be easier in a plot.</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb11-1" data-line-number="1"><span class="kw">cor</span>(tolerance[ , <span class="dv">2</span><span class="op">:</span><span class="dv">6</span>]) <span class="op">%&gt;%</span></a>
+<a class="sourceLine" id="cb11-2" data-line-number="2"><span class="st">  </span><span class="kw">data.frame</span>() <span class="op">%&gt;%</span></a>
+<a class="sourceLine" id="cb11-3" data-line-number="3"><span class="st">  </span><span class="kw">rownames_to_column</span>(<span class="st">&quot;row&quot;</span>) <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb11-4" data-line-number="4"><span class="st">  </span><span class="kw">pivot_longer</span>(<span class="op">-</span>row,</a>
+<a class="sourceLine" id="cb11-5" data-line-number="5">               <span class="dt">names_to =</span> <span class="st">&quot;column&quot;</span>,</a>
+<a class="sourceLine" id="cb11-6" data-line-number="6">               <span class="dt">values_to =</span> <span class="st">&quot;correlation&quot;</span>) <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb11-7" data-line-number="7"><span class="st">  </span><span class="kw">mutate</span>(<span class="dt">row =</span> <span class="kw">factor</span>(row) <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">fct_rev</span>(.)) <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb11-8" data-line-number="8"><span class="st">  </span></a>
+<a class="sourceLine" id="cb11-9" data-line-number="9"><span class="st">  </span><span class="kw">ggplot</span>(<span class="kw">aes</span>(<span class="dt">x =</span> column, <span class="dt">y =</span> row)) <span class="op">+</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb11-10" data-line-number="10"><span class="st">  </span><span class="kw">geom_raster</span>(<span class="kw">aes</span>(<span class="dt">fill =</span> correlation)) <span class="op">+</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb11-11" data-line-number="11"><span class="st">  </span><span class="kw">geom_text</span>(<span class="kw">aes</span>(<span class="dt">label =</span> <span class="kw">round</span>(correlation, <span class="dt">digits =</span> <span class="dv">2</span>)),</a>
+<a class="sourceLine" id="cb11-12" data-line-number="12">            <span class="dt">size =</span> <span class="fl">3.5</span>) <span class="op">+</span></a>
+<a class="sourceLine" id="cb11-13" data-line-number="13"><span class="st">  </span><span class="kw">scale_fill_gradient</span>(<span class="dt">low =</span> <span class="st">&quot;white&quot;</span>, <span class="dt">high =</span> <span class="st">&quot;red4&quot;</span>, <span class="dt">limits =</span> <span class="kw">c</span>(<span class="dv">0</span>, <span class="dv">1</span>)) <span class="op">+</span></a>
+<a class="sourceLine" id="cb11-14" data-line-number="14"><span class="st">  </span><span class="kw">scale_x_discrete</span>(<span class="ot">NULL</span>, <span class="dt">position =</span> <span class="st">&quot;top&quot;</span>, <span class="dt">expand =</span> <span class="kw">c</span>(<span class="dv">0</span>, <span class="dv">0</span>)) <span class="op">+</span></a>
+<a class="sourceLine" id="cb11-15" data-line-number="15"><span class="st">  </span><span class="kw">scale_y_discrete</span>(<span class="ot">NULL</span>, <span class="dt">expand =</span> <span class="kw">c</span>(<span class="dv">0</span>, <span class="dv">0</span>)) <span class="op">+</span></a>
+<a class="sourceLine" id="cb11-16" data-line-number="16"><span class="st">  </span><span class="kw">theme</span>(<span class="dt">axis.ticks =</span> <span class="kw">element_blank</span>())</a></code></pre></div>
+<p><img src="02_files/figure-gfm/unnamed-chunk-6-1.png" width="360" style="display: block; margin: auto;" /></p>
+<p>If all you wanted was the lower diagonal, you could use the <code>lowerCor()</code> function from the <a href="https://personality-project.org/r/"><strong>psych</strong> package</a>.</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb12-1" data-line-number="1">psych<span class="op">::</span><span class="kw">lowerCor</span>(tolerance[ , <span class="dv">2</span><span class="op">:</span><span class="dv">6</span>])</a></code></pre></div>
+<pre><code>##       tol11 tol12 tol13 tol14 tol15
+## tol11 1.00                         
+## tol12 0.66  1.00                   
+## tol13 0.06  0.25  1.00             
+## tol14 0.14  0.21  0.59  1.00       
+## tol15 0.26  0.39  0.57  0.83  1.00</code></pre>
+<p>For more ways to compute, organize, and visualize correlations within the <strong>tidyverse</strong> paradigm, check out the <a href="https://tidymodels.github.io/corrr/"><strong>corr</strong> package</a>.</p>
+</div>
+<div id="the-person-period-data-set." class="section level3">
+<h3><span class="header-section-number">2.1.2</span> The person-period data set.</h3>
+<p>Here are the person-period data (i.e., those shown in the bottom of Figure 2.1).</p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb14-1" data-line-number="1">tolerance_pp &lt;-<span class="st"> </span><span class="kw">read_csv</span>(<span class="st">&quot;https://stats.idre.ucla.edu/wp-content/uploads/2016/02/tolerance1_pp.txt&quot;</span>,</a>
+<a class="sourceLine" id="cb14-2" data-line-number="2">                         <span class="dt">col_names =</span> T)</a>
+<a class="sourceLine" id="cb14-3" data-line-number="3"></a>
+<a class="sourceLine" id="cb14-4" data-line-number="4">tolerance_pp <span class="op">%&gt;%</span></a>
+<a class="sourceLine" id="cb14-5" data-line-number="5"><span class="st">  </span><span class="kw">slice</span>(<span class="kw">c</span>(<span class="dv">1</span><span class="op">:</span><span class="dv">9</span>, <span class="dv">76</span><span class="op">:</span><span class="dv">80</span>))</a></code></pre></div>
+<pre><code>## # A tibble: 14 x 6
+##       id   age tolerance  male exposure  time
+##    &lt;dbl&gt; &lt;dbl&gt;     &lt;dbl&gt; &lt;dbl&gt;    &lt;dbl&gt; &lt;dbl&gt;
+##  1     9    11      2.23     0     1.54     0
+##  2     9    12      1.79     0     1.54     1
+##  3     9    13      1.9      0     1.54     2
+##  4     9    14      2.12     0     1.54     3
+##  5     9    15      2.66     0     1.54     4
+##  6    45    11      1.12     1     1.16     0
+##  7    45    12      1.45     1     1.16     1
+##  8    45    13      1.45     1     1.16     2
+##  9    45    14      1.45     1     1.16     3
+## 10  1653    11      1.11     0     1.25     0
+## 11  1653    12      1.11     0     1.25     1
+## 12  1653    13      1.34     0     1.25     2
+## 13  1653    14      1.55     0     1.25     3
+## 14  1653    15      2.12     0     1.25     4</code></pre>
+<p>With data like these, the simple use of <code>count()</code> or <code>nrow()</code> won’t help us discover how many participants there are in the <code>tolerance_pp</code> data. One quick way is to <code>count()</code> the number of <code>distinct()</code> <code>id</code> values.</p>
+<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb16-1" data-line-number="1">tolerance_pp <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb16-2" data-line-number="2"><span class="st">  </span><span class="kw">distinct</span>(id) <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb16-3" data-line-number="3"><span class="st">  </span><span class="kw">count</span>()</a></code></pre></div>
+<pre><code>## # A tibble: 1 x 1
+##       n
+##   &lt;int&gt;
+## 1    16</code></pre>
+<p>A fundamental skill is knowing how to convert longitudinal data in one format to the other. If you’re using packages within the <strong>tidyverse</strong>, the <code>pivot_longer()</code> function will get you from the person-level format to the person-period format.</p>
+<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb18-1" data-line-number="1">tolerance <span class="op">%&gt;%</span></a>
+<a class="sourceLine" id="cb18-2" data-line-number="2"><span class="st">  </span><span class="co"># this is the main event</span></a>
+<a class="sourceLine" id="cb18-3" data-line-number="3"><span class="st">  </span><span class="kw">pivot_longer</span>(<span class="op">-</span><span class="kw">c</span>(id, male, exposure),</a>
+<a class="sourceLine" id="cb18-4" data-line-number="4">               <span class="dt">names_to =</span> <span class="st">&quot;age&quot;</span>, </a>
+<a class="sourceLine" id="cb18-5" data-line-number="5">               <span class="dt">values_to =</span> <span class="st">&quot;tolerance&quot;</span>) <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb18-6" data-line-number="6"><span class="st">  </span><span class="co"># here we remove the `tol` prefix from the `age` values and then save the numbers as integers</span></a>
+<a class="sourceLine" id="cb18-7" data-line-number="7"><span class="st">  </span><span class="kw">mutate</span>(<span class="dt">age =</span> <span class="kw">str_remove</span>(age, <span class="st">&quot;tol&quot;</span>) <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">as.integer</span>()) <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb18-8" data-line-number="8"><span class="st">  </span><span class="co"># these last two lines just make the results look more like those in the last code chunk</span></a>
+<a class="sourceLine" id="cb18-9" data-line-number="9"><span class="st">  </span><span class="kw">arrange</span>(id, age) <span class="op">%&gt;%</span></a>
+<a class="sourceLine" id="cb18-10" data-line-number="10"><span class="st">  </span><span class="kw">slice</span>(<span class="kw">c</span>(<span class="dv">1</span><span class="op">:</span><span class="dv">9</span>, <span class="dv">76</span><span class="op">:</span><span class="dv">80</span>))</a></code></pre></div>
+<pre><code>## # A tibble: 14 x 5
+##       id  male exposure   age tolerance
+##    &lt;dbl&gt; &lt;dbl&gt;    &lt;dbl&gt; &lt;int&gt;     &lt;dbl&gt;
+##  1     9     0     1.54    11      2.23
+##  2     9     0     1.54    12      1.79
+##  3     9     0     1.54    13      1.9 
+##  4     9     0     1.54    14      2.12
+##  5     9     0     1.54    15      2.66
+##  6    45     1     1.16    11      1.12
+##  7    45     1     1.16    12      1.45
+##  8    45     1     1.16    13      1.45
+##  9    45     1     1.16    14      1.45
+## 10  1653     0     1.25    11      1.11
+## 11  1653     0     1.25    12      1.11
+## 12  1653     0     1.25    13      1.34
+## 13  1653     0     1.25    14      1.55
+## 14  1653     0     1.25    15      2.12</code></pre>
+<p>You can learn more about the <code>pivot_longer()</code> function <a href="https://tidyr.tidyverse.org/reference/pivot_longer.html">here</a> and <a href="https://tidyr.tidyverse.org/articles/pivot.html">here</a>.</p>
+<p>As hinted at in the above hyperlinks, the opposite of the <code>pivot_longer()</code> function is <code>pivot_wider()</code>. We can use <code>pivot_wider()</code> to convert the person-period <code>tolerance_pp</code> data to the same format as the person-level <code>tolerance</code> data.</p>
+<div class="sourceCode" id="cb20"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb20-1" data-line-number="1">tolerance_pp <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb20-2" data-line-number="2"><span class="st">  </span><span class="co"># we&#39;ll want to add that `tol` prefix back to the `age` values</span></a>
+<a class="sourceLine" id="cb20-3" data-line-number="3"><span class="st">  </span><span class="kw">mutate</span>(<span class="dt">age =</span> <span class="kw">str_c</span>(<span class="st">&quot;tol&quot;</span>, age)) <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb20-4" data-line-number="4"><span class="st">  </span><span class="co"># this variable is just in the way. we&#39;ll drop it</span></a>
+<a class="sourceLine" id="cb20-5" data-line-number="5"><span class="st">  </span><span class="kw">select</span>(<span class="op">-</span>time) <span class="op">%&gt;%</span></a>
+<a class="sourceLine" id="cb20-6" data-line-number="6"><span class="st">  </span><span class="co"># here&#39;s the main action</span></a>
+<a class="sourceLine" id="cb20-7" data-line-number="7"><span class="st">  </span><span class="kw">pivot_wider</span>(<span class="dt">names_from =</span> age, <span class="dt">values_from =</span> tolerance)</a></code></pre></div>
+<pre><code>## # A tibble: 16 x 8
+##       id  male exposure tol11 tol12 tol13 tol14 tol15
+##    &lt;dbl&gt; &lt;dbl&gt;    &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;
+##  1     9     0     1.54  2.23  1.79  1.9   2.12  2.66
+##  2    45     1     1.16  1.12  1.45  1.45  1.45  1.99
+##  3   268     1     0.9   1.45  1.34  1.99  1.79  1.34
+##  4   314     0     0.81  1.22  1.22  1.55  1.12  1.12
+##  5   442     0     1.13  1.45  1.99  1.45  1.67  1.9 
+##  6   514     1     0.9   1.34  1.67  2.23  2.12  2.44
+##  7   569     0     1.99  1.79  1.9   1.9   1.99  1.99
+##  8   624     1     0.98  1.12  1.12  1.22  1.12  1.22
+##  9   723     0     0.81  1.22  1.34  1.12  1     1.12
+## 10   918     0     1.21  1     1     1.22  1.99  1.22
+## 11   949     1     0.93  1.99  1.55  1.12  1.45  1.55
+## 12   978     1     1.59  1.22  1.34  2.12  3.46  3.32
+## 13  1105     1     1.38  1.34  1.9   1.99  1.9   2.12
+## 14  1542     0     1.44  1.22  1.22  1.99  1.79  2.12
+## 15  1552     0     1.04  1     1.12  2.23  1.55  1.55
+## 16  1653     0     1.25  1.11  1.11  1.34  1.55  2.12</code></pre>
+</div>
+</div>
+<div id="descriptive-analysis-of-individual-change-over-time" class="section level2">
+<h2><span class="header-section-number">2.2</span> Descriptive analysis of individual change over time</h2>
+<p>The following “descriptive analyses [are intended to] reveal the nature and idiosyncrasies of each person’s temporal pattern of growth, addressing the question: How does each person change over time” (p. 23)?</p>
+<div id="empirical-growth-plots." class="section level3">
+<h3><span class="header-section-number">2.2.1</span> Empirical growth plots.</h3>
+<p><em>Empirical growth plots</em> show individual-level sequence in a variable of interest over time. We’ll put <code>age</code> on the x-axis, <code>tolerance</code> on the y-axis, and make our variant of Figure 2.2 with <code>geom_point()</code>. It’s the <code>facet_wrap()</code> part of the code that splits the plot up by <code>id</code>.</p>
+<div class="sourceCode" id="cb22"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb22-1" data-line-number="1">tolerance_pp <span class="op">%&gt;%</span></a>
+<a class="sourceLine" id="cb22-2" data-line-number="2"><span class="st">  </span><span class="kw">ggplot</span>(<span class="kw">aes</span>(<span class="dt">x =</span> age, <span class="dt">y =</span> tolerance)) <span class="op">+</span></a>
+<a class="sourceLine" id="cb22-3" data-line-number="3"><span class="st">  </span><span class="kw">geom_point</span>() <span class="op">+</span></a>
+<a class="sourceLine" id="cb22-4" data-line-number="4"><span class="st">  </span><span class="kw">coord_cartesian</span>(<span class="dt">ylim =</span> <span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">4</span>)) <span class="op">+</span></a>
+<a class="sourceLine" id="cb22-5" data-line-number="5"><span class="st">  </span><span class="kw">theme</span>(<span class="dt">panel.grid =</span> <span class="kw">element_blank</span>()) <span class="op">+</span></a>
+<a class="sourceLine" id="cb22-6" data-line-number="6"><span class="st">  </span><span class="kw">facet_wrap</span>(<span class="op">~</span>id)</a></code></pre></div>
+<p><img src="02_files/figure-gfm/unnamed-chunk-12-1.png" width="432" style="display: block; margin: auto;" /></p>
+<p>By default, <strong>ggplot2</strong> sets the scales of the x- and y-axes to the same values across subpanels. If you’d like to free that constraint, play around with the <code>scales</code> argument within <code>facet_wrap()</code>.</p>
+</div>
+<div id="using-a-trajectory-to-summarize-each-persons-empirical-growth-record." class="section level3">
+<h3><span class="header-section-number">2.2.2</span> Using a trajectory to summarize each person’s empirical growth record.</h3>
+<p>If we wanted to connect the dots, we might just add a <code>geom_line()</code> line.</p>
+<div class="sourceCode" id="cb23"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb23-1" data-line-number="1">tolerance_pp <span class="op">%&gt;%</span></a>
+<a class="sourceLine" id="cb23-2" data-line-number="2"><span class="st">  </span><span class="kw">ggplot</span>(<span class="kw">aes</span>(<span class="dt">x =</span> age, <span class="dt">y =</span> tolerance)) <span class="op">+</span></a>
+<a class="sourceLine" id="cb23-3" data-line-number="3"><span class="st">  </span><span class="kw">geom_point</span>() <span class="op">+</span></a>
+<a class="sourceLine" id="cb23-4" data-line-number="4"><span class="st">  </span><span class="kw">geom_line</span>() <span class="op">+</span></a>
+<a class="sourceLine" id="cb23-5" data-line-number="5"><span class="st">  </span><span class="kw">coord_cartesian</span>(<span class="dt">ylim =</span> <span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">4</span>)) <span class="op">+</span></a>
+<a class="sourceLine" id="cb23-6" data-line-number="6"><span class="st">  </span><span class="kw">theme</span>(<span class="dt">panel.grid =</span> <span class="kw">element_blank</span>()) <span class="op">+</span></a>
+<a class="sourceLine" id="cb23-7" data-line-number="7"><span class="st">  </span><span class="kw">facet_wrap</span>(<span class="op">~</span>id)</a></code></pre></div>
+<p><img src="02_files/figure-gfm/unnamed-chunk-13-1.png" width="432" style="display: block; margin: auto;" /></p>
+<p>However, Singer and Willett recommend two other approaches:</p>
+<ul>
+<li>nonparametric smoothing</li>
+<li>parametric functions</li>
+</ul>
+<div id="smoothing-the-empirical-growth-trajectory-nonparametrically." class="section level4">
+<h4><span class="header-section-number">2.2.2.1</span> Smoothing the empirical growth trajectory nonparametrically.</h4>
+<p>For our version of Figure 2.3, we’ll use a loess smoother. When using the <code>stat_smooth()</code> function in <strong>ggplot2</strong>, you can control how smooth or wiggly the line is with the <code>span</code> argument.</p>
+<div class="sourceCode" id="cb24"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb24-1" data-line-number="1">tolerance_pp <span class="op">%&gt;%</span></a>
+<a class="sourceLine" id="cb24-2" data-line-number="2"><span class="st">  </span><span class="kw">ggplot</span>(<span class="kw">aes</span>(<span class="dt">x =</span> age, <span class="dt">y =</span> tolerance)) <span class="op">+</span></a>
+<a class="sourceLine" id="cb24-3" data-line-number="3"><span class="st">  </span><span class="kw">geom_point</span>() <span class="op">+</span></a>
+<a class="sourceLine" id="cb24-4" data-line-number="4"><span class="st">  </span><span class="kw">stat_smooth</span>(<span class="dt">method =</span> <span class="st">&quot;loess&quot;</span>, <span class="dt">se =</span> F, <span class="dt">span =</span> <span class="fl">.9</span>) <span class="op">+</span></a>
+<a class="sourceLine" id="cb24-5" data-line-number="5"><span class="st">  </span><span class="kw">coord_cartesian</span>(<span class="dt">ylim =</span> <span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">4</span>)) <span class="op">+</span></a>
+<a class="sourceLine" id="cb24-6" data-line-number="6"><span class="st">  </span><span class="kw">theme</span>(<span class="dt">panel.grid =</span> <span class="kw">element_blank</span>()) <span class="op">+</span></a>
+<a class="sourceLine" id="cb24-7" data-line-number="7"><span class="st">  </span><span class="kw">facet_wrap</span>(<span class="op">~</span>id)</a></code></pre></div>
+<p><img src="02_files/figure-gfm/unnamed-chunk-14-1.png" width="432" style="display: block; margin: auto;" /></p>
+</div>
+<div id="smoothing-the-empirical-growth-trajectory-using-ols-single-level-bayesian-regression." class="section level4">
+<h4><span class="header-section-number">2.2.2.2</span> Smoothing the empirical growth trajectory using <del>OLS</del> single-level Bayesian regression.</h4>
+<p>Although “fitting person-specific regression models, one individual at a time, is hardly the most efficient use of longitudinal data” (p. 28), we may as well play along with the text. It’ll have pedagogical utility. You’ll see.</p>
+<p>For this section, we’ll take a <a href="https://www.youtube.com/watch?v=rz3_FDVt9eg&amp;t=3458s">cue from Hadley Wickham</a> and use <code>group_by()</code> and <code>nest()</code> to make a tibble composed of tibbles (i.e., a nested tibble).</p>
+<div class="sourceCode" id="cb25"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb25-1" data-line-number="1">by_id &lt;-</a>
+<a class="sourceLine" id="cb25-2" data-line-number="2"><span class="st">  </span>tolerance_pp <span class="op">%&gt;%</span></a>
+<a class="sourceLine" id="cb25-3" data-line-number="3"><span class="st">  </span><span class="kw">group_by</span>(id) <span class="op">%&gt;%</span></a>
+<a class="sourceLine" id="cb25-4" data-line-number="4"><span class="st">  </span><span class="kw">nest</span>()</a></code></pre></div>
+<p>You can get a sense of what we did with <code>head()</code>.</p>
+<div class="sourceCode" id="cb26"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb26-1" data-line-number="1">by_id <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">head</span>()</a></code></pre></div>
+<pre><code>## # A tibble: 6 x 2
+## # Groups:   id [6]
+##      id data            
+##   &lt;dbl&gt; &lt;list&gt;          
+## 1     9 &lt;tibble [5 × 5]&gt;
+## 2    45 &lt;tibble [5 × 5]&gt;
+## 3   268 &lt;tibble [5 × 5]&gt;
+## 4   314 &lt;tibble [5 × 5]&gt;
+## 5   442 &lt;tibble [5 × 5]&gt;
+## 6   514 &lt;tibble [5 × 5]&gt;</code></pre>
+<p>As indexed by <code>id</code>, each participant now has their own data set stored in the <code>data</code> column. To get a better sense, we’ll use our double-bracket subsetting skills to open up the first data set, the one for <code>id == 9</code>. If you’re not familiar with this skill, you can learn more from <a href="https://bookdown.org/rdpeng/rprogdatascience/subsetting-r-objects.html">Chapter 9</a> of <a href="https://twitter.com/rdpeng?lang=en">Roger Peng</a>’s great online book, <a href="https://bookdown.org/rdpeng/rprogdatascience/"><em>R Programming for Data Science</em></a>, or <a href="https://twitter.com/JennyBryan">Jenny Bryan</a>’s fun and useful talk, <a href="https://www.youtube.com/watch?v=4MfUCX_KpdE"><em>Behind every great plot there’s a great deal of wrangling</em></a>.</p>
+<div class="sourceCode" id="cb28"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb28-1" data-line-number="1">by_id<span class="op">$</span>data[[<span class="dv">1</span>]]</a></code></pre></div>
+<pre><code>## # A tibble: 5 x 5
+##     age tolerance  male exposure  time
+##   &lt;dbl&gt;     &lt;dbl&gt; &lt;dbl&gt;    &lt;dbl&gt; &lt;dbl&gt;
+## 1    11      2.23     0     1.54     0
+## 2    12      1.79     0     1.54     1
+## 3    13      1.9      0     1.54     2
+## 4    14      2.12     0     1.54     3
+## 5    15      2.66     0     1.54     4</code></pre>
+<p>Our <code>by_id</code> data object has many data sets stored in a higher-level data set. The code we used is verbose, but that’s what made it human-readable. Now we have our nested tibble, we can make a function that will fit the simple linear model <code>tolerance ~ 1 + time</code> to each id-level data set. <em>Why use <code>time</code> as the predictor?</em> you ask. On page 29 in the text, Singer and Willett clarified they fit their individual models with <span class="math inline">\((\text{age} - 11)\)</span> in order to have the model intercepts centered at 11 years old rather than 0. If we wanted to, we could make an <span class="math inline">\((\text{age} - 11)\)</span> variable like so.</p>
+<div class="sourceCode" id="cb30"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb30-1" data-line-number="1">by_id<span class="op">$</span>data[[<span class="dv">1</span>]] <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb30-2" data-line-number="2"><span class="st">  </span><span class="kw">mutate</span>(<span class="dt">age_minus_11 =</span> age <span class="op">-</span><span class="st"> </span><span class="dv">11</span>)</a></code></pre></div>
+<pre><code>## # A tibble: 5 x 6
+##     age tolerance  male exposure  time age_minus_11
+##   &lt;dbl&gt;     &lt;dbl&gt; &lt;dbl&gt;    &lt;dbl&gt; &lt;dbl&gt;        &lt;dbl&gt;
+## 1    11      2.23     0     1.54     0            0
+## 2    12      1.79     0     1.54     1            1
+## 3    13      1.9      0     1.54     2            2
+## 4    14      2.12     0     1.54     3            3
+## 5    15      2.66     0     1.54     4            4</code></pre>
+<p>Did you notice how our <code>age_minus_11</code> variable is the same as the <code>time</code> variable already in the data set? Yep, that’s why we’ll be using <code>time</code> in the model. In our data, <span class="math inline">\((\text{age} - 11)\)</span> is encoded as <code>time</code>.</p>
+<p>Singer and Willett used OLS to fit their exploratory models. We could do that to with the <code>lm()</code> function and we will do a little of that in this project. But let’s get frisky and fit the models as Bayesians, instead. Our primary statistical package for fitting Bayesian models will be <a href="https://twitter.com/paulbuerkner?lang=en">Paul Bürkner</a>’s <a href="https://github.com/paul-buerkner/brms"><strong>brms</strong></a>. Let’s open it up.</p>
+<div class="sourceCode" id="cb32"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb32-1" data-line-number="1"><span class="kw">library</span>(brms)</a></code></pre></div>
+<p>Since this is our first Bayesian model, we should start slow. The primary model-fitting function in <strong>brms</strong> is <code>brm()</code>. The function is astonishingly general and includes numerous arguments, most of which have sensible defaults. The primary two arguments are <code>data</code> and <code>formula</code>. I’m guessing they’re self-explanatory. I’m not going to go into detail on the three arguments at the bottom of the code. We’ll go over them later. For simple models like these, I would have omitted them entirely, but given the sparsity of the data (i.e., 5 data points per model), I wanted to make sure we gave the algorithm a good chance to arrive at reasonable estimates.</p>
+<div class="sourceCode" id="cb33"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb33-1" data-line-number="1">fit2<span class="fl">.1</span> &lt;-</a>
+<a class="sourceLine" id="cb33-2" data-line-number="2"><span class="st">  </span><span class="kw">brm</span>(<span class="dt">data =</span> by_id<span class="op">$</span>data[[<span class="dv">1</span>]],</a>
+<a class="sourceLine" id="cb33-3" data-line-number="3">      <span class="dt">formula =</span> tolerance <span class="op">~</span><span class="st"> </span><span class="dv">1</span> <span class="op">+</span><span class="st"> </span>time,</a>
+<a class="sourceLine" id="cb33-4" data-line-number="4">      <span class="dt">prior =</span> <span class="kw">prior</span>(<span class="kw">normal</span>(<span class="dv">0</span>, <span class="dv">2</span>), <span class="dt">class =</span> b),</a>
+<a class="sourceLine" id="cb33-5" data-line-number="5">      <span class="dt">iter =</span> <span class="dv">4000</span>, <span class="dt">chains =</span> <span class="dv">4</span>, <span class="dt">cores =</span> <span class="dv">4</span>,</a>
+<a class="sourceLine" id="cb33-6" data-line-number="6">      <span class="dt">seed =</span> <span class="dv">2</span>,</a>
+<a class="sourceLine" id="cb33-7" data-line-number="7">      <span class="dt">file =</span> <span class="st">&quot;fits/fit02.01&quot;</span>)</a></code></pre></div>
+<p>We just fit a single-level Bayesian regression model for our first participant. We saved the results as an object named <code>fit2.1</code>. We can return a useful summary of <code>fit2.1</code> with either <code>print()</code> or <code>summary()</code>. Since it’s less typing, we’ll use <code>print()</code>.</p>
+<div class="sourceCode" id="cb34"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb34-1" data-line-number="1"><span class="kw">print</span>(fit2<span class="fl">.1</span>)</a></code></pre></div>
+<pre><code>##  Family: gaussian 
+##   Links: mu = identity; sigma = identity 
+## Formula: tolerance ~ 1 + time 
+##    Data: by_id$data[[1]] (Number of observations: 5) 
+## Samples: 4 chains, each with iter = 4000; warmup = 2000; thin = 1;
+##          total post-warmup samples = 8000
+## 
+## Population-Level Effects: 
+##           Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## Intercept     1.90      0.54     0.84     2.96 1.00     3925     2667
+## time          0.12      0.22    -0.31     0.57 1.00     3394     2367
+## 
+## Family Specific Parameters: 
+##       Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## sigma     0.61      0.50     0.21     1.92 1.00     1529     2288
+## 
+## Samples were drawn using sampling(NUTS). For each parameter, Bulk_ESS
+## and Tail_ESS are effective sample size measures, and Rhat is the potential
+## scale reduction factor on split chains (at convergence, Rhat = 1).</code></pre>
+<p>The ‘Intercept’ and ‘time’ coefficients are the primary regression parameters. Also notice ‘sigma’, which is our variant of the residual standard error you might get from an OLS output (e.g., from base <strong>R</strong> <code>lm()</code>). Since we’re Bayesians, the output summaries do not contain <span class="math inline">\(p\)</span>-values. But we do get posterior standard deviations (i.e., the ‘Est.Error’ column) and the upper- and lower-levels of the percentile-based 95% intervals.</p>
+<p>You probably heard somewhere that Bayesian statistics require priors. We can see what those were by pulling them out of our <code>fit2.1</code> object.</p>
+<div class="sourceCode" id="cb36"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb36-1" data-line-number="1">fit2<span class="fl">.1</span><span class="op">$</span>prior</a></code></pre></div>
+<pre><code>##                 prior     class coef group resp dpar nlpar bound
+## 1        normal(0, 2)         b                                 
+## 2                             b time                            
+## 3 student_t(3, 2, 10) Intercept                                 
+## 4 student_t(3, 0, 10)     sigma</code></pre>
+<p>The prior in the top line, <code>normal(0, 2)</code>, is for all parameters of <code>class = b</code>. We actually specified this in our <code>brm()</code> code, above, with the code snip: <code>prior = prior(normal(0, 2), class = b)</code>. At this stage in the project, my initial impulse was to leave this line blank and save the discussion of how to set priors by hand for later. However, the difficulty is that the first several models we’re fitting are all of <span class="math inline">\(n = 5\)</span>. Bayesian statistics handle small-<span class="math inline">\(n\)</span> models just fine. However, when your <span class="math inline">\(n\)</span> gets small, the algorithms we use to implement our Bayesian models benefit from priors that are at least modestly informative. As it turns out, the <strong>brms</strong> default priors are flat for parameters of <code>class = b</code>. They offer no information beyond that contained in the likelihood. To stave off algorithm problems with our extremely-small-<span class="math inline">\(n\)</span> data subsets, we used <code>normal(0, 2)</code> instead. In our model, the only parameter of <code>class = b</code> is the regression slope for <code>time</code>. On the scale of the data, <code>normal(0, 2)</code> is a vary-permissive prior for our <code>time</code> slope.</p>
+<p>In addition to our <code>time</code> slope parameter, our model contained an intercept and a residual variance. From the <code>fit2.1$prior</code> output, we can see those were <code>student_t(3, 2, 10)</code> and <code>student_t(3, 0, 10)</code>, respectively. <strong>brms</strong> default priors are designed to be weakly informative. Given the data and the model, these priors have a minimal influence on the results. We’ll focus more on priors later in the project. For now just recognize that even if you don’t specify your priors, you can’t escape using some priors when using <code>brm()</code>. This is a good thing.</p>
+<p>Okay, so that was the model for just one participant. We want to do that for all 16. Instead of repeating that code 15 times, we can work in bulk. With <strong>brms</strong>, you can reuse a model with the <code>update()</code> function. Here’s how to do that with the data from our second participant.</p>
+<div class="sourceCode" id="cb38"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb38-1" data-line-number="1">fit2<span class="fl">.2</span> &lt;-</a>
+<a class="sourceLine" id="cb38-2" data-line-number="2"><span class="st">  </span><span class="kw">update</span>(fit2<span class="fl">.1</span>, </a>
+<a class="sourceLine" id="cb38-3" data-line-number="3">         <span class="dt">newdata =</span> by_id<span class="op">$</span>data[[<span class="dv">2</span>]],</a>
+<a class="sourceLine" id="cb38-4" data-line-number="4">         <span class="dt">file =</span> <span class="st">&quot;fits/fit02.02&quot;</span>)</a></code></pre></div>
+<p>Peek at the results.</p>
+<div class="sourceCode" id="cb39"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb39-1" data-line-number="1"><span class="kw">print</span>(fit2<span class="fl">.2</span>)</a></code></pre></div>
+<pre><code>##  Family: gaussian 
+##   Links: mu = identity; sigma = identity 
+## Formula: tolerance ~ 1 + time 
+##    Data: by_id$data[[2]] (Number of observations: 5) 
+## Samples: 4 chains, each with iter = 4000; warmup = 2000; thin = 1;
+##          total post-warmup samples = 8000
+## 
+## Population-Level Effects: 
+##           Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## Intercept     1.14      0.49     0.32     1.92 1.00     3104     1618
+## time          0.18      0.20    -0.14     0.50 1.00     3070     1515
+## 
+## Family Specific Parameters: 
+##       Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## sigma     0.39      0.53     0.11     1.51 1.00     1001     1086
+## 
+## Samples were drawn using sampling(NUTS). For each parameter, Bulk_ESS
+## and Tail_ESS are effective sample size measures, and Rhat is the potential
+## scale reduction factor on split chains (at convergence, Rhat = 1).</code></pre>
+<p>Different participants yield different model results.</p>
+<p>Looking ahead a bit, we’ll need to know how to get the <span class="math inline">\(R^2\)</span> for a single-level Gaussian model. With <strong>brms</strong>, you do that with the <code>bayes_R2()</code> function.</p>
+<div class="sourceCode" id="cb41"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb41-1" data-line-number="1"><span class="kw">bayes_R2</span>(fit2<span class="fl">.2</span>)</a></code></pre></div>
+<pre><code>##     Estimate Est.Error       Q2.5     Q97.5
+## R2 0.6235052 0.2489466 0.01109299 0.8148395</code></pre>
+<p>Though the default spits out summary statistics, you can get the full posterior distribution for the <span class="math inline">\(R^2\)</span> by specifying <code>summary = F</code>.</p>
+<div class="sourceCode" id="cb43"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb43-1" data-line-number="1"><span class="kw">bayes_R2</span>(fit2<span class="fl">.2</span>, <span class="dt">summary =</span> F) <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb43-2" data-line-number="2"><span class="st">  </span><span class="kw">str</span>()</a></code></pre></div>
+<pre><code>##  num [1:8000, 1] 0.639 0.67 0.809 0.812 0.78 ...
+##  - attr(*, &quot;dimnames&quot;)=List of 2
+##   ..$ : NULL
+##   ..$ : chr &quot;R2&quot;</code></pre>
+<p>Our code returned a numeric vector. If you’d like to plot the results with <strong>ggplot2</strong>, you’ll need to convert the vector to a data frame.</p>
+<div class="sourceCode" id="cb45"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb45-1" data-line-number="1"><span class="kw">bayes_R2</span>(fit2<span class="fl">.2</span>, <span class="dt">summary =</span> F) <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb45-2" data-line-number="2"><span class="st">  </span><span class="kw">data.frame</span>() <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb45-3" data-line-number="3"><span class="st">  </span></a>
+<a class="sourceLine" id="cb45-4" data-line-number="4"><span class="st">  </span><span class="kw">ggplot</span>(<span class="kw">aes</span>(<span class="dt">x =</span> R2)) <span class="op">+</span></a>
+<a class="sourceLine" id="cb45-5" data-line-number="5"><span class="st">  </span><span class="kw">geom_density</span>(<span class="dt">fill =</span> <span class="st">&quot;black&quot;</span>) <span class="op">+</span></a>
+<a class="sourceLine" id="cb45-6" data-line-number="6"><span class="st">  </span><span class="kw">scale_x_continuous</span>(<span class="kw">expression</span>(Bayesian<span class="op">~</span><span class="kw">italic</span>(R)<span class="op">^</span><span class="dv">2</span>), <span class="dt">limits =</span> <span class="kw">c</span>(<span class="dv">0</span>, <span class="dv">1</span>)) <span class="op">+</span></a>
+<a class="sourceLine" id="cb45-7" data-line-number="7"><span class="st">  </span><span class="kw">scale_y_continuous</span>(<span class="ot">NULL</span>, <span class="dt">breaks =</span> <span class="ot">NULL</span>) <span class="op">+</span></a>
+<a class="sourceLine" id="cb45-8" data-line-number="8"><span class="st">  </span><span class="kw">theme</span>(<span class="dt">panel.grid =</span> <span class="kw">element_blank</span>())</a></code></pre></div>
+<p><img src="02_files/figure-gfm/unnamed-chunk-25-1.png" width="672" style="display: block; margin: auto;" /></p>
+<p>You’ll note how non-Gaussian the Bayesian <span class="math inline">\(R^2\)</span> can be. Also, with the combination of default minimally-informative priors and only 5 data points, there’ massive uncertainty in the shape. As such, the value of central tendency will vary widely based on which statistic you use.</p>
+<div class="sourceCode" id="cb46"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb46-1" data-line-number="1"><span class="kw">bayes_R2</span>(fit2<span class="fl">.2</span>, <span class="dt">summary =</span> F) <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb46-2" data-line-number="2"><span class="st">  </span><span class="kw">data.frame</span>() <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb46-3" data-line-number="3"><span class="st">  </span><span class="kw">summarise</span>(<span class="dt">mean   =</span> <span class="kw">mean</span>(R2),</a>
+<a class="sourceLine" id="cb46-4" data-line-number="4">            <span class="dt">median =</span> <span class="kw">median</span>(R2),</a>
+<a class="sourceLine" id="cb46-5" data-line-number="5">            <span class="dt">mode   =</span> tidybayes<span class="op">::</span><span class="kw">Mode</span>(R2))</a></code></pre></div>
+<pre><code>##        mean    median     mode
+## 1 0.6235052 0.7477635 0.796846</code></pre>
+<p>By default, <code>bayes_R2()</code> returns the mean. You can get the median with the <code>robust = T</code> argument. To pull the mode, you’ll need to use <code>summary = F</code> and feed the results into a mode function, like <code>tidybayes::Mode()</code>.</p>
+<p>I should also point out the <strong>brms</strong> package did not get these <span class="math inline">\(R^2\)</span> values by traditional method used in, say, OLS estimation. To learn more about how the Bayesian <span class="math inline">\(R^2\)</span> sausage is made, check out Gelman, Goodrich, Gabry, and Vehtari’s (2017) paper, <a href="https://www.tandfonline.com/doi/abs/10.1080/00031305.2018.1549100?journalCode=utas20"><em>R-squared for Bayesian regression models</em></a>.</p>
+<p>With a little tricky programing, we can use the <code>purrr::map()</code> function to serially fit this model to each of our participant-level data sets. We’ll save the results as <code>models</code>.</p>
+<div class="sourceCode" id="cb48"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb48-1" data-line-number="1">models &lt;-<span class="st"> </span></a>
+<a class="sourceLine" id="cb48-2" data-line-number="2"><span class="st">  </span>by_id <span class="op">%&gt;%</span></a>
+<a class="sourceLine" id="cb48-3" data-line-number="3"><span class="st">  </span><span class="kw">mutate</span>(<span class="dt">model =</span> <span class="kw">map</span>(data, <span class="op">~</span><span class="kw">update</span>(fit2<span class="fl">.1</span>, <span class="dt">newdata =</span> ., <span class="dt">seed =</span> <span class="dv">2</span>)))</a></code></pre></div>
+<p>Let’s walk through what we did. The <code>map()</code> function takes two primary arguments, <code>.x</code> and <code>.f</code>, respectively. We set <code>.x = data</code>, which meant we wanted to iterate over the contents in our <code>data</code> vector. Recall that each row of <code>data</code> itself contained an entire data set–one for each of the 16 participants. It’s with the second argument <code>.f</code> that we indicated what we wanted to do with our rows of <code>data</code>. We set that to <code>.f = ~update(fit2.1, newdata = ., seed = 2)</code>. With the <code>~</code> syntax, we entered in a formula, which was <code>update(fit2.1, newdata = ., seed = 2)</code>. Just like we did with <code>fit2.2</code>, above, we reused the model formula and other technical specs from <code>fit2.1</code>. Now notice the middle part of the formula, <code>newdata = .</code>. That little <code>.</code> refers to the element we specified in the <code>.x</code> argument. What this combination means is that for each of the 16 rows of our nested <code>by_id</code> tibble, we plugged in the <code>id</code>-specific data set into <code>update(fit, newdata[[i]])</code> where <code>i</code> is simply meant as a row index. The new column, <code>model</code>, contains the output of each of the 16 iterations.</p>
+<div class="sourceCode" id="cb49"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb49-1" data-line-number="1"><span class="kw">print</span>(models)</a></code></pre></div>
+<pre><code>## # A tibble: 16 x 3
+## # Groups:   id [16]
+##       id data             model    
+##    &lt;dbl&gt; &lt;list&gt;           &lt;list&gt;   
+##  1     9 &lt;tibble [5 × 5]&gt; &lt;brmsfit&gt;
+##  2    45 &lt;tibble [5 × 5]&gt; &lt;brmsfit&gt;
+##  3   268 &lt;tibble [5 × 5]&gt; &lt;brmsfit&gt;
+##  4   314 &lt;tibble [5 × 5]&gt; &lt;brmsfit&gt;
+##  5   442 &lt;tibble [5 × 5]&gt; &lt;brmsfit&gt;
+##  6   514 &lt;tibble [5 × 5]&gt; &lt;brmsfit&gt;
+##  7   569 &lt;tibble [5 × 5]&gt; &lt;brmsfit&gt;
+##  8   624 &lt;tibble [5 × 5]&gt; &lt;brmsfit&gt;
+##  9   723 &lt;tibble [5 × 5]&gt; &lt;brmsfit&gt;
+## 10   918 &lt;tibble [5 × 5]&gt; &lt;brmsfit&gt;
+## 11   949 &lt;tibble [5 × 5]&gt; &lt;brmsfit&gt;
+## 12   978 &lt;tibble [5 × 5]&gt; &lt;brmsfit&gt;
+## 13  1105 &lt;tibble [5 × 5]&gt; &lt;brmsfit&gt;
+## 14  1542 &lt;tibble [5 × 5]&gt; &lt;brmsfit&gt;
+## 15  1552 &lt;tibble [5 × 5]&gt; &lt;brmsfit&gt;
+## 16  1653 &lt;tibble [5 × 5]&gt; &lt;brmsfit&gt;</code></pre>
+<p>Next, we’ll want to extract the necessary summary information from our <code>models</code> to remake our version of Table 2.2. There’s a lot of info in that table, so let’s take it step by step. First, we’ll extract the posterior means (i.e., “Estimate”) and standard deviations (i.e., “se”) for the initial status and rate of change of each model. We’ll also do the same for sigma (i.e., the square of the “Residual variance”).</p>
+<div class="sourceCode" id="cb51"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb51-1" data-line-number="1">mean_structure &lt;-</a>
+<a class="sourceLine" id="cb51-2" data-line-number="2"><span class="st">  </span>models <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb51-3" data-line-number="3"><span class="st">  </span><span class="kw">mutate</span>(<span class="dt">coefs =</span> <span class="kw">map</span>(model, <span class="op">~</span><span class="st"> </span><span class="kw">posterior_summary</span>(.)[<span class="dv">1</span><span class="op">:</span><span class="dv">2</span>, <span class="dv">1</span><span class="op">:</span><span class="dv">2</span>] <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb51-4" data-line-number="4"><span class="st">                       </span><span class="kw">data.frame</span>() <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb51-5" data-line-number="5"><span class="st">                       </span><span class="kw">rownames_to_column</span>(<span class="st">&quot;coefficients&quot;</span>))) <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb51-6" data-line-number="6"><span class="st">  </span><span class="kw">unnest</span>(coefs) <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb51-7" data-line-number="7"><span class="st">  </span><span class="kw">select</span>(<span class="op">-</span>data, <span class="op">-</span>model) <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb51-8" data-line-number="8"><span class="st">  </span><span class="kw">unite</span>(temp, Estimate, Est.Error) <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb51-9" data-line-number="9"><span class="st">  </span><span class="kw">pivot_wider</span>(<span class="dt">names_from =</span> coefficients,</a>
+<a class="sourceLine" id="cb51-10" data-line-number="10">              <span class="dt">values_from =</span> temp) <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb51-11" data-line-number="11"><span class="st">  </span><span class="kw">separate</span>(b_Intercept, <span class="dt">into =</span> <span class="kw">c</span>(<span class="st">&quot;init_stat_est&quot;</span>, <span class="st">&quot;init_stat_sd&quot;</span>), <span class="dt">sep =</span> <span class="st">&quot;_&quot;</span>) <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb51-12" data-line-number="12"><span class="st">  </span><span class="kw">separate</span>(b_time, <span class="dt">into =</span> <span class="kw">c</span>(<span class="st">&quot;rate_change_est&quot;</span>, <span class="st">&quot;rate_change_sd&quot;</span>), <span class="dt">sep =</span> <span class="st">&quot;_&quot;</span>) <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb51-13" data-line-number="13"><span class="st">  </span><span class="kw">mutate_if</span>(is.character, <span class="op">~</span><span class="st"> </span><span class="kw">as.double</span>(.) <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">round</span>(<span class="dt">digits =</span> <span class="dv">2</span>)) <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb51-14" data-line-number="14"><span class="st">  </span><span class="kw">ungroup</span>()</a>
+<a class="sourceLine" id="cb51-15" data-line-number="15"></a>
+<a class="sourceLine" id="cb51-16" data-line-number="16"><span class="kw">head</span>(mean_structure)</a></code></pre></div>
+<pre><code>## # A tibble: 6 x 5
+##      id init_stat_est init_stat_sd rate_change_est rate_change_sd
+##   &lt;dbl&gt;         &lt;dbl&gt;        &lt;dbl&gt;           &lt;dbl&gt;          &lt;dbl&gt;
+## 1     9          1.9          0.54            0.12           0.22
+## 2    45          1.15         0.37            0.17           0.15
+## 3   268          1.55         0.69            0.02           0.28
+## 4   314          1.32         0.38           -0.03           0.16
+## 5   442          1.58         0.49            0.06           0.2 
+## 6   514          1.43         0.34            0.27           0.14</code></pre>
+<p>It’s simpler to extract the residual variance. Recall that because <strong>brms</strong> gives that in the standard deviation metric (i.e., <span class="math inline">\(\sigma\)</span>), you need to square it to return it in a variance metric (i.e., <span class="math inline">\(\sigma^2\)</span>).</p>
+<div class="sourceCode" id="cb53"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb53-1" data-line-number="1">residual_variance &lt;-</a>
+<a class="sourceLine" id="cb53-2" data-line-number="2"><span class="st">  </span>models <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb53-3" data-line-number="3"><span class="st">  </span><span class="kw">mutate</span>(<span class="dt">residual_variance =</span> <span class="kw">map_dbl</span>(model, <span class="op">~</span><span class="st"> </span><span class="kw">posterior_summary</span>(.)[<span class="dv">3</span>, <span class="dv">1</span>])<span class="op">^</span><span class="dv">2</span>) <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb53-4" data-line-number="4"><span class="st">  </span><span class="kw">mutate_if</span>(is.double, round, <span class="dt">digits =</span> <span class="dv">2</span>) <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb53-5" data-line-number="5"><span class="st">  </span><span class="kw">select</span>(id, residual_variance)</a>
+<a class="sourceLine" id="cb53-6" data-line-number="6"></a>
+<a class="sourceLine" id="cb53-7" data-line-number="7"><span class="kw">head</span>(residual_variance)</a></code></pre></div>
+<pre><code>## # A tibble: 6 x 2
+## # Groups:   id [6]
+##      id residual_variance
+##   &lt;dbl&gt;             &lt;dbl&gt;
+## 1     9             0.37 
+## 2    45             0.13 
+## 3   268             0.45 
+## 4   314             0.15 
+## 5   442             0.290
+## 6   514             0.12</code></pre>
+<p>We’ll extract our Bayesian <span class="math inline">\(R^2\)</span> summaries, next. Given how nonnormal these are, we’ll use the posterior median rather than the mean. We get that by using the <code>robust = T</code> argument within the <code>bayes_R2()</code> function.</p>
+<div class="sourceCode" id="cb55"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb55-1" data-line-number="1">r2 &lt;-</a>
+<a class="sourceLine" id="cb55-2" data-line-number="2"><span class="st">  </span>models <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb55-3" data-line-number="3"><span class="st">  </span><span class="kw">mutate</span>(<span class="dt">r2 =</span> <span class="kw">map_dbl</span>(model, <span class="op">~</span><span class="st"> </span><span class="kw">bayes_R2</span>(., <span class="dt">robust =</span> T)[<span class="dv">1</span>])) <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb55-4" data-line-number="4"><span class="st">  </span><span class="kw">mutate_if</span>(is.double, round, <span class="dt">digits =</span> <span class="dv">2</span>) <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb55-5" data-line-number="5"><span class="st">  </span><span class="kw">select</span>(id, r2)</a>
+<a class="sourceLine" id="cb55-6" data-line-number="6"></a>
+<a class="sourceLine" id="cb55-7" data-line-number="7"><span class="kw">head</span>(r2)</a></code></pre></div>
+<pre><code>## # A tibble: 6 x 2
+## # Groups:   id [6]
+##      id    r2
+##   &lt;dbl&gt; &lt;dbl&gt;
+## 1     9  0.33
+## 2    45  0.75
+## 3   268  0.2 
+## 4   314  0.23
+## 5   442  0.25
+## 6   514  0.86</code></pre>
+<p>Here we combine all the components with a series of <code>left_join()</code> statements and present it in a <a href="https://yihui.name/knitr/"><strong>knitr</strong></a>-type table.</p>
+<div class="sourceCode" id="cb57"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb57-1" data-line-number="1">table &lt;-</a>
+<a class="sourceLine" id="cb57-2" data-line-number="2"><span class="st">  </span>models <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb57-3" data-line-number="3"><span class="st">  </span><span class="kw">unnest</span>(data) <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb57-4" data-line-number="4"><span class="st">  </span><span class="kw">group_by</span>(id) <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb57-5" data-line-number="5"><span class="st">  </span><span class="kw">slice</span>(<span class="dv">1</span>) <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb57-6" data-line-number="6"><span class="st">  </span><span class="kw">select</span>(id, male, exposure) <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb57-7" data-line-number="7"><span class="st">  </span><span class="kw">left_join</span>(mean_structure,    <span class="dt">by =</span> <span class="st">&quot;id&quot;</span>) <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb57-8" data-line-number="8"><span class="st">  </span><span class="kw">left_join</span>(residual_variance, <span class="dt">by =</span> <span class="st">&quot;id&quot;</span>) <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb57-9" data-line-number="9"><span class="st">  </span><span class="kw">left_join</span>(r2,                <span class="dt">by =</span> <span class="st">&quot;id&quot;</span>) <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb57-10" data-line-number="10"><span class="st">  </span><span class="kw">rename</span>(<span class="dt">residual_var =</span> residual_variance) <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb57-11" data-line-number="11"><span class="st">  </span><span class="kw">select</span>(id, init_stat_est<span class="op">:</span>r2, <span class="kw">everything</span>()) <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb57-12" data-line-number="12"><span class="st">  </span><span class="kw">ungroup</span>()</a>
+<a class="sourceLine" id="cb57-13" data-line-number="13"></a>
+<a class="sourceLine" id="cb57-14" data-line-number="14">table <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb57-15" data-line-number="15"><span class="st">  </span>knitr<span class="op">::</span><span class="kw">kable</span>()</a></code></pre></div>
+<table>
+<thead>
+<tr class="header">
+<th align="right">id</th>
+<th align="right">init_stat_est</th>
+<th align="right">init_stat_sd</th>
+<th align="right">rate_change_est</th>
+<th align="right">rate_change_sd</th>
+<th align="right">residual_var</th>
+<th align="right">r2</th>
+<th align="right">male</th>
+<th align="right">exposure</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="right">9</td>
+<td align="right">1.90</td>
+<td align="right">0.54</td>
+<td align="right">0.12</td>
+<td align="right">0.22</td>
+<td align="right">0.37</td>
+<td align="right">0.33</td>
+<td align="right">0</td>
+<td align="right">1.54</td>
+</tr>
+<tr class="even">
+<td align="right">45</td>
+<td align="right">1.15</td>
+<td align="right">0.37</td>
+<td align="right">0.17</td>
+<td align="right">0.15</td>
+<td align="right">0.13</td>
+<td align="right">0.75</td>
+<td align="right">1</td>
+<td align="right">1.16</td>
+</tr>
+<tr class="odd">
+<td align="right">268</td>
+<td align="right">1.55</td>
+<td align="right">0.69</td>
+<td align="right">0.02</td>
+<td align="right">0.28</td>
+<td align="right">0.45</td>
+<td align="right">0.20</td>
+<td align="right">1</td>
+<td align="right">0.90</td>
+</tr>
+<tr class="even">
+<td align="right">314</td>
+<td align="right">1.32</td>
+<td align="right">0.38</td>
+<td align="right">-0.03</td>
+<td align="right">0.16</td>
+<td align="right">0.15</td>
+<td align="right">0.23</td>
+<td align="right">0</td>
+<td align="right">0.81</td>
+</tr>
+<tr class="odd">
+<td align="right">442</td>
+<td align="right">1.58</td>
+<td align="right">0.49</td>
+<td align="right">0.06</td>
+<td align="right">0.20</td>
+<td align="right">0.29</td>
+<td align="right">0.25</td>
+<td align="right">0</td>
+<td align="right">1.13</td>
+</tr>
+<tr class="even">
+<td align="right">514</td>
+<td align="right">1.43</td>
+<td align="right">0.34</td>
+<td align="right">0.27</td>
+<td align="right">0.14</td>
+<td align="right">0.12</td>
+<td align="right">0.86</td>
+<td align="right">1</td>
+<td align="right">0.90</td>
+</tr>
+<tr class="odd">
+<td align="right">569</td>
+<td align="right">1.82</td>
+<td align="right">0.08</td>
+<td align="right">0.05</td>
+<td align="right">0.03</td>
+<td align="right">0.00</td>
+<td align="right">0.86</td>
+<td align="right">0</td>
+<td align="right">1.99</td>
+</tr>
+<tr class="even">
+<td align="right">624</td>
+<td align="right">1.12</td>
+<td align="right">0.12</td>
+<td align="right">0.02</td>
+<td align="right">0.05</td>
+<td align="right">0.01</td>
+<td align="right">0.36</td>
+<td align="right">1</td>
+<td align="right">0.98</td>
+</tr>
+<tr class="odd">
+<td align="right">723</td>
+<td align="right">1.27</td>
+<td align="right">0.28</td>
+<td align="right">-0.06</td>
+<td align="right">0.11</td>
+<td align="right">0.06</td>
+<td align="right">0.47</td>
+<td align="right">0</td>
+<td align="right">0.81</td>
+</tr>
+<tr class="even">
+<td align="right">918</td>
+<td align="right">1.01</td>
+<td align="right">0.66</td>
+<td align="right">0.13</td>
+<td align="right">0.26</td>
+<td align="right">0.54</td>
+<td align="right">0.32</td>
+<td align="right">0</td>
+<td align="right">1.21</td>
+</tr>
+<tr class="odd">
+<td align="right">949</td>
+<td align="right">1.74</td>
+<td align="right">0.70</td>
+<td align="right">-0.10</td>
+<td align="right">0.29</td>
+<td align="right">0.43</td>
+<td align="right">0.32</td>
+<td align="right">1</td>
+<td align="right">0.93</td>
+</tr>
+<tr class="even">
+<td align="right">978</td>
+<td align="right">1.07</td>
+<td align="right">0.77</td>
+<td align="right">0.61</td>
+<td align="right">0.30</td>
+<td align="right">0.67</td>
+<td align="right">0.86</td>
+<td align="right">1</td>
+<td align="right">1.59</td>
+</tr>
+<tr class="odd">
+<td align="right">1105</td>
+<td align="right">1.54</td>
+<td align="right">0.36</td>
+<td align="right">0.15</td>
+<td align="right">0.15</td>
+<td align="right">0.15</td>
+<td align="right">0.66</td>
+<td align="right">1</td>
+<td align="right">1.38</td>
+</tr>
+<tr class="even">
+<td align="right">1542</td>
+<td align="right">1.20</td>
+<td align="right">0.53</td>
+<td align="right">0.23</td>
+<td align="right">0.19</td>
+<td align="right">0.23</td>
+<td align="right">0.76</td>
+<td align="right">0</td>
+<td align="right">1.44</td>
+</tr>
+<tr class="odd">
+<td align="right">1552</td>
+<td align="right">1.22</td>
+<td align="right">0.90</td>
+<td align="right">0.14</td>
+<td align="right">0.38</td>
+<td align="right">0.89</td>
+<td align="right">0.30</td>
+<td align="right">0</td>
+<td align="right">1.04</td>
+</tr>
+<tr class="even">
+<td align="right">1653</td>
+<td align="right">0.96</td>
+<td align="right">0.38</td>
+<td align="right">0.24</td>
+<td align="right">0.15</td>
+<td align="right">0.13</td>
+<td align="right">0.84</td>
+<td align="right">0</td>
+<td align="right">1.25</td>
+</tr>
+</tbody>
+</table>
+<p>We can make the four stem-and-leaf plots of Figure 2.4 with serial combinations of <code>pull()</code> and <code>stem()</code>.</p>
+<div class="sourceCode" id="cb58"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb58-1" data-line-number="1"><span class="co"># fitted initial status</span></a>
+<a class="sourceLine" id="cb58-2" data-line-number="2">table <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb58-3" data-line-number="3"><span class="st">  </span><span class="kw">pull</span>(init_stat_est) <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb58-4" data-line-number="4"><span class="st">  </span><span class="kw">stem</span>(<span class="dt">scale =</span> <span class="dv">2</span>)</a></code></pre></div>
+<pre><code>## 
+##   The decimal point is 1 digit(s) to the left of the |
+## 
+##    9 | 6
+##   10 | 17
+##   11 | 25
+##   12 | 027
+##   13 | 2
+##   14 | 3
+##   15 | 458
+##   16 | 
+##   17 | 4
+##   18 | 2
+##   19 | 0</code></pre>
+<div class="sourceCode" id="cb60"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb60-1" data-line-number="1"><span class="co"># fitted rate of change</span></a>
+<a class="sourceLine" id="cb60-2" data-line-number="2">table <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb60-3" data-line-number="3"><span class="st">  </span><span class="kw">pull</span>(rate_change_est) <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb60-4" data-line-number="4"><span class="st">  </span><span class="kw">stem</span>(<span class="dt">scale =</span> <span class="dv">2</span>)</a></code></pre></div>
+<pre><code>## 
+##   The decimal point is 1 digit(s) to the left of the |
+## 
+##   -1 | 0
+##   -0 | 63
+##    0 | 2256
+##    1 | 23457
+##    2 | 347
+##    3 | 
+##    4 | 
+##    5 | 
+##    6 | 1</code></pre>
+<div class="sourceCode" id="cb62"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb62-1" data-line-number="1"><span class="co"># residual variance</span></a>
+<a class="sourceLine" id="cb62-2" data-line-number="2">table <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb62-3" data-line-number="3"><span class="st">  </span><span class="kw">pull</span>(residual_var) <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb62-4" data-line-number="4"><span class="st">  </span><span class="kw">stem</span>(<span class="dt">scale =</span> <span class="dv">2</span>)</a></code></pre></div>
+<pre><code>## 
+##   The decimal point is 1 digit(s) to the left of the |
+## 
+##   0 | 016
+##   1 | 23355
+##   2 | 39
+##   3 | 7
+##   4 | 35
+##   5 | 4
+##   6 | 7
+##   7 | 
+##   8 | 9</code></pre>
+<div class="sourceCode" id="cb64"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb64-1" data-line-number="1"><span class="co"># r2 statistic</span></a>
+<a class="sourceLine" id="cb64-2" data-line-number="2">table <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb64-3" data-line-number="3"><span class="st">  </span><span class="kw">pull</span>(r2) <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb64-4" data-line-number="4"><span class="st">  </span><span class="kw">stem</span>(<span class="dt">scale =</span> <span class="dv">2</span>)</a></code></pre></div>
+<pre><code>## 
+##   The decimal point is 1 digit(s) to the left of the |
+## 
+##   2 | 035
+##   3 | 02236
+##   4 | 7
+##   5 | 
+##   6 | 6
+##   7 | 56
+##   8 | 4666</code></pre>
+<p>To make Figure 2.5, we’ll combine information from the original data and the ‘Estimates’ (i.e., posterior means) from our Bayesian models we’ve encoded in <code>mean_structure</code>.</p>
+<div class="sourceCode" id="cb66"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb66-1" data-line-number="1">by_id <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb66-2" data-line-number="2"><span class="st">  </span><span class="kw">unnest</span>(data) <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb66-3" data-line-number="3"><span class="st">  </span></a>
+<a class="sourceLine" id="cb66-4" data-line-number="4"><span class="st">  </span><span class="kw">ggplot</span>(<span class="kw">aes</span>(<span class="dt">x =</span> time, <span class="dt">y =</span> tolerance, <span class="dt">group =</span> id)) <span class="op">+</span></a>
+<a class="sourceLine" id="cb66-5" data-line-number="5"><span class="st">  </span><span class="kw">geom_point</span>() <span class="op">+</span></a>
+<a class="sourceLine" id="cb66-6" data-line-number="6"><span class="st">  </span><span class="kw">geom_abline</span>(<span class="dt">data =</span> mean_structure,</a>
+<a class="sourceLine" id="cb66-7" data-line-number="7">              <span class="kw">aes</span>(<span class="dt">intercept =</span> init_stat_est,</a>
+<a class="sourceLine" id="cb66-8" data-line-number="8">                  <span class="dt">slope =</span> rate_change_est, <span class="dt">group =</span> id),</a>
+<a class="sourceLine" id="cb66-9" data-line-number="9">              <span class="dt">color =</span> <span class="st">&quot;blue&quot;</span>) <span class="op">+</span></a>
+<a class="sourceLine" id="cb66-10" data-line-number="10"><span class="st">  </span><span class="kw">scale_x_continuous</span>(<span class="dt">breaks =</span> <span class="dv">0</span><span class="op">:</span><span class="dv">4</span>, <span class="dt">labels =</span> <span class="dv">0</span><span class="op">:</span><span class="dv">4</span> <span class="op">+</span><span class="st"> </span><span class="dv">11</span>) <span class="op">+</span></a>
+<a class="sourceLine" id="cb66-11" data-line-number="11"><span class="st">  </span><span class="kw">coord_cartesian</span>(<span class="dt">ylim =</span> <span class="kw">c</span>(<span class="dv">0</span>, <span class="dv">4</span>)) <span class="op">+</span></a>
+<a class="sourceLine" id="cb66-12" data-line-number="12"><span class="st">  </span><span class="kw">theme</span>(<span class="dt">panel.grid =</span> <span class="kw">element_blank</span>()) <span class="op">+</span></a>
+<a class="sourceLine" id="cb66-13" data-line-number="13"><span class="st">  </span><span class="kw">facet_wrap</span>(<span class="op">~</span>id)</a></code></pre></div>
+<p><img src="02_files/figure-gfm/unnamed-chunk-34-1.png" width="432" style="display: block; margin: auto;" /></p>
+</div>
+</div>
+</div>
+<div id="exploring-differences-in-change-across-people" class="section level2">
+<h2><span class="header-section-number">2.3</span> Exploring differences in change across people</h2>
+<p>“Having summarized how each individual changes over time, we now examine similarities and differences in these changes across people” (p. 33).</p>
+<div id="examining-the-entire-set-of-smooth-trajectories." class="section level3">
+<h3><span class="header-section-number">2.3.1</span> Examining the entire set of smooth trajectories.</h3>
+<p>The key to making our version of the left-hand side of Figure 2.6 is two <code>stat_smooth()</code> lines. The first one will produce the overall smooth. The second one, the one including the <code>aes(group = id)</code> argument, will give the <code>id</code>-specific smooths.</p>
+<div class="sourceCode" id="cb67"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb67-1" data-line-number="1">tolerance_pp <span class="op">%&gt;%</span></a>
+<a class="sourceLine" id="cb67-2" data-line-number="2"><span class="st">  </span><span class="kw">ggplot</span>(<span class="kw">aes</span>(<span class="dt">x =</span> age, <span class="dt">y =</span> tolerance)) <span class="op">+</span></a>
+<a class="sourceLine" id="cb67-3" data-line-number="3"><span class="st">  </span><span class="kw">stat_smooth</span>(<span class="dt">method =</span> <span class="st">&quot;loess&quot;</span>, <span class="dt">se =</span> F, <span class="dt">span =</span> <span class="fl">.9</span>, <span class="dt">size =</span> <span class="dv">2</span>) <span class="op">+</span></a>
+<a class="sourceLine" id="cb67-4" data-line-number="4"><span class="st">  </span><span class="kw">stat_smooth</span>(<span class="kw">aes</span>(<span class="dt">group =</span> id),</a>
+<a class="sourceLine" id="cb67-5" data-line-number="5">              <span class="dt">method =</span> <span class="st">&quot;loess&quot;</span>, <span class="dt">se =</span> F, <span class="dt">span =</span> <span class="fl">.9</span>, <span class="dt">size =</span> <span class="dv">1</span><span class="op">/</span><span class="dv">4</span>) <span class="op">+</span></a>
+<a class="sourceLine" id="cb67-6" data-line-number="6"><span class="st">  </span><span class="kw">coord_cartesian</span>(<span class="dt">ylim =</span> <span class="kw">c</span>(<span class="dv">0</span>, <span class="dv">4</span>)) <span class="op">+</span></a>
+<a class="sourceLine" id="cb67-7" data-line-number="7"><span class="st">  </span><span class="kw">theme</span>(<span class="dt">panel.grid =</span> <span class="kw">element_blank</span>())</a></code></pre></div>
+<p><img src="02_files/figure-gfm/unnamed-chunk-35-1.png" width="240" style="display: block; margin: auto;" /></p>
+<p>To get the linear OLS trajectories, just switch <code>method = &quot;loess&quot;</code> <code>to method = &quot;lm&quot;</code>.</p>
+<div class="sourceCode" id="cb68"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb68-1" data-line-number="1">tolerance_pp <span class="op">%&gt;%</span></a>
+<a class="sourceLine" id="cb68-2" data-line-number="2"><span class="st">  </span><span class="kw">ggplot</span>(<span class="kw">aes</span>(<span class="dt">x =</span> age, <span class="dt">y =</span> tolerance)) <span class="op">+</span></a>
+<a class="sourceLine" id="cb68-3" data-line-number="3"><span class="st">  </span><span class="kw">stat_smooth</span>(<span class="dt">method =</span> <span class="st">&quot;lm&quot;</span>, <span class="dt">se =</span> F, <span class="dt">span =</span> <span class="fl">.9</span>, <span class="dt">size =</span> <span class="dv">2</span>) <span class="op">+</span></a>
+<a class="sourceLine" id="cb68-4" data-line-number="4"><span class="st">  </span><span class="kw">stat_smooth</span>(<span class="kw">aes</span>(<span class="dt">group =</span> id),</a>
+<a class="sourceLine" id="cb68-5" data-line-number="5">              <span class="dt">method =</span> <span class="st">&quot;lm&quot;</span>, <span class="dt">se =</span> F, <span class="dt">span =</span> <span class="fl">.9</span>, <span class="dt">size =</span> <span class="dv">1</span><span class="op">/</span><span class="dv">4</span>) <span class="op">+</span></a>
+<a class="sourceLine" id="cb68-6" data-line-number="6"><span class="st">  </span><span class="kw">coord_cartesian</span>(<span class="dt">ylim =</span> <span class="kw">c</span>(<span class="dv">0</span>, <span class="dv">4</span>)) <span class="op">+</span></a>
+<a class="sourceLine" id="cb68-7" data-line-number="7"><span class="st">  </span><span class="kw">theme</span>(<span class="dt">panel.grid =</span> <span class="kw">element_blank</span>())</a></code></pre></div>
+<p><img src="02_files/figure-gfm/unnamed-chunk-36-1.png" width="240" style="display: block; margin: auto;" /></p>
+<p>But we wanted to be Bayesians. We already have the <code>id</code>-specific trajectories. All we need now is one based on all the data.</p>
+<div class="sourceCode" id="cb69"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb69-1" data-line-number="1">fit2<span class="fl">.3</span> &lt;-</a>
+<a class="sourceLine" id="cb69-2" data-line-number="2"><span class="st">  </span><span class="kw">update</span>(fit2<span class="fl">.1</span>, </a>
+<a class="sourceLine" id="cb69-3" data-line-number="3">         <span class="dt">newdata =</span> tolerance_pp,</a>
+<a class="sourceLine" id="cb69-4" data-line-number="4">         <span class="dt">file =</span> <span class="st">&quot;fits/fit02.03&quot;</span>)</a></code></pre></div>
+<p>Here’s the model summary.</p>
+<div class="sourceCode" id="cb70"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb70-1" data-line-number="1"><span class="kw">summary</span>(fit2<span class="fl">.3</span>)</a></code></pre></div>
+<pre><code>##  Family: gaussian 
+##   Links: mu = identity; sigma = identity 
+## Formula: tolerance ~ 1 + time 
+##    Data: tolerance_pp (Number of observations: 80) 
+## Samples: 4 chains, each with iter = 4000; warmup = 2000; thin = 1;
+##          total post-warmup samples = 8000
+## 
+## Population-Level Effects: 
+##           Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## Intercept     1.36      0.09     1.18     1.53 1.00     6951     5710
+## time          0.13      0.04     0.06     0.21 1.00     7128     5355
+## 
+## Family Specific Parameters: 
+##       Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## sigma     0.47      0.04     0.40     0.55 1.00     6938     5381
+## 
+## Samples were drawn using sampling(NUTS). For each parameter, Bulk_ESS
+## and Tail_ESS are effective sample size measures, and Rhat is the potential
+## scale reduction factor on split chains (at convergence, Rhat = 1).</code></pre>
+<p>Before, we used <code>posterior_summary()</code> to isolate the posterior means and <span class="math inline">\(SD\)</span>s. We can also use the <code>fixef()</code> function for that.</p>
+<div class="sourceCode" id="cb72"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb72-1" data-line-number="1"><span class="kw">fixef</span>(fit2<span class="fl">.3</span>)</a></code></pre></div>
+<pre><code>##           Estimate  Est.Error       Q2.5     Q97.5
+## Intercept 1.355090 0.09115680 1.17625722 1.5308531
+## time      0.131688 0.03707848 0.06014904 0.2053063</code></pre>
+<p>With a little subsetting, we can extract just the means from each.</p>
+<div class="sourceCode" id="cb74"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb74-1" data-line-number="1"><span class="kw">fixef</span>(fit2<span class="fl">.3</span>)[<span class="dv">1</span>, <span class="dv">1</span>]</a></code></pre></div>
+<pre><code>## [1] 1.35509</code></pre>
+<div class="sourceCode" id="cb76"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb76-1" data-line-number="1"><span class="kw">fixef</span>(fit2<span class="fl">.3</span>)[<span class="dv">2</span>, <span class="dv">1</span>]</a></code></pre></div>
+<pre><code>## [1] 0.131688</code></pre>
+<p>For this plot, we’ll work more directly with the model formulas to plot the trajectories. We can use <code>init_stat_est</code> and <code>rate_change_est</code> from the <code>mean_structure</code> object as stand-ins for <span class="math inline">\(\beta_{0i}\)</span> and <span class="math inline">\(\beta_{1i}\)</span> from our model equation,</p>
+<p><span class="math display">\[\text{tolerance}_{ij} = \beta_{0i} + \beta_{1i} \cdot \text{time}_{ij} + \epsilon_{ij},\]</span></p>
+<p>where <span class="math inline">\(i\)</span> indexes children and <span class="math inline">\(j\)</span> indexes time points. All we need to do is plug in the appropriate values for <code>time</code> and we’ll have the fitted <code>tolerance</code> values for each level of <code>id</code>. After a little wrangling, the data will be in good shape for plotting.</p>
+<div class="sourceCode" id="cb78"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb78-1" data-line-number="1">tol_fitted &lt;-</a>
+<a class="sourceLine" id="cb78-2" data-line-number="2"><span class="st">  </span>mean_structure <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb78-3" data-line-number="3"><span class="st">  </span><span class="kw">mutate</span>(<span class="st">`</span><span class="dt">11</span><span class="st">`</span> =<span class="st"> </span>init_stat_est <span class="op">+</span><span class="st"> </span>rate_change_est <span class="op">*</span><span class="st"> </span><span class="dv">0</span>,</a>
+<a class="sourceLine" id="cb78-4" data-line-number="4">         <span class="st">`</span><span class="dt">15</span><span class="st">`</span> =<span class="st"> </span>init_stat_est <span class="op">+</span><span class="st"> </span>rate_change_est <span class="op">*</span><span class="st"> </span><span class="dv">4</span>) <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb78-5" data-line-number="5"><span class="st">  </span><span class="kw">select</span>(id, <span class="st">`</span><span class="dt">11</span><span class="st">`</span>, <span class="st">`</span><span class="dt">15</span><span class="st">`</span>) <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb78-6" data-line-number="6"><span class="st">  </span><span class="kw">pivot_longer</span>(<span class="op">-</span>id, </a>
+<a class="sourceLine" id="cb78-7" data-line-number="7">               <span class="dt">names_to =</span> <span class="st">&quot;age&quot;</span>, </a>
+<a class="sourceLine" id="cb78-8" data-line-number="8">               <span class="dt">values_to =</span> <span class="st">&quot;tolerance&quot;</span>) <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb78-9" data-line-number="9"><span class="st">  </span><span class="kw">mutate</span>(<span class="dt">age =</span> <span class="kw">as.integer</span>(age))</a>
+<a class="sourceLine" id="cb78-10" data-line-number="10"></a>
+<a class="sourceLine" id="cb78-11" data-line-number="11"><span class="kw">head</span>(tol_fitted)</a></code></pre></div>
+<pre><code>## # A tibble: 6 x 3
+##      id   age tolerance
+##   &lt;dbl&gt; &lt;int&gt;     &lt;dbl&gt;
+## 1     9    11      1.9 
+## 2     9    15      2.38
+## 3    45    11      1.15
+## 4    45    15      1.83
+## 5   268    11      1.55
+## 6   268    15      1.63</code></pre>
+<p>We’ll plot the <code>id</code>-level trajectories with those values and <code>geom_line()</code>. To get the overall trajectory, we’ll get tricky with <code>fixef(fit2.3)</code> and <code>geom_abline()</code>.</p>
+<div class="sourceCode" id="cb80"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb80-1" data-line-number="1">tol_fitted <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb80-2" data-line-number="2"><span class="st">  </span><span class="kw">ggplot</span>(<span class="kw">aes</span>(<span class="dt">x =</span> age, <span class="dt">y =</span> tolerance, <span class="dt">group =</span> id)) <span class="op">+</span></a>
+<a class="sourceLine" id="cb80-3" data-line-number="3"><span class="st">  </span><span class="kw">geom_line</span>(<span class="dt">color =</span> <span class="st">&quot;blue&quot;</span>, <span class="dt">size =</span> <span class="dv">1</span><span class="op">/</span><span class="dv">4</span>) <span class="op">+</span></a>
+<a class="sourceLine" id="cb80-4" data-line-number="4"><span class="st">  </span><span class="kw">geom_abline</span>(<span class="dt">intercept =</span> <span class="kw">fixef</span>(fit2<span class="fl">.3</span>)[<span class="dv">1</span>, <span class="dv">1</span>] <span class="op">+</span><span class="st"> </span><span class="kw">fixef</span>(fit2<span class="fl">.3</span>)[<span class="dv">2</span>, <span class="dv">1</span>] <span class="op">*</span><span class="st"> </span><span class="dv">-11</span>,</a>
+<a class="sourceLine" id="cb80-5" data-line-number="5">              <span class="dt">slope     =</span> <span class="kw">fixef</span>(fit2<span class="fl">.3</span>)[<span class="dv">2</span>, <span class="dv">1</span>],</a>
+<a class="sourceLine" id="cb80-6" data-line-number="6">              <span class="dt">color =</span> <span class="st">&quot;blue&quot;</span>, <span class="dt">size =</span> <span class="dv">2</span>) <span class="op">+</span></a>
+<a class="sourceLine" id="cb80-7" data-line-number="7"><span class="st">  </span><span class="kw">coord_cartesian</span>(<span class="dt">ylim =</span> <span class="kw">c</span>(<span class="dv">0</span>, <span class="dv">4</span>)) <span class="op">+</span></a>
+<a class="sourceLine" id="cb80-8" data-line-number="8"><span class="st">  </span><span class="kw">theme</span>(<span class="dt">panel.grid =</span> <span class="kw">element_blank</span>()) </a></code></pre></div>
+<p><img src="02_files/figure-gfm/unnamed-chunk-41-1.png" width="240" style="display: block; margin: auto;" /></p>
+</div>
+<div id="using-the-results-of-model-fitting-to-frame-questions-about-change." class="section level3">
+<h3><span class="header-section-number">2.3.2</span> Using the results of model fitting to frame questions about change.</h3>
+<p>If you’re new to the multilevel model, the ideas in this section are foundational.</p>
+<blockquote>
+<p>To learn about the observed <em>average</em> pattern of change, we examine the sample averages of the fitted intercepts and slopes; these tell us about the average initial status and the average annual rate of change in the sample as a whole. To learn about the observed <em>individual differences</em> in change, we examine the sample <em>variances</em> and <em>standard deviations</em> of the intercepts and slopes; these tell us about the observed variability in initial status. And to learn about the observed relationship between initial status and the rate of change, we can examine the sample <em>covariance</em> or <em>correlation</em> between intercepts and slopes.</p>
+<p>Formal answers to these questions require the multilevel model for change of chapter 3. But we can presage this work by conducting simple descriptive analyses of the estimated intercepts and slopes. (p. 36, <em>emphasis</em> in the original)</p>
+</blockquote>
+<p>Here are the means and standard deviations presented in Table 2.3.</p>
+<div class="sourceCode" id="cb81"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb81-1" data-line-number="1">mean_structure <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb81-2" data-line-number="2"><span class="st">  </span><span class="kw">pivot_longer</span>(<span class="kw">ends_with</span>(<span class="st">&quot;est&quot;</span>)) <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb81-3" data-line-number="3"><span class="st">  </span><span class="kw">group_by</span>(name) <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb81-4" data-line-number="4"><span class="st">  </span><span class="kw">summarise</span>(<span class="dt">mean =</span> <span class="kw">mean</span>(value),</a>
+<a class="sourceLine" id="cb81-5" data-line-number="5">            <span class="dt">sd   =</span> <span class="kw">sd</span>(value)) <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb81-6" data-line-number="6"><span class="st">  </span><span class="kw">mutate_if</span>(is.double, round, <span class="dt">digits =</span> <span class="dv">2</span>)</a></code></pre></div>
+<pre><code>## # A tibble: 2 x 3
+##   name             mean    sd
+##   &lt;chr&gt;           &lt;dbl&gt; &lt;dbl&gt;
+## 1 init_stat_est    1.37 0.290
+## 2 rate_change_est  0.13 0.17</code></pre>
+<p>Here’s how to get the Pearson’s correlation coefficient.</p>
+<div class="sourceCode" id="cb83"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb83-1" data-line-number="1">mean_structure <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb83-2" data-line-number="2"><span class="st">  </span><span class="kw">select</span>(init_stat_est, rate_change_est) <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb83-3" data-line-number="3"><span class="st">  </span><span class="kw">cor</span>() <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb83-4" data-line-number="4"><span class="st">  </span><span class="kw">round</span>(<span class="dt">digits =</span> <span class="dv">2</span>)</a></code></pre></div>
+<pre><code>##                 init_stat_est rate_change_est
+## init_stat_est            1.00           -0.42
+## rate_change_est         -0.42            1.00</code></pre>
+</div>
+<div id="exploring-the-relationship-between-change-and-time-invariant-predictors." class="section level3">
+<h3><span class="header-section-number">2.3.3</span> Exploring the relationship between change and time-invariant predictors.</h3>
+<p>“Evaluating the impact of predictors helps you uncover systematic patterns in the individual change trajectories corresponding to interindividual variation in personal characteristics” (p. 37).</p>
+<div id="graphically-examining-groups-of-smoothed-individual-growth-trajectories." class="section level4">
+<h4><span class="header-section-number">2.3.3.1</span> Graphically examining groups of smoothed individual growth trajectories.</h4>
+<p>If we’d like Bayesian estimates differing by <code>male</code>, we’ll need to fit an interaction model.</p>
+<div class="sourceCode" id="cb85"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb85-1" data-line-number="1">fit2<span class="fl">.4</span> &lt;-</a>
+<a class="sourceLine" id="cb85-2" data-line-number="2"><span class="st">  </span><span class="kw">update</span>(fit2<span class="fl">.1</span>, </a>
+<a class="sourceLine" id="cb85-3" data-line-number="3">         <span class="dt">newdata =</span> tolerance_pp,</a>
+<a class="sourceLine" id="cb85-4" data-line-number="4">         tolerance <span class="op">~</span><span class="st"> </span><span class="dv">1</span> <span class="op">+</span><span class="st"> </span>time <span class="op">+</span><span class="st"> </span>male <span class="op">+</span><span class="st"> </span>time<span class="op">:</span>male,</a>
+<a class="sourceLine" id="cb85-5" data-line-number="5">         <span class="dt">file =</span> <span class="st">&quot;fits/fit02.04&quot;</span>)</a></code></pre></div>
+<p>Check the model summary.</p>
+<div class="sourceCode" id="cb86"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb86-1" data-line-number="1"><span class="kw">print</span>(fit2<span class="fl">.4</span>)</a></code></pre></div>
+<pre><code>##  Family: gaussian 
+##   Links: mu = identity; sigma = identity 
+## Formula: tolerance ~ time + male + time:male 
+##    Data: tolerance_pp (Number of observations: 80) 
+## Samples: 4 chains, each with iter = 4000; warmup = 2000; thin = 1;
+##          total post-warmup samples = 8000
+## 
+## Population-Level Effects: 
+##           Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## Intercept     1.35      0.12     1.12     1.59 1.00     4411     5364
+## time          0.10      0.05     0.01     0.20 1.00     4277     4949
+## male          0.01      0.19    -0.36     0.38 1.00     3714     4226
+## time:male     0.07      0.08    -0.09     0.21 1.00     3468     3867
+## 
+## Family Specific Parameters: 
+##       Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## sigma     0.47      0.04     0.40     0.55 1.00     5993     5064
+## 
+## Samples were drawn using sampling(NUTS). For each parameter, Bulk_ESS
+## and Tail_ESS are effective sample size measures, and Rhat is the potential
+## scale reduction factor on split chains (at convergence, Rhat = 1).</code></pre>
+<p>Here’s how to use <code>fixef()</code> and the model equation to get fitted values for <code>tolerance</code> based on specific values for <code>time</code> and <code>male</code>.</p>
+<div class="sourceCode" id="cb88"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb88-1" data-line-number="1">tol_fitted_male &lt;-</a>
+<a class="sourceLine" id="cb88-2" data-line-number="2"><span class="st">  </span><span class="kw">tibble</span>(<span class="dt">male =</span> <span class="kw">rep</span>(<span class="dv">0</span><span class="op">:</span><span class="dv">1</span>, <span class="dt">each =</span> <span class="dv">2</span>),</a>
+<a class="sourceLine" id="cb88-3" data-line-number="3">         <span class="dt">age  =</span> <span class="kw">rep</span>(<span class="kw">c</span>(<span class="dv">11</span>, <span class="dv">15</span>), <span class="dt">times =</span> <span class="dv">2</span>)) <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb88-4" data-line-number="4"><span class="st">  </span><span class="kw">mutate</span>(<span class="dt">time =</span> age <span class="op">-</span><span class="st"> </span><span class="dv">11</span>) <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb88-5" data-line-number="5"><span class="st">  </span><span class="kw">mutate</span>(<span class="dt">tolerance =</span> <span class="kw">fixef</span>(fit2<span class="fl">.4</span>)[<span class="dv">1</span>, <span class="dv">1</span>] <span class="op">+</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb88-6" data-line-number="6"><span class="st">           </span><span class="kw">fixef</span>(fit2<span class="fl">.4</span>)[<span class="dv">2</span>, <span class="dv">1</span>] <span class="op">*</span><span class="st"> </span>time <span class="op">+</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb88-7" data-line-number="7"><span class="st">           </span><span class="kw">fixef</span>(fit2<span class="fl">.4</span>)[<span class="dv">3</span>, <span class="dv">1</span>] <span class="op">*</span><span class="st"> </span>male <span class="op">+</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb88-8" data-line-number="8"><span class="st">           </span><span class="kw">fixef</span>(fit2<span class="fl">.4</span>)[<span class="dv">4</span>, <span class="dv">1</span>] <span class="op">*</span><span class="st"> </span>time <span class="op">*</span><span class="st"> </span>male)</a>
+<a class="sourceLine" id="cb88-9" data-line-number="9"></a>
+<a class="sourceLine" id="cb88-10" data-line-number="10">tol_fitted_male</a></code></pre></div>
+<pre><code>## # A tibble: 4 x 4
+##    male   age  time tolerance
+##   &lt;int&gt; &lt;dbl&gt; &lt;dbl&gt;     &lt;dbl&gt;
+## 1     0    11     0      1.35
+## 2     0    15     4      1.76
+## 3     1    11     0      1.36
+## 4     1    15     4      2.03</code></pre>
+<p>Now we’re ready to make our Bayesian version of the top panels of Figure 2.7.</p>
+<div class="sourceCode" id="cb90"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb90-1" data-line-number="1">tol_fitted <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb90-2" data-line-number="2"><span class="st">  </span><span class="co"># we need to add `male` values to `tol_fitted`</span></a>
+<a class="sourceLine" id="cb90-3" data-line-number="3"><span class="st">  </span><span class="kw">left_join</span>(tolerance_pp <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">select</span>(id, male),</a>
+<a class="sourceLine" id="cb90-4" data-line-number="4">            <span class="dt">by =</span> <span class="st">&quot;id&quot;</span>) <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb90-5" data-line-number="5"><span class="st">  </span></a>
+<a class="sourceLine" id="cb90-6" data-line-number="6"><span class="st">  </span><span class="kw">ggplot</span>(<span class="kw">aes</span>(<span class="dt">x =</span> age, <span class="dt">y =</span> tolerance, <span class="dt">color =</span> <span class="kw">factor</span>(male))) <span class="op">+</span></a>
+<a class="sourceLine" id="cb90-7" data-line-number="7"><span class="st">  </span><span class="kw">geom_line</span>(<span class="kw">aes</span>(<span class="dt">group =</span> id),</a>
+<a class="sourceLine" id="cb90-8" data-line-number="8">            <span class="dt">size =</span> <span class="dv">1</span><span class="op">/</span><span class="dv">4</span>) <span class="op">+</span></a>
+<a class="sourceLine" id="cb90-9" data-line-number="9"><span class="st">  </span><span class="kw">geom_line</span>(<span class="dt">data =</span> tol_fitted_male,</a>
+<a class="sourceLine" id="cb90-10" data-line-number="10">            <span class="dt">size =</span> <span class="dv">2</span>) <span class="op">+</span></a>
+<a class="sourceLine" id="cb90-11" data-line-number="11"><span class="st">  </span><span class="kw">scale_color_viridis_d</span>(<span class="dt">end =</span> <span class="fl">.75</span>) <span class="op">+</span></a>
+<a class="sourceLine" id="cb90-12" data-line-number="12"><span class="st">  </span><span class="kw">coord_cartesian</span>(<span class="dt">ylim =</span> <span class="kw">c</span>(<span class="dv">0</span>, <span class="dv">4</span>)) <span class="op">+</span></a>
+<a class="sourceLine" id="cb90-13" data-line-number="13"><span class="st">  </span><span class="kw">theme</span>(<span class="dt">legend.position =</span> <span class="st">&quot;none&quot;</span>,</a>
+<a class="sourceLine" id="cb90-14" data-line-number="14">        <span class="dt">panel.grid =</span> <span class="kw">element_blank</span>()) <span class="op">+</span></a>
+<a class="sourceLine" id="cb90-15" data-line-number="15"><span class="st">  </span><span class="kw">facet_wrap</span>(<span class="op">~</span>male)</a></code></pre></div>
+<p><img src="02_files/figure-gfm/unnamed-chunk-46-1.png" width="480" style="display: block; margin: auto;" /></p>
+<p>Before we can do the same thing with <code>exposure</code>, we’ll need to dichotomize it by its median. A simple way is with a conditional statement within the <code>if_else()</code> function.</p>
+<div class="sourceCode" id="cb91"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb91-1" data-line-number="1">tolerance_pp &lt;-</a>
+<a class="sourceLine" id="cb91-2" data-line-number="2"><span class="st">  </span>tolerance_pp <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb91-3" data-line-number="3"><span class="st">  </span><span class="kw">mutate</span>(<span class="dt">exposure_01 =</span> <span class="kw">if_else</span>(exposure <span class="op">&gt;</span><span class="st"> </span><span class="kw">median</span>(exposure), <span class="dv">1</span>, <span class="dv">0</span>))</a></code></pre></div>
+<p>Now fit the second interaction model.</p>
+<div class="sourceCode" id="cb92"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb92-1" data-line-number="1">fit2<span class="fl">.5</span> &lt;-</a>
+<a class="sourceLine" id="cb92-2" data-line-number="2"><span class="st">  </span><span class="kw">update</span>(fit2<span class="fl">.4</span>, </a>
+<a class="sourceLine" id="cb92-3" data-line-number="3">         <span class="dt">newdata =</span> tolerance_pp,</a>
+<a class="sourceLine" id="cb92-4" data-line-number="4">         tolerance <span class="op">~</span><span class="st"> </span><span class="dv">1</span> <span class="op">+</span><span class="st"> </span>time <span class="op">+</span><span class="st"> </span>exposure_<span class="dv">01</span> <span class="op">+</span><span class="st"> </span>time<span class="op">:</span>exposure_<span class="dv">01</span>,</a>
+<a class="sourceLine" id="cb92-5" data-line-number="5">         <span class="dt">file =</span> <span class="st">&quot;fits/fit02.05&quot;</span>)</a></code></pre></div>
+<p>Here’s the summary.</p>
+<div class="sourceCode" id="cb93"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb93-1" data-line-number="1"><span class="kw">print</span>(fit2<span class="fl">.5</span>)</a></code></pre></div>
+<pre><code>##  Family: gaussian 
+##   Links: mu = identity; sigma = identity 
+## Formula: tolerance ~ time + exposure_01 + time:exposure_01 
+##    Data: tolerance_pp (Number of observations: 80) 
+## Samples: 4 chains, each with iter = 4000; warmup = 2000; thin = 1;
+##          total post-warmup samples = 8000
+## 
+## Population-Level Effects: 
+##                  Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## Intercept            1.39      0.12     1.16     1.63 1.00     4132     5646
+## time                 0.04      0.05    -0.05     0.14 1.00     3879     4757
+## exposure_01         -0.07      0.17    -0.40     0.25 1.00     3594     4929
+## time:exposure_01     0.18      0.07     0.04     0.31 1.00     3283     4207
+## 
+## Family Specific Parameters: 
+##       Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## sigma     0.43      0.04     0.37     0.51 1.00     5907     4869
+## 
+## Samples were drawn using sampling(NUTS). For each parameter, Bulk_ESS
+## and Tail_ESS are effective sample size measures, and Rhat is the potential
+## scale reduction factor on split chains (at convergence, Rhat = 1).</code></pre>
+<p>Now use <code>fixef()</code> and the model equation to get fitted values for <code>tolerance</code> based on specific values for <code>time</code> and <code>exposure_01</code>.</p>
+<div class="sourceCode" id="cb95"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb95-1" data-line-number="1">tol_fitted_exposure &lt;-</a>
+<a class="sourceLine" id="cb95-2" data-line-number="2"><span class="st">  </span><span class="kw">crossing</span>(<span class="dt">exposure_01 =</span> <span class="dv">0</span><span class="op">:</span><span class="dv">1</span>,</a>
+<a class="sourceLine" id="cb95-3" data-line-number="3">           <span class="dt">age         =</span> <span class="kw">c</span>(<span class="dv">11</span>, <span class="dv">15</span>)) <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb95-4" data-line-number="4"><span class="st">  </span><span class="kw">mutate</span>(<span class="dt">time =</span> age <span class="op">-</span><span class="st"> </span><span class="dv">11</span>) <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb95-5" data-line-number="5"><span class="st">  </span><span class="kw">mutate</span>(<span class="dt">tolerance =</span> <span class="kw">fixef</span>(fit2<span class="fl">.5</span>)[<span class="dv">1</span>, <span class="dv">1</span>] <span class="op">+</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb95-6" data-line-number="6"><span class="st">           </span><span class="kw">fixef</span>(fit2<span class="fl">.5</span>)[<span class="dv">2</span>, <span class="dv">1</span>] <span class="op">*</span><span class="st"> </span>time <span class="op">+</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb95-7" data-line-number="7"><span class="st">           </span><span class="kw">fixef</span>(fit2<span class="fl">.5</span>)[<span class="dv">3</span>, <span class="dv">1</span>] <span class="op">*</span><span class="st"> </span>exposure_<span class="dv">01</span> <span class="op">+</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb95-8" data-line-number="8"><span class="st">           </span><span class="kw">fixef</span>(fit2<span class="fl">.5</span>)[<span class="dv">4</span>, <span class="dv">1</span>] <span class="op">*</span><span class="st"> </span>time <span class="op">*</span><span class="st"> </span>exposure_<span class="dv">01</span>,</a>
+<a class="sourceLine" id="cb95-9" data-line-number="9">         <span class="dt">exposure =</span> <span class="kw">if_else</span>(exposure_<span class="dv">01</span> <span class="op">==</span><span class="st"> </span><span class="dv">1</span>, <span class="st">&quot;high exposure&quot;</span>, <span class="st">&quot;low exposure&quot;</span>) <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb95-10" data-line-number="10"><span class="st">           </span><span class="kw">factor</span>(., <span class="dt">levels =</span> <span class="kw">c</span>(<span class="st">&quot;low exposure&quot;</span>, <span class="st">&quot;high exposure&quot;</span>)))</a>
+<a class="sourceLine" id="cb95-11" data-line-number="11"></a>
+<a class="sourceLine" id="cb95-12" data-line-number="12">tol_fitted_exposure</a></code></pre></div>
+<pre><code>## # A tibble: 4 x 5
+##   exposure_01   age  time tolerance exposure     
+##         &lt;int&gt; &lt;dbl&gt; &lt;dbl&gt;     &lt;dbl&gt; &lt;fct&gt;        
+## 1           0    11     0      1.39 low exposure 
+## 2           0    15     4      1.56 low exposure 
+## 3           1    11     0      1.32 high exposure
+## 4           1    15     4      2.20 high exposure</code></pre>
+<p>Did you notice in the last lines in the second <code>mutate()</code> how we made a version of <code>exposure</code> that is a factor? That will come in handy for labeling and ordering the subplots. Now make our Bayesian version of the bottom panels of Figure 2.7.</p>
+<div class="sourceCode" id="cb97"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb97-1" data-line-number="1">tol_fitted <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb97-2" data-line-number="2"><span class="st">  </span><span class="co"># we need to add `exposure_01` values to `tol_fitted`</span></a>
+<a class="sourceLine" id="cb97-3" data-line-number="3"><span class="st">  </span><span class="kw">left_join</span>(tolerance_pp <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">select</span>(id, exposure_<span class="dv">01</span>),</a>
+<a class="sourceLine" id="cb97-4" data-line-number="4">            <span class="dt">by =</span> <span class="st">&quot;id&quot;</span>) <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb97-5" data-line-number="5"><span class="st">  </span><span class="kw">mutate</span>(<span class="dt">exposure =</span> <span class="kw">if_else</span>(exposure_<span class="dv">01</span> <span class="op">==</span><span class="st"> </span><span class="dv">1</span>, <span class="st">&quot;high exposure&quot;</span>, <span class="st">&quot;low exposure&quot;</span>) <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb97-6" data-line-number="6"><span class="st">           </span><span class="kw">factor</span>(., <span class="dt">levels =</span> <span class="kw">c</span>(<span class="st">&quot;low exposure&quot;</span>, <span class="st">&quot;high exposure&quot;</span>))) <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb97-7" data-line-number="7"><span class="st">  </span></a>
+<a class="sourceLine" id="cb97-8" data-line-number="8"><span class="st">  </span><span class="kw">ggplot</span>(<span class="kw">aes</span>(<span class="dt">x =</span> age, <span class="dt">y =</span> tolerance, <span class="dt">color =</span> exposure)) <span class="op">+</span></a>
+<a class="sourceLine" id="cb97-9" data-line-number="9"><span class="st">  </span><span class="kw">geom_line</span>(<span class="kw">aes</span>(<span class="dt">group =</span> id),</a>
+<a class="sourceLine" id="cb97-10" data-line-number="10">            <span class="dt">size =</span> <span class="dv">1</span><span class="op">/</span><span class="dv">4</span>) <span class="op">+</span></a>
+<a class="sourceLine" id="cb97-11" data-line-number="11"><span class="st">  </span><span class="kw">geom_line</span>(<span class="dt">data =</span> tol_fitted_exposure,</a>
+<a class="sourceLine" id="cb97-12" data-line-number="12">            <span class="dt">size =</span> <span class="dv">2</span>) <span class="op">+</span></a>
+<a class="sourceLine" id="cb97-13" data-line-number="13"><span class="st">  </span><span class="kw">scale_color_viridis_d</span>(<span class="dt">option =</span> <span class="st">&quot;A&quot;</span>, <span class="dt">end =</span> <span class="fl">.75</span>) <span class="op">+</span></a>
+<a class="sourceLine" id="cb97-14" data-line-number="14"><span class="st">  </span><span class="kw">coord_cartesian</span>(<span class="dt">ylim =</span> <span class="kw">c</span>(<span class="dv">0</span>, <span class="dv">4</span>)) <span class="op">+</span></a>
+<a class="sourceLine" id="cb97-15" data-line-number="15"><span class="st">  </span><span class="kw">theme</span>(<span class="dt">legend.position =</span> <span class="st">&quot;none&quot;</span>,</a>
+<a class="sourceLine" id="cb97-16" data-line-number="16">        <span class="dt">panel.grid =</span> <span class="kw">element_blank</span>()) <span class="op">+</span></a>
+<a class="sourceLine" id="cb97-17" data-line-number="17"><span class="st">  </span><span class="kw">facet_wrap</span>(<span class="op">~</span>exposure)</a></code></pre></div>
+<p><img src="02_files/figure-gfm/unnamed-chunk-50-1.png" width="480" style="display: block; margin: auto;" /></p>
+</div>
+<div id="the-relationship-between-ols-estimated-single-level-bayesian-trajectories-and-substantive-predictors" class="section level4">
+<h4><span class="header-section-number">2.3.3.2</span> The relationship between <del>OLS-Estimated</del> single-level Bayesian trajectories and substantive predictors</h4>
+<p>“To investigate whether fitted trajectories vary systematically with predictors, we can treat the estimated intercepts and slopes as outcomes and explore the relationship between them and predictors” (p. 39). Here are the left panels of Figure 2.8.</p>
+<div class="sourceCode" id="cb98"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb98-1" data-line-number="1">p1 &lt;-</a>
+<a class="sourceLine" id="cb98-2" data-line-number="2"><span class="st">  </span>mean_structure <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb98-3" data-line-number="3"><span class="st">  </span><span class="kw">pivot_longer</span>(<span class="kw">ends_with</span>(<span class="st">&quot;est&quot;</span>)) <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb98-4" data-line-number="4"><span class="st">  </span><span class="kw">mutate</span>(<span class="dt">name =</span> <span class="kw">factor</span>(name, <span class="dt">labels =</span> <span class="kw">c</span>(<span class="st">&quot;Fitted inital status&quot;</span>, <span class="st">&quot;Fitted rate of change&quot;</span>))) <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb98-5" data-line-number="5"><span class="st">  </span><span class="co"># we need to add `male` values to `tol_fitted`</span></a>
+<a class="sourceLine" id="cb98-6" data-line-number="6"><span class="st">  </span><span class="kw">left_join</span>(tolerance_pp <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">select</span>(id, male),</a>
+<a class="sourceLine" id="cb98-7" data-line-number="7">            <span class="dt">by =</span> <span class="st">&quot;id&quot;</span>) <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb98-8" data-line-number="8"><span class="st">  </span></a>
+<a class="sourceLine" id="cb98-9" data-line-number="9"><span class="st">  </span><span class="kw">ggplot</span>(<span class="kw">aes</span>(<span class="dt">x =</span> <span class="kw">factor</span>(male), <span class="dt">y =</span> value, <span class="dt">color =</span> name)) <span class="op">+</span></a>
+<a class="sourceLine" id="cb98-10" data-line-number="10"><span class="st">  </span><span class="kw">geom_point</span>(<span class="dt">alpha =</span> <span class="dv">1</span><span class="op">/</span><span class="dv">2</span>) <span class="op">+</span></a>
+<a class="sourceLine" id="cb98-11" data-line-number="11"><span class="st">  </span><span class="kw">scale_color_viridis_d</span>(<span class="dt">option =</span> <span class="st">&quot;B&quot;</span>, <span class="dt">begin =</span> <span class="fl">.2</span>, <span class="dt">end =</span> <span class="fl">.7</span>) <span class="op">+</span></a>
+<a class="sourceLine" id="cb98-12" data-line-number="12"><span class="st">  </span><span class="kw">labs</span>(<span class="dt">x =</span> <span class="st">&quot;male&quot;</span>,</a>
+<a class="sourceLine" id="cb98-13" data-line-number="13">       <span class="dt">y =</span> <span class="ot">NULL</span>) <span class="op">+</span></a>
+<a class="sourceLine" id="cb98-14" data-line-number="14"><span class="st">  </span><span class="kw">theme</span>(<span class="dt">legend.position =</span> <span class="st">&quot;none&quot;</span>,</a>
+<a class="sourceLine" id="cb98-15" data-line-number="15">        <span class="dt">panel.grid =</span> <span class="kw">element_blank</span>()) <span class="op">+</span></a>
+<a class="sourceLine" id="cb98-16" data-line-number="16"><span class="st">  </span><span class="kw">facet_wrap</span>(<span class="op">~</span>name, <span class="dt">scale =</span> <span class="st">&quot;free_y&quot;</span>, <span class="dt">ncol =</span> <span class="dv">1</span>)</a>
+<a class="sourceLine" id="cb98-17" data-line-number="17"></a>
+<a class="sourceLine" id="cb98-18" data-line-number="18">p1</a></code></pre></div>
+<p><img src="02_files/figure-gfm/unnamed-chunk-51-1.png" width="240" style="display: block; margin: auto;" /></p>
+<p>Here are the right panels.</p>
+<div class="sourceCode" id="cb99"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb99-1" data-line-number="1">p2 &lt;-</a>
+<a class="sourceLine" id="cb99-2" data-line-number="2"><span class="st">  </span>mean_structure <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb99-3" data-line-number="3"><span class="st">  </span><span class="kw">pivot_longer</span>(<span class="kw">ends_with</span>(<span class="st">&quot;est&quot;</span>)) <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb99-4" data-line-number="4"><span class="st">  </span><span class="kw">mutate</span>(<span class="dt">name =</span> <span class="kw">factor</span>(name, <span class="dt">labels =</span> <span class="kw">c</span>(<span class="st">&quot;Fitted inital status&quot;</span>, <span class="st">&quot;Fitted rate of change&quot;</span>))) <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb99-5" data-line-number="5"><span class="st">  </span><span class="co"># we need to add `male` values to `tol_fitted`</span></a>
+<a class="sourceLine" id="cb99-6" data-line-number="6"><span class="st">  </span><span class="kw">left_join</span>(tolerance_pp <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">select</span>(id, exposure),</a>
+<a class="sourceLine" id="cb99-7" data-line-number="7">            <span class="dt">by =</span> <span class="st">&quot;id&quot;</span>) <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb99-8" data-line-number="8"><span class="st">  </span></a>
+<a class="sourceLine" id="cb99-9" data-line-number="9"><span class="st">  </span><span class="kw">ggplot</span>(<span class="kw">aes</span>(<span class="dt">x =</span> exposure, <span class="dt">y =</span> value, <span class="dt">color =</span> name)) <span class="op">+</span></a>
+<a class="sourceLine" id="cb99-10" data-line-number="10"><span class="st">  </span><span class="kw">geom_point</span>(<span class="dt">alpha =</span> <span class="dv">1</span><span class="op">/</span><span class="dv">2</span>) <span class="op">+</span></a>
+<a class="sourceLine" id="cb99-11" data-line-number="11"><span class="st">  </span><span class="kw">scale_color_viridis_d</span>(<span class="dt">option =</span> <span class="st">&quot;B&quot;</span>, <span class="dt">begin =</span> <span class="fl">.2</span>, <span class="dt">end =</span> <span class="fl">.7</span>) <span class="op">+</span></a>
+<a class="sourceLine" id="cb99-12" data-line-number="12"><span class="st">  </span><span class="kw">scale_x_continuous</span>(<span class="dt">breaks =</span> <span class="dv">0</span><span class="op">:</span><span class="dv">2</span>,</a>
+<a class="sourceLine" id="cb99-13" data-line-number="13">                     <span class="dt">limits =</span> <span class="kw">c</span>(<span class="dv">0</span>, <span class="fl">2.4</span>)) <span class="op">+</span></a>
+<a class="sourceLine" id="cb99-14" data-line-number="14"><span class="st">  </span><span class="kw">labs</span>(<span class="dt">y =</span> <span class="ot">NULL</span>) <span class="op">+</span></a>
+<a class="sourceLine" id="cb99-15" data-line-number="15"><span class="st">  </span><span class="kw">theme</span>(<span class="dt">legend.position =</span> <span class="st">&quot;none&quot;</span>,</a>
+<a class="sourceLine" id="cb99-16" data-line-number="16">        <span class="dt">panel.grid =</span> <span class="kw">element_blank</span>()) <span class="op">+</span></a>
+<a class="sourceLine" id="cb99-17" data-line-number="17"><span class="st">  </span><span class="kw">facet_wrap</span>(<span class="op">~</span>name, <span class="dt">scale =</span> <span class="st">&quot;free_y&quot;</span>, <span class="dt">ncol =</span> <span class="dv">1</span>)</a>
+<a class="sourceLine" id="cb99-18" data-line-number="18"></a>
+<a class="sourceLine" id="cb99-19" data-line-number="19">p2</a></code></pre></div>
+<p><img src="02_files/figure-gfm/unnamed-chunk-52-1.png" width="240" style="display: block; margin: auto;" /></p>
+<p>Did you notice how we saved those last two plots as <code>p1</code> and <code>p2</code>? We can use syntax from the <a href="https://github.com/thomasp85/patchwork"><strong>patchwork</strong> package</a> to combine them into one compound plot.</p>
+<div class="sourceCode" id="cb100"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb100-1" data-line-number="1"><span class="kw">library</span>(patchwork)</a>
+<a class="sourceLine" id="cb100-2" data-line-number="2"></a>
+<a class="sourceLine" id="cb100-3" data-line-number="3">p1 <span class="op">+</span><span class="st"> </span>p2 <span class="op">+</span><span class="st"> </span><span class="kw">scale_y_continuous</span>(<span class="dt">breaks =</span> <span class="ot">NULL</span>)</a></code></pre></div>
+<p><img src="02_files/figure-gfm/unnamed-chunk-53-1.png" width="480" style="display: block; margin: auto;" /></p>
+<p>As interesting as these plots are, do remember that “the need for ad hoc correlations has been effectively replaced by the widespread availability of computer software for fitting the multilevel model for change directly” (pp. 41–42). As you’ll see, Bürkner’s <strong>brms</strong> package is one of the foremost in that regard.</p>
+</div>
+</div>
+</div>
+<div id="improving-the-precision-and-reliability-of-ols-single-level-bayesian-estimated-rates-of-change-lessons-for-research-design" class="section level2">
+<h2><span class="header-section-number">2.4</span> Improving the precision and reliability of <del>OLS</del> single-level-Bayesian-estimated rates of change: Lessons for research design</h2>
+<blockquote>
+<p>Statisticians assess the precision of a parameter estimate in terms of its <em>sampling variation</em>, a measure of the variability that would be found across infinite resamplings from the same population. The most common measure of sampling variability is an estimate’s <em>standard error</em>, the square root of its estimated sampling variance. Precision and standard error have an inverse relationship; the smaller the standard error, the more precise the estimate. (p. 41, <em>emphasis</em> in the original)</p>
+</blockquote>
+<p>So here’s the deal: When Singer and Willett wrote “Statisticians assess…” a more complete expression would have been ‘Frequentist statisticians assess…’ Bayesian statistics are not based on asymptotic theory. They do not presume an idealized infinite distribution of replications. Rather, Bayesian statistics use Bayes theorem to estimate the probability of the parameters given the data. That probability has a distribution. Analogous to frequentist statistics, we often summarize that distribution (i.e., the posterior distribution) in terms of central tendency (e.g., posterior mean, posterior median, posterior mode) and spread. <em>Spread?</em> you say. We typically express spread in one or both of two ways. One typical expression of spread is the 95% intervals. In the Bayesian world, these are often called credible or probability intervals. The other typical expression of spread is the <em>posterior standard deviation</em>. In <strong>brms</strong>, this of typically summarized in the ‘Est.error’ column of the output of functions like <code>print()</code> and <code>posterior_summary()</code> and so on. The posterior standard deviation is analogous to the frequentist standard error. Philosophically and mechanically, they are <em>not</em> the same. But in practice, they are often quite similar.</p>
+<p>Later we read:</p>
+<blockquote>
+<p>Unlike precision which describes how well an individual slope estimate measures that person’s true rate of change, reliability describes how much the rate of change varies across people. Precision has meaning for the individual; reliability has meaning for the group. (p. 42)</p>
+</blockquote>
+<p>I have to protest. True, if we were working within a Classical Test Theory paradigm, this would be correct. But this places reliability with the context of group-based cross-sectional design. Though this is a popular design, it is not the whole story (i.e., see this book!). For introductions to more expansive and person-specific notions of reliability, check out Cronbach’s Generalizability Theory (<a href="https://www.amazon.com/Dependability-Behavioral-Measurements-Generalizability-Profiles/dp/0471188506">Cronbach, Gleser, Nanda, &amp; Rajaratnam, 1972</a>; <a href="https://www.springer.com/us/book/9780387952826">Brennan, 2001</a>; also <a href="https://journals.sagepub.com/doi/pdf/10.1177/0146167206287721?casa_token=okVoJxGFt0UAAAAA:4TWd7Imln0hZc3f2VDPlMvaI5omrI_F_9lUDtkd8i6nn0h_VE-g-f_ZrwB608HWaUqT0v1eJgcD_JA">Cranford, Shrout, Iida, Rafaeli, Yip, &amp; Bolger, 2006</a>; <a href="https://journals.sagepub.com/doi/pdf/10.1177/0149206314554215?casa_token=AYMEPAKydVQAAAAA:oqFgrMlto2rhdlZrgdLaOUvvJO9s9BJ5jek4UA6eVL7Zz5tmKqYgoX_jGvKd9ZX9_bdgV39ZcJXlmQ">LoPilato, Carter, &amp; Wang , 2015</a>; <a href="https://psycnet.apa.org/record/2012-05165-017">Shrout &amp; Lane, 2012</a>).</p>
+</div>
+<div id="reference-1" class="section level2 unnumbered">
+<h2>Reference</h2>
+<p><a href="https://www.oxfordscholarship.com/view/10.1093/acprof:oso/9780195152968.001.0001/acprof-9780195152968">Singer, J. D., &amp; Willett, J. B. (2003). <em>Applied longitudinal data analysis: Modeling change and event occurrence</em>. New York, NY, US: Oxford University Press.</a></p>
+</div>
+<div id="session-info-1" class="section level2 unnumbered">
+<h2>Session info</h2>
+<div class="sourceCode" id="cb101"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb101-1" data-line-number="1"><span class="kw">sessionInfo</span>()</a></code></pre></div>
+<pre><code>## R version 3.6.3 (2020-02-29)
+## Platform: x86_64-apple-darwin15.6.0 (64-bit)
+## Running under: macOS Catalina 10.15.3
+## 
+## Matrix products: default
+## BLAS:   /Library/Frameworks/R.framework/Versions/3.6/Resources/lib/libRblas.0.dylib
+## LAPACK: /Library/Frameworks/R.framework/Versions/3.6/Resources/lib/libRlapack.dylib
+## 
+## locale:
+## [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
+## 
+## attached base packages:
+## [1] stats     graphics  grDevices utils     datasets  methods   base     
+## 
+## other attached packages:
+##  [1] patchwork_1.0.0 brms_2.12.0     Rcpp_1.0.4.6    forcats_0.5.0   stringr_1.4.0   dplyr_0.8.5     purrr_0.3.3    
+##  [8] readr_1.3.1     tidyr_1.0.2     tibble_3.0.0    ggplot2_3.3.0   tidyverse_1.3.0
+## 
+## loaded via a namespace (and not attached):
+##   [1] colorspace_1.4-1     ellipsis_0.3.0       ggridges_0.5.2       rsconnect_0.8.16     markdown_1.1        
+##   [6] base64enc_0.1-3      fs_1.4.1             rstudioapi_0.11      farver_2.0.3         rstan_2.19.3        
+##  [11] svUnit_0.7-12        DT_0.13              fansi_0.4.1          mvtnorm_1.1-0        lubridate_1.7.8     
+##  [16] xml2_1.3.1           bridgesampling_1.0-0 splines_3.6.3        mnormt_1.5-6         knitr_1.28          
+##  [21] shinythemes_1.1.2    bayesplot_1.7.1      jsonlite_1.6.1       broom_0.5.5          dbplyr_1.4.2        
+##  [26] shiny_1.4.0.2        compiler_3.6.3       httr_1.4.1           backports_1.1.6      assertthat_0.2.1    
+##  [31] Matrix_1.2-18        fastmap_1.0.1        cli_2.0.2            later_1.0.0          prettyunits_1.1.1   
+##  [36] htmltools_0.4.0      tools_3.6.3          igraph_1.2.5         coda_0.19-3          gtable_0.3.0        
+##  [41] glue_1.4.0           reshape2_1.4.4       cellranger_1.1.0     vctrs_0.2.4          nlme_3.1-144        
+##  [46] crosstalk_1.1.0.1    psych_1.9.12.31      xfun_0.13            ps_1.3.2             rvest_0.3.5         
+##  [51] mime_0.9             miniUI_0.1.1.1       lifecycle_0.2.0      tidybayes_2.0.3      gtools_3.8.2        
+##  [56] zoo_1.8-7            scales_1.1.0         colourpicker_1.0     hms_0.5.3            promises_1.1.0      
+##  [61] Brobdingnag_1.2-6    parallel_3.6.3       inline_0.3.15        shinystan_2.5.0      yaml_2.2.1          
+##  [66] curl_4.3             gridExtra_2.3        StanHeaders_2.21.0-1 loo_2.2.0            stringi_1.4.6       
+##  [71] highr_0.8            dygraphs_1.1.1.6     pkgbuild_1.0.6       rlang_0.4.5          pkgconfig_2.0.3     
+##  [76] matrixStats_0.56.0   evaluate_0.14        lattice_0.20-38      rstantools_2.0.0     htmlwidgets_1.5.1   
+##  [81] labeling_0.3         processx_3.4.2       tidyselect_1.0.0     plyr_1.8.6           magrittr_1.5        
+##  [86] bookdown_0.18        R6_2.4.1             generics_0.0.2       DBI_1.1.0            pillar_1.4.3        
+##  [91] haven_2.2.0          withr_2.1.2          mgcv_1.8-31          xts_0.12-0           abind_1.4-5         
+##  [96] modelr_0.1.6         crayon_1.3.4         arrayhelpers_1.1-0   utf8_1.1.4           rmarkdown_2.1       
+## [101] grid_3.6.3           readxl_1.3.1         callr_3.4.3          threejs_0.3.3        reprex_0.3.0        
+## [106] digest_0.6.25        xtable_1.8-4         httpuv_1.5.2         stats4_3.6.3         munsell_0.5.0       
+## [111] viridisLite_0.3.0    shinyjs_1.1</code></pre>
+
+</div>
+</div>
+            </section>
+
+          </div>
+        </div>
+      </div>
+<a href="a-framework-for-investigating-change-over-time.html" class="navigation navigation-prev " aria-label="Previous page"><i class="fa fa-angle-left"></i></a>
+<a href="introducing-the-multilevel-model-for-change.html" class="navigation navigation-next " aria-label="Next page"><i class="fa fa-angle-right"></i></a>
+    </div>
+  </div>
+<script src="libs/gitbook-2.6.7/js/app.min.js"></script>
+<script src="libs/gitbook-2.6.7/js/lunr.js"></script>
+<script src="libs/gitbook-2.6.7/js/clipboard.min.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-search.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-sharing.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-fontsettings.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-bookdown.js"></script>
+<script src="libs/gitbook-2.6.7/js/jquery.highlight.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-clipboard.js"></script>
+<script>
+gitbook.require(["gitbook"], function(gitbook) {
+gitbook.start({
+"sharing": {
+"github": false,
+"facebook": true,
+"twitter": true,
+"linkedin": false,
+"weibo": false,
+"instapaper": false,
+"vk": false,
+"all": ["facebook", "twitter", "linkedin", "weibo", "instapaper"]
+},
+"fontsettings": {
+"theme": "white",
+"family": "sans",
+"size": 2
+},
+"edit": {
+"link": null,
+"text": null
+},
+"history": {
+"link": null,
+"text": null
+},
+"view": {
+"link": null,
+"text": null
+},
+"download": null,
+"toc": {
+"collapse": "subsection"
+}
+});
+});
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    var src = "true";
+    if (src === "" || src === "true") src = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML";
+    if (location.protocol !== "file:")
+      if (/^https?:/.test(src))
+        src = src.replace(/^https?:/, '');
+    script.src = src;
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+</body>
+
+</html>

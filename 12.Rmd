@@ -6,7 +6,9 @@ output:
   github_document
 ---
 
-```{r, echo = FALSE, cache = FALSE}
+```{r, echo = F, cache = F}
+knitr::opts_chunk$set(fig.retina = 2.5)
+knitr::opts_chunk$set(fig.align = "center")
 options(width = 110)
 ```
 
@@ -296,7 +298,7 @@ p1 <-
   theme(panel.grid = element_blank())
 ```
 
-The bottom two panels require we redo our `make_fitted()` code from above, this time seeing `scale = "response"`.
+The bottom two panels require we redo our `make_fitted()` code from above, this time setting `scale = "response"`.
 
 ```{r}
 nd <- tibble(period_f = 1:9)
@@ -415,7 +417,7 @@ tibble(loo_difference = c(rnorm(n, mean = l1[2, 1] * -2, sd = l1[2, 2] * 2),
   ggplot(aes(x = loo_difference, y = 0)) +
   stat_halfeyeh(.width = c(.5, .95), normalize = "panels") +
   scale_y_continuous(NULL, breaks = NULL) +
-  labs(title = "LOO difference simulations based on 1,000,000 draws",
+  labs(title = "LOO-difference simulations based on 1,000,000 draws",
        x = "difference distribution") +
   theme(panel.grid = element_blank()) +
   facet_wrap(~models, scales = "free")
@@ -530,7 +532,7 @@ Check the model summary.
 print(fit12.9)
 ```
 
-Focusing just on the posterior means, this yields the following formula for the quadratic discrete-time hazard model: $\operatorname{logit} \hat h (t_j) = $ `r fixef(fit12.9)[1, 1] %>% round(4) %>% format(nsmall = 4)` $\text{one } +$ `r fixef(fit12.9)[2, 1] %>% round(4) %>% format(nsmall = 4)`$(\text{time}_j - 5)$ `r fixef(fit12.9)[3, 1] %>% round(4) %>% format(nsmall = 4)`$(\text{time}_j - 5)^2$.
+Focusing just on the posterior means, this yields the following formula for the quadratic discrete-time hazard model: $\operatorname{logit} \hat h (t_j) =\;$ `r fixef(fit12.9)[1, 1] %>% round(4) %>% format(nsmall = 4)` $\text{one } +$ `r fixef(fit12.9)[2, 1] %>% round(4) %>% format(nsmall = 4)`$(\text{time}_j - 5)$ `r fixef(fit12.9)[3, 1] %>% round(4) %>% format(nsmall = 4)`$(\text{time}_j - 5)^2$.
 
 Singer and Willett used the term "flipover point" for the point at which the quadratic function reaches its peak or trough. If we let $c$ be the centering constant for time variable, $\alpha_1$ be the linear coefficient for time, and $\alpha_2$ be the quadratic coefficient for time, we define the flipover point as 
 
@@ -591,7 +593,7 @@ f %>%
 
 To keep the plot manageable, we filtered to just the first 30 posterior draws. Each was depicted with its own hazard line. Note how each of those hazard lines peaks at a different point along the $x$-axis. Most peak somewhere around 7.4. Some take on notably higher values.
 
-Now fit a cubic model using `period_5` (i.e., $(TIME_j - 5)$) as the measure of time.
+Now fit a cubic model using `period_5`, $(TIME_j - 5)$, as the measure of time.
 
 ```{r fit12.10}
 fit12.10 <-
@@ -609,7 +611,7 @@ Check the model summary.
 print(fit12.10)
 ```
 
-Focusing again on just the posterior means, this yields the following formula for the cubic discrete-time hazard model: $\operatorname{logit} \hat h (t_j) = $ `r fixef(fit12.10)[1, 1] %>% round(4) %>% format(nsmall = 4)` $\text{one } +$ `r fixef(fit12.10)[2, 1] %>% round(4) %>% format(nsmall = 4)`$(\text{time}_j - 5)$ `r fixef(fit12.10)[3, 1] %>% round(4) %>% format(nsmall = 4)`$(\text{time}_j - 5)^2$ `r fixef(fit12.10)[4, 1] %>% round(4) %>% format(nsmall = 4)`$(\text{time}_j - 5)^3$. Now if we let $c$, $\alpha_1$ and $\alpha_2$ retain their meanings from before and further let $\alpha_3$ stand for the cubic term for time, we can define the two flipover points in the cubic logit hazard model with
+Focusing again on just the posterior means, this yields the following formula for the cubic discrete-time hazard model: $\operatorname{logit} \hat h (t_j) =\;$ `r fixef(fit12.10)[1, 1] %>% round(4) %>% format(nsmall = 4)` $\text{one } +$ `r fixef(fit12.10)[2, 1] %>% round(4) %>% format(nsmall = 4)`$(\text{time}_j - 5)$ `r fixef(fit12.10)[3, 1] %>% round(4) %>% format(nsmall = 4)`$(\text{time}_j - 5)^2$ `r fixef(fit12.10)[4, 1] %>% round(4) %>% format(nsmall = 4)`$(\text{time}_j - 5)^3$. Now if we let $c$, $\alpha_1$ and $\alpha_2$ retain their meanings from before and further let $\alpha_3$ stand for the cubic term for time, we can define the two flipover points in the cubic logit hazard model as
 
 $$\text{flipover points} = c + \frac{-\alpha_2 \pm \sqrt{\alpha_2^2 - 3 \alpha_1 \alpha_3}}{3 \alpha_3}.$$
 
@@ -689,9 +691,7 @@ f %>%
   theme(panel.grid = element_blank())
 ```
 
-On the region to the right of 0 on the $x$-axis, the plot looks a lot like the one for the quadratic model. But look at how wildly the lines fan out on the left size of 0. Since that’s the region where we find the second flipover point, all that uncertainty got baked into its marginal posterior.
-
-Just because I think it looks cool, here's that plot with lines corresponding to all 4,000 posterior draws.
+On the region to the right of 0 on the $x$-axis, the plot looks a lot like the one for the quadratic model. But look at how wildly the lines fan out on the left side of 0. Since that's the region where we find the second flipover point, all that uncertainty got baked into its marginal posterior. Just because I think it looks cool, here's a version of that plot with lines corresponding to all 4,000 posterior draws.
 
 ```{r, fig.width = 4, fig.height = 3}
 f %>% 
@@ -713,9 +713,9 @@ So far we've been using the
 
 The *complimentary log-log* transformation--*clog-log* for short--is a widely-used alternative. It follows the form
 
-$$\operatorname{clog-log} = \log (- \log (1 - p)),$$
+$$\operatorname{clog-log} = \log \big (- \log (1 - p) \big),$$
 
-where $p$ is a probability value. In words, while logit transformation yields the logarithm of the *odds of event occurrence*, the clog-log transformation yields *the logarithm of the negated logarithm of the probability of event nonoccurrence* (p. 420, *emphasis* in the original).
+where $p$ is a probability value. In words, "while the logit transformation yields the logarithm of the *odds of event occurrence*, the clog-log transformation yields *the logarithm of the negated logarithm of the probability of event nonoccurrence*" (p. 420, *emphasis* in the original).
 
 ### The clog-log transformation: When and why it is useful.
 
@@ -745,7 +745,7 @@ tibble(p = seq(from = .00001, to = .99999, length.out = 1e4)) %>%
         panel.grid = element_blank())
 ```
 
-Both transformations extend to the full $-\infty$ to $\infty$ parameter space. But whereas the logit is symmetric around zero and has a memorable point corresponding to $p = .5$ (0), the clog-log is asymmetric and has a less-intuitive point corresponding to $p = .5$ (`r round(log(-log(1 - .5)), 7)`). Though somewhat odd, the advantage of the clog-log is 
+Both transformations extend to the full $-\infty$ to $\infty$ parameter space. But whereas the logit is symmetric around zero and has a memorable point corresponding to $p = .5$ (i.e., 0), the clog-log is asymmetric and has a less-intuitive point corresponding to $p = .5$ (i.e., `r round(log(-log(1 - .5)), 7)`). Though somewhat odd, the advantage of the clog-log is 
 
 > it provides a discrete-time statistical model for hazard that has a built-in *proportional hazards* assumption, and not a *proportional odds* assumption (as in the case of the logit link). This would be completely unremarkable except for one thing: it provides a conceptual parallelism between the clog-log discrete-time hazard model and the models that we will ultimately describe for continuous-time survival analysis. (p. 421, *emphasis* in the original)
 
@@ -768,7 +768,7 @@ sex_pp <- read_csv("data/firstsex_pp.csv")
 glimpse(sex_pp)
 ```
 
-Our next task is to recreate Figure 12.3, which shows the "sample hazard functions for the grade of first intercourse data displayed on different scales," namely the logit and clog-log (p. 423). The key word here is "sample," meaning we're not fitting full models. For our version of the corresponding figure from the last chapter (i.e., Figure 11.2 from page 363), we computed the sample logit hazard functions with life tables based on the output from the `survival::survfit()` function. I am not aware that you can get hazards in the clog-log scale from the `survfit()` function. The folks at idre solved the problem by fitting four maximum likelihood models using the `glm()` function (see [here](https://stats.idre.ucla.edu/r/examples/alda/r-applied-longitudinal-data-analysis-ch-12/)). We'll follow a similar approach, but with weakly-regularizing priors using the `brms::brm()` function.
+Our next task is to recreate Figure 12.3, which shows the "sample hazard functions for the grade of first intercourse data displayed on different scales," namely the logit and clog-log (p. 423). The key word here is "sample," meaning we're not fitting full models. For our version of the corresponding figure from the last chapter (i.e., Figure 11.2 from page 363), we computed the sample logit hazard functions with life tables based on the output from the `survival::survfit()` function. I am not aware that you can get hazards in the clog-log scale from the `survfit()` function. The folks at IDRE solved the problem by fitting four maximum likelihood models using the `glm()` function (see [here](https://stats.idre.ucla.edu/r/examples/alda/r-applied-longitudinal-data-analysis-ch-12/)). We'll follow a similar approach, but with weakly-regularizing priors using the `brms::brm()` function.
 
 ```{r fit12.11}
 ## logit
@@ -854,7 +854,7 @@ f %>%
 Our next step is to fit proper models to the data. First, we will refit `fit11.8` from last chapter. Then we'll fit the clog-log analogue to the same model. The two models, respectively, follow the form
 
 \begin{align*}
-\operatorname{logit} h(t_{ij}) & = [\alpha_7 D_{7ij} + \alpha_8 D_{8ij} + \cdots + \alpha_{12} D_{12ij}] + [\beta_1 \text{PT}_i ] \\
+\operatorname{logit} h(t_{ij}) & = [\alpha_7 D_{7ij} + \alpha_8 D_{8ij} + \cdots + \alpha_{12} D_{12ij}] + [\beta_1 \text{PT}_i ] \; \text{and} \\
 \operatorname{clog-log} h(t_{ij}) & = [\alpha_7 D_{7ij} + \alpha_8 D_{8ij} + \cdots + \alpha_{12} D_{12ij}] + [\beta_1 \text{PT}_i ].
 \end{align*}
 
@@ -882,7 +882,7 @@ fit12.15 <-
       file = "fits/fit12.15")
 ```
 
-Both models used the binomial likelihood. They only differed in the link function we used to transform the data. To further explicate,  we can more fully write out our Bayesian clog-log model as
+Both models used the binomial likelihood. They only differed in which link function we used to transform the data. To further explicate,  we can more fully write out our Bayesian clog-log model as
 
 \begin{align*}
 \text{event}_{ij} & = \operatorname{Binomial}(n = 1, p_{ij}) \\ 
@@ -932,7 +932,7 @@ loo_compare(fit12.15, fit11.8, criterion = "loo") %>% print(simplify = F)
 model_weights(fit12.15, fit11.8, weights = "loo") %>% round(digits = 3)
 ```
 
-They're basically the same. The parameter summaries are also quite similar between the two models. A coefficient plot might make it easy to see. "Numerical similarity is common when fitting identical models with alternate link functions (and net risks of event occurrence are lot), and suggests that choice of a link function should depend on other considerations" (p. 423).
+From a LOO perspective, they're basically the same. The parameter summaries are also quite similar between the two models. A coefficient plot might make it easy to see. "Numerical similarity is common when fitting identical models with alternate link functions (and net risks of event occurrence are low) and suggests that choice of a link function should depend on other considerations" (p. 423).
 
 We already know from the last chapter that we can convert logits to probabilities with the function
 
@@ -1258,7 +1258,7 @@ Note how with this many `age` levels, our discrete-time models are beginning to 
 >
 > With this in mind, we now demonstrate how to (1) explore your data for the possibility of statistical interactions; and (2) include the additional appropriate terms when necessary. (p. 444, *emphasis* in the original)
 
-Load the  data from Keiley and Martin (2002)[^1].
+Load the  data from Keiley and Martin (2002)[^2].
 
 ```{r, warning = F, message = F}
 firstarrest_pp <- 
@@ -1501,7 +1501,7 @@ make_fitted(fit12.23,
 
 > There are two general strategies for exploring the linearity assumption. The simplest approach--although somewhat limited--is to fit additional models, replacing the raw predictor with a re-expressed version. Although the additional models also invoke a linearity constraint, use of re-expressed predictors guarantees that the effects represent nonlinear relationships for the *raw* predictors. The ladder of power (section 6.2.1) provides a dizzying array of options. The second approach is to categorize each continuous variable into a small number of groups, create a series of dummy variables representing group membership, and visually examine the *pattern of parameter estimates for consecutive dummies* to deduce the appropriate functional form. If the pattern is linear, retain the predictor in its raw state; if not, explore an alternative specification. 
 >
-> As the first approach is straightforward, we illustrate the second, using the depression onset data presented in section 12.3. (pp447--448, *emphasis* in the original)
+> As the first approach is straightforward, we illustrate the second, using the depression onset data presented in section 12.3. (pp. 447--448, *emphasis* in the original)
 
 Here's another look at those `depression_pp` data.
 
@@ -1574,7 +1574,7 @@ depression_pp %>%
   mutate(percent = (100 * n / sum(n)) %>% round(digits = 1))
 ```
 
-Now fit our version of Model B, in which we replace the original linear predictor `nsibs` with a series of dummies: `sibs12`, `sibs34`, ..., `sibs9plus`.
+Now fit our version of Model B, in which we replace the original linear predictor `nsibs` with a series of dummies: `sibs12`, `sibs34`,..., `sibs9plus`.
 
 ```{r fit12.25}
 # model b (nonlinear)  
@@ -1595,7 +1595,7 @@ Here's the model summary.
 print(fit12.25)
 ```
 
-It might be easier to compare the various `sibs...` coefficients with a coefficient plot.
+It might be easier to compare the various `sibs*` coefficients with a coefficient plot.
 
 ```{r, fig.width = 6, fig.height = 1.75}
 posterior_samples(fit12.25) %>% 
@@ -1963,7 +1963,7 @@ model_weights(fit12.27, fit12.28, fit12.29, weights = "loo") %>% round(digits = 
 model_weights(fit12.27, fit12.28, fit12.29, weights = "waic") %>% round(digits = 3)
 ```
 
-You’ll note both the LOO and WAIC estimates are very close to those displayed in Table 12.5. When we take their standard errors into account, `fit12.29` (model C) is marginally better than the other two models. `fit12.29` also took most of the LOO and WAIC weights.
+You’ll note both the LOO and WAIC estimates are very close to those displayed in Table 12.5. When we take their standard errors into account, `fit12.29` (Model C) is marginally better than the other two models. `fit12.29` also took most of the LOO and WAIC weights.
 
 > How do we interpret the gender differential implied by Model C? Because we have centered *TIME* at 1, the coefficient for *FEMALE* (0.2275) estimates the differential in time period 1, which here is 11th grade. Antilogging yields 1.26, which leads us to estimate that in 11th grade, the odds of ending one's mathematics course-taking career are 26% higher for females. (p. 460, *emphasis* in the original)
 
@@ -2009,7 +2009,7 @@ posterior_samples(fit12.29) %>%
 >
 > Unobserved heterogeneity can have serious consequences. In their classic [1985 paper](http://pure.iiasa.ac.at/id/eprint/2602/1/RR-86-03.pdf), Vaupel and Yaskin elegantly demonstrate what they call "heterogeneity's ruses"--that ability of unobserved heterogeneity to create the misimpression that a hazard function follows a particular form, when in fact it may not....
 >
-> Is it possible to fit a hazard model that accounts for unobserved heterogeneity? As you might expect, doing so requires that we have either additional data (for example, data on repeated events within individuals) or that we invoke other--perhaps less tenable--assumptions about the distribution of event time errors ([Aalen, 1988](https://onlinelibrary.wiley.com/doi/abs/10.1002/sim.4780071105); [Heckman and Singer, 1984](https://www.cambridge.org/core/books/longitudinal-analysis-of-labor-market-data/0D46228F1D5803E54310FA89FD8118C0); [Vaupel, Manton, & Stallard, 1979](http://www.ressources-actuarielles.net/EXT/ISFA/1226.nsf/769998e0a65ea348c1257052003eb94f/2d6493f9f0d93b50c125774b0045c00b/$FILE/Vaupel-Demography-16-1979-3.pdf); [Scheike & Jensen, 1997](https://www.ncbi.nlm.nih.gov/pubmed/9147597); [Mare, 1994](https://www.semanticscholar.org/paper/DISCRETE-TIME-BIVARIATE-HAZARDS-WITH-UNOBSERVED-A-Mare/c13ff07817b0b0a28774806db29c2491e0ec6a3d)). As a result, most empirical researchers--and we--proceed ahead, if not ignoring the problem, at least not addressing it. In the remainder of this book, we assume that all heterogeneity is observed and attributable t0 the predictors included in our models.
+> Is it possible to fit a hazard model that accounts for unobserved heterogeneity? As you might expect, doing so requires that we have either additional data (for example, data on repeated events within individuals) or that we invoke other--perhaps less tenable--assumptions about the distribution of event time errors ([Aalen, 1988](https://onlinelibrary.wiley.com/doi/abs/10.1002/sim.4780071105); [Heckman and Singer, 1984](https://www.cambridge.org/core/books/longitudinal-analysis-of-labor-market-data/0D46228F1D5803E54310FA89FD8118C0); [Vaupel, Manton, & Stallard, 1979](http://www.ressources-actuarielles.net/EXT/ISFA/1226.nsf/769998e0a65ea348c1257052003eb94f/2d6493f9f0d93b50c125774b0045c00b/$FILE/Vaupel-Demography-16-1979-3.pdf); [Scheike & Jensen, 1997](https://www.ncbi.nlm.nih.gov/pubmed/9147597); [Mare, 1994](https://www.semanticscholar.org/paper/DISCRETE-TIME-BIVARIATE-HAZARDS-WITH-UNOBSERVED-A-Mare/c13ff07817b0b0a28774806db29c2491e0ec6a3d)). As a result, most empirical researchers--and we--proceed ahead, if not ignoring the problem, at least not addressing it. In the remainder of this book, we assume that all heterogeneity is observed and attributable to the predictors included in our models.
 
 ## Residual analysis
 
@@ -2046,7 +2046,7 @@ sex_pp %>%
 
 Just as we often express the uncertainty in our Bayesian models with parameter summaries from the posterior, we also express the uncertainty of our residuals. Thus, the four columns returned by the `residuals()` function are the familiar summary columns of ` Estimate`, `Est.Error`, `Q2.5`, and `Q97.5`. On page 465, Singer and Willett showcased the deviance residuals for eight participants. We’re going to diverge from them a little. In the plot, below, we’ll look at the residuals for the first 10 cases in the data, by `period`.
 
-```{r, fig.width = 8, fig.height = 3}
+```{r, fig.width = 8, fig.height = 2.75}
 residuals(fit11.10) %>% 
   data.frame() %>% 
   bind_cols(sex_pp) %>%
@@ -2057,7 +2057,8 @@ residuals(fit11.10) %>%
   filter(id < 11) %>% 
   
   ggplot(aes(x = id, y = Estimate, ymin = Q2.5, ymax = Q97.5, color = event)) +
-  geom_pointrange(fatten = 1/2) +
+  geom_hline(yintercept = 0, color = "white") +
+  geom_pointrange(fatten = 2/3) +
   scale_color_viridis_d(option = "A", end = .6) +
   scale_x_continuous(breaks = 1:10, labels = rep(c(1, "", 10), times = c(1, 8, 1))) +
   ylab("residual") +
@@ -2078,20 +2079,20 @@ residuals(fit11.10) %>%
   
   ggplot(aes(x = id, y = Estimate, ymin = Q2.5, ymax = Q97.5, color = event)) +
   geom_hline(yintercept = 0, color = "white") +
-  geom_pointrange(fatten = 2/3, alpha = 1/2) +
+  geom_pointrange(fatten = 3/4, alpha = 1/2) +
   scale_color_viridis_d(option = "A", end = .6) +
   ylab("residual") +
   theme(legend.position = "top", 
         panel.grid = element_blank()) 
 ```
 
-This plot is our analogue to the top portion of Singer and Willette’s Figure 12.9. But whereas we plotted our residual summaries, they plotted the expected values of their *deviance residuals*. In contrast with the material on page 464, I am not going to discuss deviance residuals or the sums of the squared deviance residuals. Our **brms** workflow offers an alternative. Before we offer our alternative, we might focus on deviance residuals for just a moment:
+This plot is our analogue to the top portion of Singer and Willette's Figure 12.9. But whereas we plotted our residual summaries, they plotted the expected values of their *deviance residuals*. In contrast with the material on page 464, I am not going to discuss deviance residuals or the sums of the squared deviance residuals. Our **brms** workflow offers an alternative. Before we offer our alternative, we might focus on deviance residuals for just a moment:
 
 > Deviance residuals are so named because, when squared, they represent an individual's contribution to the deviance statistic for that time period. The sum of the squared deviance residuals across all the records in a person-period data set yields the deviance statistic for the specified model....
 >
 > The absolute value of a deviance residual indicates how well the model fits that person's data for that period. Large absolute values identify person-period records whose outcomes are poorly predicted. (p. 464)
 
-Back in chapter 11, we computed the LOO for ` fit11.10`. Let's take a look at that.
+Back in Chapter 11, we computed the LOO for ` fit11.10`. Let's take a look at that.
 
 ```{r}
 loo(fit11.10)
@@ -2123,7 +2124,7 @@ loo(fit11.10)$diagnostics %>%
 
 To learn the technical details about `pareto_k`, check out Vehtari, Gelman, and Gabry's [*Practical Bayesian model evaluation using leave-one-out cross-validation and WAIC*](https://arxiv.org/abs/1507.04544) or Vehtari, Simpson, Gelman, Yao, and Gabry's [*Pareto smoothed importance sampling*](https://arxiv.org/abs/1507.02646). In short, we can use `pareto_k` values to flag cases that were overly-influential on the model in a way that's a little like Singer and Willett's deviance residuals. As pointed out in the [reference manual](https://cran.r-project.org/web/packages/loo/loo.pdf) for the **loo** package, which **brms** used to compute all this, the makers of the **loo** package warn against `pareto_k` values when they get much larger than $0.5$. We should be a little worried by values that exceed the $0.7$ threshold and it's very likely a problem when they get larger than $1$. In this case, they're all below $0.4$ and all is good.
 
-To learn more about `pareto_k` values and what the **loo** package can do for you, check out Vehtari and Gabry's [*Using the loo package*](https://cran.r-project.org/web/packages/loo/vignettes/loo2-example.html) vignette.
+To learn more about `pareto_k` values and what the **loo** package can do for you, check out Vehtari and Gabry's vignette, [*Using the loo package*](https://cran.r-project.org/web/packages/loo/vignettes/loo2-example.html).
 
 ## Reference {-}
 
@@ -2137,12 +2138,12 @@ sessionInfo()
 
 ```{r, echo = F, message = F}
 # here we'll remove our objects
-rm(tenure_pp, fit12.1, fit12.2, fit12.3, fit12.4, fit12.5, fit12.6, fit12.7, fit12.8, p1, p2, p3, p4, p5, p6, p7, make_fitted, nd, f, models, new_rows, l1, l2, l3, n, pp, tenure_pp, fit12.9, fit12.10, post, sex_pp, fit12.11, fit12.12, fit12.13, fit12.14, fit11.8, fit12.15, pars, depression_pp, fit12.16, fit12.17, depression_aggregated, firstarrest_pp, fit12.18, fit12.19, fit12.20, fit12.21, fit12.22, fit12.23, fit12.24, fit12.25, fit12.26, breaks, labels, mathdropout_pp, fit12.27, fit12.28, fit12.29, fit11.10)
+rm(tenure_pp, fit12.1, fit12.2, fit12.3, fit12.4, fit12.5, fit12.6, fit12.7, fit12.8, p1, p2, p3, p4, p5, p6, p7, make_fitted, nd, f, models, new_rows, l1, l2, l3, n, pp, fit12.9, fit12.10, post, sex_pp, fit12.11, fit12.12, fit12.13, fit12.14, fit11.8, fit12.15, pars, depression_pp, fit12.16, fit12.17, depression_aggregated, firstarrest_pp, fit12.18, fit12.19, fit12.20, fit12.21, fit12.22, fit12.23, fit12.24, fit12.25, fit12.26, breaks, labels, mathdropout_pp, fit12.27, fit12.28, fit12.29, fit11.10)
 
 pacman::p_unload(pacman::p_loaded(), character.only = TRUE)
 ```
 
 ## Footnote {-}
 
-[^1]: In their reference section, Singer and Willett indicated this was a manuscript submitted for publication. To my knowledge, it was never published.
+[^2]: In their reference section, Singer and Willett indicated this was a manuscript submitted for publication. To my knowledge, it was never published.
 

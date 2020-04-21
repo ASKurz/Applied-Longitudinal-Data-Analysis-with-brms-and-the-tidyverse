@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+<head>
+
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <title>9 A Framework for Investigating Event Occurrence | Applied Longitudinal Data Analysis in brms and the tidyverse</title>
+  <meta name="description" content="This project is a reworking of Singer and Willett’s classic (2003) text within a contemporary Bayesian framework with emphasis of the brms and tidyverse packages within the R computational framework." />
+  <meta name="generator" content="bookdown 0.18 and GitBook 2.6.7" />
+
+  <meta property="og:title" content="9 A Framework for Investigating Event Occurrence | Applied Longitudinal Data Analysis in brms and the tidyverse" />
+  <meta property="og:type" content="book" />
+  
+  
+  <meta property="og:description" content="This project is a reworking of Singer and Willett’s classic (2003) text within a contemporary Bayesian framework with emphasis of the brms and tidyverse packages within the R computational framework." />
+  <meta name="github-repo" content="ASKurz/Applied-Longitudinal-Data-Analysis-with-brms-and-the-tidyverse" />
+
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="9 A Framework for Investigating Event Occurrence | Applied Longitudinal Data Analysis in brms and the tidyverse" />
+  <meta name="twitter:site" content="@SolomonKurz" />
+  <meta name="twitter:description" content="This project is a reworking of Singer and Willett’s classic (2003) text within a contemporary Bayesian framework with emphasis of the brms and tidyverse packages within the R computational framework." />
+  
+
+<meta name="author" content="A Solomon Kurz" />
+
+
+<meta name="date" content="2020-04-21" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+  
+  
+<link rel="prev" href="modeling-change-using-covariance-structure-analysis.html"/>
+<link rel="next" href="describing-discrete-time-event-occurrence-data.html"/>
+<script src="libs/jquery-2.2.3/jquery.min.js"></script>
+<link href="libs/gitbook-2.6.7/css/style.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-table.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-bookdown.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-highlight.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-search.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-fontsettings.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-clipboard.css" rel="stylesheet" />
+
+
+
+
+
+
+
+
+
+
+
+<style type="text/css">
+a.sourceLine { display: inline-block; line-height: 1.25; }
+a.sourceLine { pointer-events: none; color: inherit; text-decoration: inherit; }
+a.sourceLine:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode { white-space: pre; position: relative; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+code.sourceCode { white-space: pre-wrap; }
+a.sourceLine { text-indent: -1em; padding-left: 1em; }
+}
+pre.numberSource a.sourceLine
+  { position: relative; left: -4em; }
+pre.numberSource a.sourceLine::before
+  { content: attr(data-line-number);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; pointer-events: all; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {  }
+@media screen {
+a.sourceLine::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+</style>
+
+</head>
+
+<body>
+
+
+
+  <div class="book without-animation with-summary font-size-2 font-family-1" data-basepath=".">
+
+    <div class="book-summary">
+      <nav role="navigation">
+
+<ul class="summary">
+<li class="chapter" data-level="" data-path="index.html"><a href="index.html"><i class="fa fa-check"></i>What and why</a><ul>
+<li class="chapter" data-level="" data-path="index.html"><a href="index.html#caution-work-in-progress"><i class="fa fa-check"></i>Caution: Work in progress</a></li>
+</ul></li>
+<li class="chapter" data-level="1" data-path="a-framework-for-investigating-change-over-time.html"><a href="a-framework-for-investigating-change-over-time.html"><i class="fa fa-check"></i><b>1</b> A Framework for Investigating Change over Time</a><ul>
+<li class="chapter" data-level="1.1" data-path="a-framework-for-investigating-change-over-time.html"><a href="a-framework-for-investigating-change-over-time.html#when-might-you-study-change-over-time"><i class="fa fa-check"></i><b>1.1</b> When might you study change over time?</a></li>
+<li class="chapter" data-level="1.2" data-path="a-framework-for-investigating-change-over-time.html"><a href="a-framework-for-investigating-change-over-time.html#distinguishing-between-two-types-of-questions-about-change"><i class="fa fa-check"></i><b>1.2</b> Distinguishing between two types of questions about change</a></li>
+<li class="chapter" data-level="1.3" data-path="a-framework-for-investigating-change-over-time.html"><a href="a-framework-for-investigating-change-over-time.html#three-important-features-of-a-study-of-change"><i class="fa fa-check"></i><b>1.3</b> Three important features of a study of change</a><ul>
+<li class="chapter" data-level="1.3.1" data-path="a-framework-for-investigating-change-over-time.html"><a href="a-framework-for-investigating-change-over-time.html#multiple-waves-of-data."><i class="fa fa-check"></i><b>1.3.1</b> Multiple waves of data.</a></li>
+<li class="chapter" data-level="1.3.2" data-path="a-framework-for-investigating-change-over-time.html"><a href="a-framework-for-investigating-change-over-time.html#a-sensible-metric-for-time."><i class="fa fa-check"></i><b>1.3.2</b> A sensible metric for time.</a></li>
+<li class="chapter" data-level="1.3.3" data-path="a-framework-for-investigating-change-over-time.html"><a href="a-framework-for-investigating-change-over-time.html#a-continuous-outcome-that-changes-systematically-over-time."><i class="fa fa-check"></i><b>1.3.3</b> A continuous outcome that changes systematically over time.</a></li>
+</ul></li>
+<li class="chapter" data-level="" data-path="a-framework-for-investigating-change-over-time.html"><a href="a-framework-for-investigating-change-over-time.html#reference"><i class="fa fa-check"></i>Reference</a></li>
+<li class="chapter" data-level="" data-path="a-framework-for-investigating-change-over-time.html"><a href="a-framework-for-investigating-change-over-time.html#session-info"><i class="fa fa-check"></i>Session info</a></li>
+</ul></li>
+<li class="chapter" data-level="2" data-path="exploring-longitudinal-data-on-change.html"><a href="exploring-longitudinal-data-on-change.html"><i class="fa fa-check"></i><b>2</b> Exploring Longitudinal Data on Change</a><ul>
+<li class="chapter" data-level="2.1" data-path="exploring-longitudinal-data-on-change.html"><a href="exploring-longitudinal-data-on-change.html#creating-a-longitudinal-data-set"><i class="fa fa-check"></i><b>2.1</b> Creating a longitudinal data set</a><ul>
+<li class="chapter" data-level="2.1.1" data-path="exploring-longitudinal-data-on-change.html"><a href="exploring-longitudinal-data-on-change.html#the-person-level-data-set."><i class="fa fa-check"></i><b>2.1.1</b> The person-level data set.</a></li>
+<li class="chapter" data-level="2.1.2" data-path="exploring-longitudinal-data-on-change.html"><a href="exploring-longitudinal-data-on-change.html#the-person-period-data-set."><i class="fa fa-check"></i><b>2.1.2</b> The person-period data set.</a></li>
+</ul></li>
+<li class="chapter" data-level="2.2" data-path="exploring-longitudinal-data-on-change.html"><a href="exploring-longitudinal-data-on-change.html#descriptive-analysis-of-individual-change-over-time"><i class="fa fa-check"></i><b>2.2</b> Descriptive analysis of individual change over time</a><ul>
+<li class="chapter" data-level="2.2.1" data-path="exploring-longitudinal-data-on-change.html"><a href="exploring-longitudinal-data-on-change.html#empirical-growth-plots."><i class="fa fa-check"></i><b>2.2.1</b> Empirical growth plots.</a></li>
+<li class="chapter" data-level="2.2.2" data-path="exploring-longitudinal-data-on-change.html"><a href="exploring-longitudinal-data-on-change.html#using-a-trajectory-to-summarize-each-persons-empirical-growth-record."><i class="fa fa-check"></i><b>2.2.2</b> Using a trajectory to summarize each person’s empirical growth record.</a></li>
+</ul></li>
+<li class="chapter" data-level="2.3" data-path="exploring-longitudinal-data-on-change.html"><a href="exploring-longitudinal-data-on-change.html#exploring-differences-in-change-across-people"><i class="fa fa-check"></i><b>2.3</b> Exploring differences in change across people</a><ul>
+<li class="chapter" data-level="2.3.1" data-path="exploring-longitudinal-data-on-change.html"><a href="exploring-longitudinal-data-on-change.html#examining-the-entire-set-of-smooth-trajectories."><i class="fa fa-check"></i><b>2.3.1</b> Examining the entire set of smooth trajectories.</a></li>
+<li class="chapter" data-level="2.3.2" data-path="exploring-longitudinal-data-on-change.html"><a href="exploring-longitudinal-data-on-change.html#using-the-results-of-model-fitting-to-frame-questions-about-change."><i class="fa fa-check"></i><b>2.3.2</b> Using the results of model fitting to frame questions about change.</a></li>
+<li class="chapter" data-level="2.3.3" data-path="exploring-longitudinal-data-on-change.html"><a href="exploring-longitudinal-data-on-change.html#exploring-the-relationship-between-change-and-time-invariant-predictors."><i class="fa fa-check"></i><b>2.3.3</b> Exploring the relationship between change and time-invariant predictors.</a></li>
+</ul></li>
+<li class="chapter" data-level="2.4" data-path="exploring-longitudinal-data-on-change.html"><a href="exploring-longitudinal-data-on-change.html#improving-the-precision-and-reliability-of-ols-single-level-bayesian-estimated-rates-of-change-lessons-for-research-design"><i class="fa fa-check"></i><b>2.4</b> Improving the precision and reliability of <del>OLS</del> single-level-Bayesian-estimated rates of change: Lessons for research design</a></li>
+<li class="chapter" data-level="" data-path="exploring-longitudinal-data-on-change.html"><a href="exploring-longitudinal-data-on-change.html#reference-1"><i class="fa fa-check"></i>Reference</a></li>
+<li class="chapter" data-level="" data-path="exploring-longitudinal-data-on-change.html"><a href="exploring-longitudinal-data-on-change.html#session-info-1"><i class="fa fa-check"></i>Session info</a></li>
+</ul></li>
+<li class="chapter" data-level="3" data-path="introducing-the-multilevel-model-for-change.html"><a href="introducing-the-multilevel-model-for-change.html"><i class="fa fa-check"></i><b>3</b> Introducing the Multilevel Model for Change</a><ul>
+<li class="chapter" data-level="3.1" data-path="introducing-the-multilevel-model-for-change.html"><a href="introducing-the-multilevel-model-for-change.html#what-is-the-purpose-of-the-multilevel-model-for-change"><i class="fa fa-check"></i><b>3.1</b> What is the purpose of the multilevel model for change?</a></li>
+<li class="chapter" data-level="3.2" data-path="introducing-the-multilevel-model-for-change.html"><a href="introducing-the-multilevel-model-for-change.html#the-level-1-submodel-for-individual-change"><i class="fa fa-check"></i><b>3.2</b> The level-1 submodel for individual change</a><ul>
+<li class="chapter" data-level="3.2.1" data-path="introducing-the-multilevel-model-for-change.html"><a href="introducing-the-multilevel-model-for-change.html#the-structural-part-of-the-level-1-submodel."><i class="fa fa-check"></i><b>3.2.1</b> The structural part of the level-1 submodel.</a></li>
+<li class="chapter" data-level="3.2.2" data-path="introducing-the-multilevel-model-for-change.html"><a href="introducing-the-multilevel-model-for-change.html#the-stochastic-part-of-the-level-1-submodel."><i class="fa fa-check"></i><b>3.2.2</b> The stochastic part of the level-1 submodel.</a></li>
+<li class="chapter" data-level="3.2.3" data-path="introducing-the-multilevel-model-for-change.html"><a href="introducing-the-multilevel-model-for-change.html#relating-the-level-1-submodel-to-the-ols-exploratory-methods-of-chapter-2."><i class="fa fa-check"></i><b>3.2.3</b> Relating the level-1 submodel to the OLS exploratory methods of chapter 2.</a></li>
+</ul></li>
+<li class="chapter" data-level="3.3" data-path="introducing-the-multilevel-model-for-change.html"><a href="introducing-the-multilevel-model-for-change.html#the-level-2-submodel-for-systematic-interindividual-differences-in-change"><i class="fa fa-check"></i><b>3.3</b> The level-2 submodel for systematic interindividual differences in change</a><ul>
+<li class="chapter" data-level="3.3.1" data-path="introducing-the-multilevel-model-for-change.html"><a href="introducing-the-multilevel-model-for-change.html#structural-components-of-the-level-2-submodel."><i class="fa fa-check"></i><b>3.3.1</b> Structural components of the level-2 submodel.</a></li>
+<li class="chapter" data-level="3.3.2" data-path="introducing-the-multilevel-model-for-change.html"><a href="introducing-the-multilevel-model-for-change.html#stochastic-components-of-the-level-2-submodel."><i class="fa fa-check"></i><b>3.3.2</b> Stochastic components of the level-2 submodel.</a></li>
+</ul></li>
+<li class="chapter" data-level="3.4" data-path="introducing-the-multilevel-model-for-change.html"><a href="introducing-the-multilevel-model-for-change.html#fitting-the-multilevel-model-for-change-to-data"><i class="fa fa-check"></i><b>3.4</b> Fitting the multilevel model for change to data</a><ul>
+<li class="chapter" data-level="3.4.1" data-path="introducing-the-multilevel-model-for-change.html"><a href="introducing-the-multilevel-model-for-change.html#the-advantages-of-maximum-likelihood-bayesian-estimation."><i class="fa fa-check"></i><b>3.4.1</b> The advantages of <del>maximum likelihood</del> Bayesian estimation.</a></li>
+<li class="chapter" data-level="3.4.2" data-path="introducing-the-multilevel-model-for-change.html"><a href="introducing-the-multilevel-model-for-change.html#using-maximum-likelihood-modern-bayesian-methods-to-fit-a-multilevel-model."><i class="fa fa-check"></i><b>3.4.2</b> Using <del>maximum likelihood</del> modern Bayesian methods to fit a multilevel model.</a></li>
+</ul></li>
+<li class="chapter" data-level="3.5" data-path="introducing-the-multilevel-model-for-change.html"><a href="introducing-the-multilevel-model-for-change.html#examining-estimated-fixed-effects"><i class="fa fa-check"></i><b>3.5</b> Examining estimated fixed effects</a><ul>
+<li class="chapter" data-level="3.5.1" data-path="introducing-the-multilevel-model-for-change.html"><a href="introducing-the-multilevel-model-for-change.html#interpreting-estimated-fixed-effects."><i class="fa fa-check"></i><b>3.5.1</b> Interpreting estimated fixed effects.</a></li>
+<li class="chapter" data-level="3.5.2" data-path="introducing-the-multilevel-model-for-change.html"><a href="introducing-the-multilevel-model-for-change.html#single-parameter-tests-for-the-fixed-effects."><i class="fa fa-check"></i><b>3.5.2</b> Single parameter tests for the fixed effects.</a></li>
+</ul></li>
+<li class="chapter" data-level="3.6" data-path="introducing-the-multilevel-model-for-change.html"><a href="introducing-the-multilevel-model-for-change.html#examining-estimated-variance-components"><i class="fa fa-check"></i><b>3.6</b> Examining estimated variance components</a><ul>
+<li class="chapter" data-level="3.6.1" data-path="introducing-the-multilevel-model-for-change.html"><a href="introducing-the-multilevel-model-for-change.html#interpreting-the-estimated-variance-components."><i class="fa fa-check"></i><b>3.6.1</b> Interpreting the estimated variance components.</a></li>
+<li class="chapter" data-level="3.6.2" data-path="introducing-the-multilevel-model-for-change.html"><a href="introducing-the-multilevel-model-for-change.html#single-parameter-tests-for-the-variance-components."><i class="fa fa-check"></i><b>3.6.2</b> Single parameter tests for the variance components.</a></li>
+</ul></li>
+<li class="chapter" data-level="3.7" data-path="introducing-the-multilevel-model-for-change.html"><a href="introducing-the-multilevel-model-for-change.html#bonus-how-did-you-simulate-that-data"><i class="fa fa-check"></i><b>3.7</b> Bonus: How did you simulate that data?</a></li>
+<li class="chapter" data-level="" data-path="introducing-the-multilevel-model-for-change.html"><a href="introducing-the-multilevel-model-for-change.html#reference-2"><i class="fa fa-check"></i>Reference</a></li>
+<li class="chapter" data-level="" data-path="introducing-the-multilevel-model-for-change.html"><a href="introducing-the-multilevel-model-for-change.html#session-info-2"><i class="fa fa-check"></i>Session info</a></li>
+</ul></li>
+<li class="chapter" data-level="4" data-path="doing-data-analysis-with-the-multilevel-model-for-change.html"><a href="doing-data-analysis-with-the-multilevel-model-for-change.html"><i class="fa fa-check"></i><b>4</b> Doing Data Analysis with the Multilevel Model for Change</a><ul>
+<li class="chapter" data-level="4.1" data-path="doing-data-analysis-with-the-multilevel-model-for-change.html"><a href="doing-data-analysis-with-the-multilevel-model-for-change.html#example-changes-in-adolescent-alcohol-use"><i class="fa fa-check"></i><b>4.1</b> Example: Changes in adolescent alcohol use</a></li>
+<li class="chapter" data-level="4.2" data-path="doing-data-analysis-with-the-multilevel-model-for-change.html"><a href="doing-data-analysis-with-the-multilevel-model-for-change.html#the-composite-specification-of-the-multilevel-model-for-change"><i class="fa fa-check"></i><b>4.2</b> The composite specification of the multilevel model for change</a><ul>
+<li class="chapter" data-level="4.2.1" data-path="doing-data-analysis-with-the-multilevel-model-for-change.html"><a href="doing-data-analysis-with-the-multilevel-model-for-change.html#the-structural-component-of-the-composite-model."><i class="fa fa-check"></i><b>4.2.1</b> The structural component of the composite model.</a></li>
+<li class="chapter" data-level="4.2.2" data-path="doing-data-analysis-with-the-multilevel-model-for-change.html"><a href="doing-data-analysis-with-the-multilevel-model-for-change.html#the-stochastic-component-of-the-composite-model."><i class="fa fa-check"></i><b>4.2.2</b> The stochastic component of the composite model.</a></li>
+</ul></li>
+<li class="chapter" data-level="4.3" data-path="doing-data-analysis-with-the-multilevel-model-for-change.html"><a href="doing-data-analysis-with-the-multilevel-model-for-change.html#methods-of-estimation-revisited"><i class="fa fa-check"></i><b>4.3</b> Methods of estimation, revisited</a></li>
+<li class="chapter" data-level="4.4" data-path="doing-data-analysis-with-the-multilevel-model-for-change.html"><a href="doing-data-analysis-with-the-multilevel-model-for-change.html#first-steps-fitting-two-unconditional-multilevel-models-for-change"><i class="fa fa-check"></i><b>4.4</b> First steps: Fitting two unconditional multilevel models for change</a><ul>
+<li class="chapter" data-level="4.4.1" data-path="doing-data-analysis-with-the-multilevel-model-for-change.html"><a href="doing-data-analysis-with-the-multilevel-model-for-change.html#the-unconditional-means-model."><i class="fa fa-check"></i><b>4.4.1</b> The unconditional means model.</a></li>
+<li class="chapter" data-level="4.4.2" data-path="doing-data-analysis-with-the-multilevel-model-for-change.html"><a href="doing-data-analysis-with-the-multilevel-model-for-change.html#the-unconditional-growth-model."><i class="fa fa-check"></i><b>4.4.2</b> The unconditional growth model.</a></li>
+<li class="chapter" data-level="4.4.3" data-path="doing-data-analysis-with-the-multilevel-model-for-change.html"><a href="doing-data-analysis-with-the-multilevel-model-for-change.html#quantifying-the-proportion-of-outcome-variation-explained."><i class="fa fa-check"></i><b>4.4.3</b> Quantifying the proportion of outcome variation “explained.”</a></li>
+</ul></li>
+<li class="chapter" data-level="4.5" data-path="doing-data-analysis-with-the-multilevel-model-for-change.html"><a href="doing-data-analysis-with-the-multilevel-model-for-change.html#practical-data-analytic-strategies-for-model-building"><i class="fa fa-check"></i><b>4.5</b> Practical data analytic strategies for model building</a><ul>
+<li class="chapter" data-level="4.5.1" data-path="doing-data-analysis-with-the-multilevel-model-for-change.html"><a href="doing-data-analysis-with-the-multilevel-model-for-change.html#a-taxonomy-of-statistical-models."><i class="fa fa-check"></i><b>4.5.1</b> A taxonomy of statistical models.</a></li>
+<li class="chapter" data-level="4.5.2" data-path="doing-data-analysis-with-the-multilevel-model-for-change.html"><a href="doing-data-analysis-with-the-multilevel-model-for-change.html#interpreting-fitted-models."><i class="fa fa-check"></i><b>4.5.2</b> Interpreting fitted models.</a></li>
+<li class="chapter" data-level="4.5.3" data-path="doing-data-analysis-with-the-multilevel-model-for-change.html"><a href="doing-data-analysis-with-the-multilevel-model-for-change.html#displaying-prototypical-change-trajectories."><i class="fa fa-check"></i><b>4.5.3</b> Displaying prototypical change trajectories.</a></li>
+<li class="chapter" data-level="4.5.4" data-path="doing-data-analysis-with-the-multilevel-model-for-change.html"><a href="doing-data-analysis-with-the-multilevel-model-for-change.html#recentering-predictors-to-improve-interpretation."><i class="fa fa-check"></i><b>4.5.4</b> Recentering predictors to improve interpretation.</a></li>
+</ul></li>
+<li class="chapter" data-level="4.6" data-path="doing-data-analysis-with-the-multilevel-model-for-change.html"><a href="doing-data-analysis-with-the-multilevel-model-for-change.html#comparing-models-using-deviance-statistics"><i class="fa fa-check"></i><b>4.6</b> Comparing models using deviance statistics</a><ul>
+<li class="chapter" data-level="4.6.1" data-path="doing-data-analysis-with-the-multilevel-model-for-change.html"><a href="doing-data-analysis-with-the-multilevel-model-for-change.html#the-deviance-statistic."><i class="fa fa-check"></i><b>4.6.1</b> The deviance statistic.</a></li>
+<li class="chapter" data-level="4.6.2" data-path="doing-data-analysis-with-the-multilevel-model-for-change.html"><a href="doing-data-analysis-with-the-multilevel-model-for-change.html#when-and-how-can-you-compare-deviance-statistics"><i class="fa fa-check"></i><b>4.6.2</b> When and how can you compare deviance statistics?</a></li>
+<li class="chapter" data-level="4.6.3" data-path="doing-data-analysis-with-the-multilevel-model-for-change.html"><a href="doing-data-analysis-with-the-multilevel-model-for-change.html#implementing-deviance-based-hypothesis-tests."><i class="fa fa-check"></i><b>4.6.3</b> Implementing deviance-based hypothesis tests.</a></li>
+<li class="chapter" data-level="4.6.4" data-path="doing-data-analysis-with-the-multilevel-model-for-change.html"><a href="doing-data-analysis-with-the-multilevel-model-for-change.html#aic-and-bic-waic-and-loo-statistics-comparing-nonnested-models-using-information-criteria-and-cross-validation."><i class="fa fa-check"></i><b>4.6.4</b> <del>AIC and BIC</del> WAIC and LOO statistics: Comparing nonnested models using information criteria [and cross validation].</a></li>
+</ul></li>
+<li class="chapter" data-level="4.7" data-path="doing-data-analysis-with-the-multilevel-model-for-change.html"><a href="doing-data-analysis-with-the-multilevel-model-for-change.html#using-wald-statistics-to-test-composite-hypotheses-about-fixed-effects"><i class="fa fa-check"></i><b>4.7</b> Using Wald statistics to test composite hypotheses about fixed effects</a></li>
+<li class="chapter" data-level="4.8" data-path="doing-data-analysis-with-the-multilevel-model-for-change.html"><a href="doing-data-analysis-with-the-multilevel-model-for-change.html#evaluating-the-tenability-of-a-models-assumptions"><i class="fa fa-check"></i><b>4.8</b> Evaluating the tenability of a model’s assumptions</a><ul>
+<li class="chapter" data-level="4.8.1" data-path="doing-data-analysis-with-the-multilevel-model-for-change.html"><a href="doing-data-analysis-with-the-multilevel-model-for-change.html#checking-functional-form."><i class="fa fa-check"></i><b>4.8.1</b> Checking functional form.</a></li>
+<li class="chapter" data-level="4.8.2" data-path="doing-data-analysis-with-the-multilevel-model-for-change.html"><a href="doing-data-analysis-with-the-multilevel-model-for-change.html#checking-normality."><i class="fa fa-check"></i><b>4.8.2</b> Checking normality.</a></li>
+<li class="chapter" data-level="4.8.3" data-path="doing-data-analysis-with-the-multilevel-model-for-change.html"><a href="doing-data-analysis-with-the-multilevel-model-for-change.html#checking-homoscedasticity."><i class="fa fa-check"></i><b>4.8.3</b> Checking homoscedasticity.</a></li>
+</ul></li>
+<li class="chapter" data-level="4.9" data-path="doing-data-analysis-with-the-multilevel-model-for-change.html"><a href="doing-data-analysis-with-the-multilevel-model-for-change.html#model-based-empirical-bayes-estimates-of-the-individual-growth-parameters"><i class="fa fa-check"></i><b>4.9</b> Model-based (Empirical Bayes) estimates of the individual growth parameters</a></li>
+<li class="chapter" data-level="" data-path="doing-data-analysis-with-the-multilevel-model-for-change.html"><a href="doing-data-analysis-with-the-multilevel-model-for-change.html#reference-3"><i class="fa fa-check"></i>Reference</a></li>
+<li class="chapter" data-level="" data-path="doing-data-analysis-with-the-multilevel-model-for-change.html"><a href="doing-data-analysis-with-the-multilevel-model-for-change.html#session-info-3"><i class="fa fa-check"></i>Session info</a></li>
+</ul></li>
+<li class="chapter" data-level="5" data-path="treating-time-more-flexibly.html"><a href="treating-time-more-flexibly.html"><i class="fa fa-check"></i><b>5</b> Treating Time More Flexibly</a><ul>
+<li class="chapter" data-level="5.1" data-path="treating-time-more-flexibly.html"><a href="treating-time-more-flexibly.html#variably-spaced-measurement-occasions"><i class="fa fa-check"></i><b>5.1</b> Variably spaced measurement occasions</a><ul>
+<li class="chapter" data-level="5.1.1" data-path="treating-time-more-flexibly.html"><a href="treating-time-more-flexibly.html#the-structure-of-variably-spaced-data-sets."><i class="fa fa-check"></i><b>5.1.1</b> The structure of variably spaced data sets.</a></li>
+<li class="chapter" data-level="5.1.2" data-path="treating-time-more-flexibly.html"><a href="treating-time-more-flexibly.html#postulating-and-fitting-multilevel-models-with-variably-spaced-waves-of-data."><i class="fa fa-check"></i><b>5.1.2</b> Postulating and fitting multilevel models with variably spaced waves of data.</a></li>
+</ul></li>
+<li class="chapter" data-level="5.2" data-path="treating-time-more-flexibly.html"><a href="treating-time-more-flexibly.html#varying-numbers-of-measurement-occasions"><i class="fa fa-check"></i><b>5.2</b> Varying numbers of measurement occasions</a><ul>
+<li class="chapter" data-level="5.2.1" data-path="treating-time-more-flexibly.html"><a href="treating-time-more-flexibly.html#analyzing-data-sets-in-which-the-number-of-waves-per-person-varies."><i class="fa fa-check"></i><b>5.2.1</b> Analyzing data sets in which the number of waves per person varies.</a></li>
+<li class="chapter" data-level="5.2.2" data-path="treating-time-more-flexibly.html"><a href="treating-time-more-flexibly.html#practical-problems-that-may-arise-when-analyzing-unbalanced-data-sets."><i class="fa fa-check"></i><b>5.2.2</b> Practical problems that may arise when analyzing unbalanced data sets.</a></li>
+<li class="chapter" data-level="5.2.3" data-path="treating-time-more-flexibly.html"><a href="treating-time-more-flexibly.html#distinguishing-among-different-types-of-missingness."><i class="fa fa-check"></i><b>5.2.3</b> Distinguishing among different types of missingness.</a></li>
+</ul></li>
+<li class="chapter" data-level="5.3" data-path="treating-time-more-flexibly.html"><a href="treating-time-more-flexibly.html#time-varying-predictors"><i class="fa fa-check"></i><b>5.3</b> Time-varying predictors</a><ul>
+<li class="chapter" data-level="5.3.1" data-path="treating-time-more-flexibly.html"><a href="treating-time-more-flexibly.html#including-the-main-effect-of-a-time-varying-predictor."><i class="fa fa-check"></i><b>5.3.1</b> Including the main effect of a time-varying predictor.</a></li>
+<li class="chapter" data-level="5.3.2" data-path="treating-time-more-flexibly.html"><a href="treating-time-more-flexibly.html#allowing-the-effect-of-a-time-varying-predictor-to-vary-over-time."><i class="fa fa-check"></i><b>5.3.2</b> Allowing the effect of a time-varying predictor to vary over time.</a></li>
+<li class="chapter" data-level="5.3.3" data-path="treating-time-more-flexibly.html"><a href="treating-time-more-flexibly.html#recentering-time-varying-predictors."><i class="fa fa-check"></i><b>5.3.3</b> Recentering time-varying predictors.</a></li>
+<li class="chapter" data-level="5.3.4" data-path="treating-time-more-flexibly.html"><a href="treating-time-more-flexibly.html#an-important-caveat-the-problem-of-reciprocal-causation."><i class="fa fa-check"></i><b>5.3.4</b> An important caveat: The problem of reciprocal causation.</a></li>
+</ul></li>
+<li class="chapter" data-level="5.4" data-path="treating-time-more-flexibly.html"><a href="treating-time-more-flexibly.html#recentering-the-effect-of-time"><i class="fa fa-check"></i><b>5.4</b> Recentering the effect of <em>TIME</em></a></li>
+<li class="chapter" data-level="" data-path="treating-time-more-flexibly.html"><a href="treating-time-more-flexibly.html#reference-4"><i class="fa fa-check"></i>Reference</a></li>
+<li class="chapter" data-level="" data-path="treating-time-more-flexibly.html"><a href="treating-time-more-flexibly.html#session-info-4"><i class="fa fa-check"></i>Session info</a></li>
+</ul></li>
+<li class="chapter" data-level="6" data-path="modeling-discontinuous-and-nonlinear-change.html"><a href="modeling-discontinuous-and-nonlinear-change.html"><i class="fa fa-check"></i><b>6</b> Modeling Discontinuous and Nonlinear Change</a><ul>
+<li class="chapter" data-level="" data-path="modeling-discontinuous-and-nonlinear-change.html"><a href="modeling-discontinuous-and-nonlinear-change.html#reference-5"><i class="fa fa-check"></i>Reference</a></li>
+<li class="chapter" data-level="" data-path="modeling-discontinuous-and-nonlinear-change.html"><a href="modeling-discontinuous-and-nonlinear-change.html#session-info-5"><i class="fa fa-check"></i>Session info</a></li>
+</ul></li>
+<li class="chapter" data-level="7" data-path="examining-the-multilevel-models-error-covariance-structure.html"><a href="examining-the-multilevel-models-error-covariance-structure.html"><i class="fa fa-check"></i><b>7</b> Examining the Multilevel Model’s Error Covariance Structure</a><ul>
+<li class="chapter" data-level="" data-path="examining-the-multilevel-models-error-covariance-structure.html"><a href="examining-the-multilevel-models-error-covariance-structure.html#reference-6"><i class="fa fa-check"></i>Reference</a></li>
+<li class="chapter" data-level="" data-path="examining-the-multilevel-models-error-covariance-structure.html"><a href="examining-the-multilevel-models-error-covariance-structure.html#session-info-6"><i class="fa fa-check"></i>Session info</a></li>
+</ul></li>
+<li class="chapter" data-level="8" data-path="modeling-change-using-covariance-structure-analysis.html"><a href="modeling-change-using-covariance-structure-analysis.html"><i class="fa fa-check"></i><b>8</b> Modeling Change Using Covariance Structure Analysis</a><ul>
+<li class="chapter" data-level="" data-path="modeling-change-using-covariance-structure-analysis.html"><a href="modeling-change-using-covariance-structure-analysis.html#reference-7"><i class="fa fa-check"></i>Reference</a></li>
+<li class="chapter" data-level="" data-path="modeling-change-using-covariance-structure-analysis.html"><a href="modeling-change-using-covariance-structure-analysis.html#session-info-7"><i class="fa fa-check"></i>Session info</a></li>
+</ul></li>
+<li class="chapter" data-level="9" data-path="a-framework-for-investigating-event-occurrence.html"><a href="a-framework-for-investigating-event-occurrence.html"><i class="fa fa-check"></i><b>9</b> A Framework for Investigating Event Occurrence</a><ul>
+<li class="chapter" data-level="9.1" data-path="a-framework-for-investigating-event-occurrence.html"><a href="a-framework-for-investigating-event-occurrence.html#should-you-conduct-a-survival-analysis-the-whether-and-when-test"><i class="fa fa-check"></i><b>9.1</b> Should you conduct a survival analysis? The “whether” and “when” test</a><ul>
+<li class="chapter" data-level="9.1.1" data-path="a-framework-for-investigating-event-occurrence.html"><a href="a-framework-for-investigating-event-occurrence.html#time-to-relapse-among-recently-treated-alcoholics."><i class="fa fa-check"></i><b>9.1.1</b> Time to relapse among recently treated alcoholics.</a></li>
+<li class="chapter" data-level="9.1.2" data-path="a-framework-for-investigating-event-occurrence.html"><a href="a-framework-for-investigating-event-occurrence.html#length-of-stay-in-teaching."><i class="fa fa-check"></i><b>9.1.2</b> Length of stay in teaching.</a></li>
+<li class="chapter" data-level="9.1.3" data-path="a-framework-for-investigating-event-occurrence.html"><a href="a-framework-for-investigating-event-occurrence.html#age-at-first-suicide-ideation."><i class="fa fa-check"></i><b>9.1.3</b> Age at first suicide ideation.</a></li>
+</ul></li>
+<li class="chapter" data-level="9.2" data-path="a-framework-for-investigating-event-occurrence.html"><a href="a-framework-for-investigating-event-occurrence.html#framing-a-research-question-about-event-occurrence"><i class="fa fa-check"></i><b>9.2</b> Framing a research question about event occurrence</a><ul>
+<li class="chapter" data-level="9.2.1" data-path="a-framework-for-investigating-event-occurrence.html"><a href="a-framework-for-investigating-event-occurrence.html#defining-event-occurrence."><i class="fa fa-check"></i><b>9.2.1</b> Defining event occurrence.</a></li>
+<li class="chapter" data-level="9.2.2" data-path="a-framework-for-investigating-event-occurrence.html"><a href="a-framework-for-investigating-event-occurrence.html#identifying-the-beginning-of-time."><i class="fa fa-check"></i><b>9.2.2</b> Identifying the “beginning of time.”</a></li>
+<li class="chapter" data-level="9.2.3" data-path="a-framework-for-investigating-event-occurrence.html"><a href="a-framework-for-investigating-event-occurrence.html#specifying-a-metric-for-time."><i class="fa fa-check"></i><b>9.2.3</b> Specifying a metric for time.</a></li>
+</ul></li>
+<li class="chapter" data-level="9.3" data-path="a-framework-for-investigating-event-occurrence.html"><a href="a-framework-for-investigating-event-occurrence.html#censoring-how-complete-are-the-data-on-event-occurrence"><i class="fa fa-check"></i><b>9.3</b> Censoring: How complete are the data on event occurrence?</a><ul>
+<li class="chapter" data-level="9.3.1" data-path="a-framework-for-investigating-event-occurrence.html"><a href="a-framework-for-investigating-event-occurrence.html#how-and-why-does-censoring-arise"><i class="fa fa-check"></i><b>9.3.1</b> How and why does censoring arise?</a></li>
+<li class="chapter" data-level="9.3.2" data-path="a-framework-for-investigating-event-occurrence.html"><a href="a-framework-for-investigating-event-occurrence.html#different-types-of-censoring."><i class="fa fa-check"></i><b>9.3.2</b> Different types of censoring.</a></li>
+<li class="chapter" data-level="9.3.3" data-path="a-framework-for-investigating-event-occurrence.html"><a href="a-framework-for-investigating-event-occurrence.html#how-does-censoring-affect-statistical-analysis"><i class="fa fa-check"></i><b>9.3.3</b> How does censoring affect statistical analysis?</a></li>
+</ul></li>
+<li class="chapter" data-level="" data-path="a-framework-for-investigating-event-occurrence.html"><a href="a-framework-for-investigating-event-occurrence.html#reference-8"><i class="fa fa-check"></i>Reference</a></li>
+<li class="chapter" data-level="" data-path="a-framework-for-investigating-event-occurrence.html"><a href="a-framework-for-investigating-event-occurrence.html#session-info-8"><i class="fa fa-check"></i>Session info</a></li>
+</ul></li>
+<li class="chapter" data-level="10" data-path="describing-discrete-time-event-occurrence-data.html"><a href="describing-discrete-time-event-occurrence-data.html"><i class="fa fa-check"></i><b>10</b> Describing Discrete-Time Event Occurrence Data</a><ul>
+<li class="chapter" data-level="10.1" data-path="describing-discrete-time-event-occurrence-data.html"><a href="describing-discrete-time-event-occurrence-data.html#the-life-table"><i class="fa fa-check"></i><b>10.1</b> The life table</a></li>
+<li class="chapter" data-level="10.2" data-path="describing-discrete-time-event-occurrence-data.html"><a href="describing-discrete-time-event-occurrence-data.html#a-framework-for-characterizing-the-distribution-of-discrete-time-event-occurrence-data"><i class="fa fa-check"></i><b>10.2</b> A framework for characterizing the distribution of discrete-time event occurrence data</a><ul>
+<li class="chapter" data-level="10.2.1" data-path="describing-discrete-time-event-occurrence-data.html"><a href="describing-discrete-time-event-occurrence-data.html#survivor-function."><i class="fa fa-check"></i><b>10.2.1</b> Survivor function.</a></li>
+<li class="chapter" data-level="10.2.2" data-path="describing-discrete-time-event-occurrence-data.html"><a href="describing-discrete-time-event-occurrence-data.html#median-lifetime."><i class="fa fa-check"></i><b>10.2.2</b> Median lifetime.</a></li>
+</ul></li>
+<li class="chapter" data-level="10.3" data-path="describing-discrete-time-event-occurrence-data.html"><a href="describing-discrete-time-event-occurrence-data.html#developing-intuition-about-hazard-functions-survivor-functions-and-median-lifetimes"><i class="fa fa-check"></i><b>10.3</b> Developing intuition about hazard functions, survivor functions, and median lifetimes</a><ul>
+<li class="chapter" data-level="10.3.1" data-path="describing-discrete-time-event-occurrence-data.html"><a href="describing-discrete-time-event-occurrence-data.html#identifying-periods-of-high-and-low-risk-using-hazard-functions."><i class="fa fa-check"></i><b>10.3.1</b> Identifying periods of high and low risk using hazard functions.</a></li>
+<li class="chapter" data-level="10.3.2" data-path="describing-discrete-time-event-occurrence-data.html"><a href="describing-discrete-time-event-occurrence-data.html#survivor-functions-as-a-context-for-evaluating-the-magnitude-of-hazard."><i class="fa fa-check"></i><b>10.3.2</b> Survivor functions as a context for evaluating the magnitude of hazard.</a></li>
+<li class="chapter" data-level="10.3.3" data-path="describing-discrete-time-event-occurrence-data.html"><a href="describing-discrete-time-event-occurrence-data.html#strengths-and-limitations-of-estimated-median-lifetimes."><i class="fa fa-check"></i><b>10.3.3</b> Strengths and limitations of estimated median lifetimes.</a></li>
+</ul></li>
+<li class="chapter" data-level="10.4" data-path="describing-discrete-time-event-occurrence-data.html"><a href="describing-discrete-time-event-occurrence-data.html#quantifying-the-effects-of-sampling-variation"><i class="fa fa-check"></i><b>10.4</b> Quantifying the effects of sampling variation</a><ul>
+<li class="chapter" data-level="10.4.1" data-path="describing-discrete-time-event-occurrence-data.html"><a href="describing-discrete-time-event-occurrence-data.html#the-standard-error-of-the-estimated-hazard-probabilities."><i class="fa fa-check"></i><b>10.4.1</b> The standard error of the estimated hazard probabilities.</a></li>
+<li class="chapter" data-level="10.4.2" data-path="describing-discrete-time-event-occurrence-data.html"><a href="describing-discrete-time-event-occurrence-data.html#standard-error-of-the-estimated-survival-probabilities."><i class="fa fa-check"></i><b>10.4.2</b> Standard error of the estimated survival probabilities.</a></li>
+</ul></li>
+<li class="chapter" data-level="10.5" data-path="describing-discrete-time-event-occurrence-data.html"><a href="describing-discrete-time-event-occurrence-data.html#a-simple-and-useful-strategy-for-constructing-the-life-table"><i class="fa fa-check"></i><b>10.5</b> A simple and useful strategy for constructing the life table</a><ul>
+<li class="chapter" data-level="10.5.1" data-path="describing-discrete-time-event-occurrence-data.html"><a href="describing-discrete-time-event-occurrence-data.html#the-person-period-data-set.-1"><i class="fa fa-check"></i><b>10.5.1</b> The person-period data set.</a></li>
+<li class="chapter" data-level="10.5.2" data-path="describing-discrete-time-event-occurrence-data.html"><a href="describing-discrete-time-event-occurrence-data.html#using-the-person-period-data-set-to-construct-the-life-table."><i class="fa fa-check"></i><b>10.5.2</b> Using the person-period data set to construct the life table.</a></li>
+</ul></li>
+<li class="chapter" data-level="10.6" data-path="describing-discrete-time-event-occurrence-data.html"><a href="describing-discrete-time-event-occurrence-data.html#bonus-fit-the-discrete-time-hazard-models-with-brms"><i class="fa fa-check"></i><b>10.6</b> Bonus: Fit the discrete-time hazard models with brms</a></li>
+<li class="chapter" data-level="" data-path="describing-discrete-time-event-occurrence-data.html"><a href="describing-discrete-time-event-occurrence-data.html#reference-9"><i class="fa fa-check"></i>Reference</a></li>
+<li class="chapter" data-level="" data-path="describing-discrete-time-event-occurrence-data.html"><a href="describing-discrete-time-event-occurrence-data.html#session-info-9"><i class="fa fa-check"></i>Session info</a></li>
+</ul></li>
+<li class="chapter" data-level="11" data-path="fitting-basic-discrete-time-hazard-models.html"><a href="fitting-basic-discrete-time-hazard-models.html"><i class="fa fa-check"></i><b>11</b> Fitting Basic Discrete-Time Hazard Models</a><ul>
+<li class="chapter" data-level="11.1" data-path="fitting-basic-discrete-time-hazard-models.html"><a href="fitting-basic-discrete-time-hazard-models.html#toward-a-statistical-model-for-discrete-time-hazard"><i class="fa fa-check"></i><b>11.1</b> Toward a statistical model for discrete-time hazard</a><ul>
+<li class="chapter" data-level="11.1.1" data-path="fitting-basic-discrete-time-hazard-models.html"><a href="fitting-basic-discrete-time-hazard-models.html#plots-of-within-group-hazard-functions-and-survivor-functions."><i class="fa fa-check"></i><b>11.1.1</b> Plots of within-group hazard functions and survivor functions.</a></li>
+<li class="chapter" data-level="11.1.2" data-path="fitting-basic-discrete-time-hazard-models.html"><a href="fitting-basic-discrete-time-hazard-models.html#what-kind-of-statistical-model-do-these-graphs-suggest"><i class="fa fa-check"></i><b>11.1.2</b> What kind of statistical model do these graphs suggest?</a></li>
+</ul></li>
+<li class="chapter" data-level="11.2" data-path="fitting-basic-discrete-time-hazard-models.html"><a href="fitting-basic-discrete-time-hazard-models.html#formal-representation-of-the-population-discrete-time-hazard-model"><i class="fa fa-check"></i><b>11.2</b> formal representation of the population discrete-time hazard model</a><ul>
+<li class="chapter" data-level="11.2.1" data-path="fitting-basic-discrete-time-hazard-models.html"><a href="fitting-basic-discrete-time-hazard-models.html#what-do-the-parameters-represent"><i class="fa fa-check"></i><b>11.2.1</b> What do the parameters represent?</a></li>
+<li class="chapter" data-level="11.2.2" data-path="fitting-basic-discrete-time-hazard-models.html"><a href="fitting-basic-discrete-time-hazard-models.html#an-alternative-representation-of-the-model."><i class="fa fa-check"></i><b>11.2.2</b> An alternative representation of the model.</a></li>
+</ul></li>
+<li class="chapter" data-level="11.3" data-path="fitting-basic-discrete-time-hazard-models.html"><a href="fitting-basic-discrete-time-hazard-models.html#fitting-a-discrete-time-hazard-model-to-data"><i class="fa fa-check"></i><b>11.3</b> Fitting a discrete-time hazard model to data</a><ul>
+<li class="chapter" data-level="11.3.1" data-path="fitting-basic-discrete-time-hazard-models.html"><a href="fitting-basic-discrete-time-hazard-models.html#adding-predictors-to-the-person-period-data-set."><i class="fa fa-check"></i><b>11.3.1</b> Adding predictors to the person-period data set.</a></li>
+<li class="chapter" data-level="11.3.2" data-path="fitting-basic-discrete-time-hazard-models.html"><a href="fitting-basic-discrete-time-hazard-models.html#maximum-likelihood-estimates-and-bayesian-posteriors-for-the-discrete-time-hazard-model."><i class="fa fa-check"></i><b>11.3.2</b> Maximum likelihood estimates [and Bayesian posteriors] for the discrete-time hazard model.</a></li>
+<li class="chapter" data-level="11.3.3" data-path="fitting-basic-discrete-time-hazard-models.html"><a href="fitting-basic-discrete-time-hazard-models.html#fitting-the-discrete-time-hazard-model-to-data."><i class="fa fa-check"></i><b>11.3.3</b> Fitting the discrete-time hazard model to data.</a></li>
+</ul></li>
+<li class="chapter" data-level="11.4" data-path="fitting-basic-discrete-time-hazard-models.html"><a href="fitting-basic-discrete-time-hazard-models.html#interpreting-parameter-estimates"><i class="fa fa-check"></i><b>11.4</b> Interpreting parameter estimates</a><ul>
+<li class="chapter" data-level="11.4.1" data-path="fitting-basic-discrete-time-hazard-models.html"><a href="fitting-basic-discrete-time-hazard-models.html#the-time-indicators."><i class="fa fa-check"></i><b>11.4.1</b> The time indicators.</a></li>
+<li class="chapter" data-level="11.4.2" data-path="fitting-basic-discrete-time-hazard-models.html"><a href="fitting-basic-discrete-time-hazard-models.html#dichotomous-substantive-predictors."><i class="fa fa-check"></i><b>11.4.2</b> Dichotomous substantive predictors.</a></li>
+<li class="chapter" data-level="11.4.3" data-path="fitting-basic-discrete-time-hazard-models.html"><a href="fitting-basic-discrete-time-hazard-models.html#continuous-substantive-predictors."><i class="fa fa-check"></i><b>11.4.3</b> Continuous substantive predictors.</a></li>
+<li class="chapter" data-level="11.4.4" data-path="fitting-basic-discrete-time-hazard-models.html"><a href="fitting-basic-discrete-time-hazard-models.html#polytomous-substantive-predictors."><i class="fa fa-check"></i><b>11.4.4</b> Polytomous substantive predictors.</a></li>
+</ul></li>
+<li class="chapter" data-level="11.5" data-path="fitting-basic-discrete-time-hazard-models.html"><a href="fitting-basic-discrete-time-hazard-models.html#displaying-fitted-hazard-and-survivor-functions"><i class="fa fa-check"></i><b>11.5</b> Displaying fitted hazard and survivor functions</a><ul>
+<li class="chapter" data-level="11.5.1" data-path="fitting-basic-discrete-time-hazard-models.html"><a href="fitting-basic-discrete-time-hazard-models.html#a-strategy-for-a-single-categorical-substantive-predictor."><i class="fa fa-check"></i><b>11.5.1</b> A strategy for a single categorical substantive predictor.</a></li>
+<li class="chapter" data-level="11.5.2" data-path="fitting-basic-discrete-time-hazard-models.html"><a href="fitting-basic-discrete-time-hazard-models.html#extending-this-strategy-to-multiple-predictors-some-of-which-are-continuous."><i class="fa fa-check"></i><b>11.5.2</b> Extending this strategy to multiple predictors (some of which are continuous).</a></li>
+<li class="chapter" data-level="11.5.3" data-path="fitting-basic-discrete-time-hazard-models.html"><a href="fitting-basic-discrete-time-hazard-models.html#two-cautions-when-interpreting-fitted-hazard-and-survivor-functions."><i class="fa fa-check"></i><b>11.5.3</b> Two cautions when interpreting fitted hazard and survivor functions.</a></li>
+</ul></li>
+<li class="chapter" data-level="11.6" data-path="fitting-basic-discrete-time-hazard-models.html"><a href="fitting-basic-discrete-time-hazard-models.html#comparing-models-using-deviance-statistics-and-information-criteria"><i class="fa fa-check"></i><b>11.6</b> Comparing models using <del>deviance statistics and</del> information criteria</a><ul>
+<li class="chapter" data-level="11.6.1" data-path="fitting-basic-discrete-time-hazard-models.html"><a href="fitting-basic-discrete-time-hazard-models.html#the-deviance-statistic.-1"><i class="fa fa-check"></i><b>11.6.1</b> The deviance statistic.</a></li>
+<li class="chapter" data-level="11.6.2" data-path="fitting-basic-discrete-time-hazard-models.html"><a href="fitting-basic-discrete-time-hazard-models.html#deviance-based-hypothesis-tests-for-individual-predictors."><i class="fa fa-check"></i><b>11.6.2</b> Deviance-based hypothesis tests for individual predictors.</a></li>
+<li class="chapter" data-level="11.6.3" data-path="fitting-basic-discrete-time-hazard-models.html"><a href="fitting-basic-discrete-time-hazard-models.html#deviance-based-hypothesis-tests-for-groups-of-predictors."><i class="fa fa-check"></i><b>11.6.3</b> Deviance-based hypothesis tests for groups of predictors.</a></li>
+<li class="chapter" data-level="11.6.4" data-path="fitting-basic-discrete-time-hazard-models.html"><a href="fitting-basic-discrete-time-hazard-models.html#comparing-nonnested-models-using-waic-and-loo."><i class="fa fa-check"></i><b>11.6.4</b> Comparing nonnested models using [WAIC and LOO].</a></li>
+</ul></li>
+<li class="chapter" data-level="11.7" data-path="fitting-basic-discrete-time-hazard-models.html"><a href="fitting-basic-discrete-time-hazard-models.html#statistical-inference-using-uncertainty-in-the-bayesian-posterior"><i class="fa fa-check"></i><b>11.7</b> Statistical inference using [uncertainty in the Bayesian posterior]</a><ul>
+<li class="chapter" data-level="11.7.1" data-path="fitting-basic-discrete-time-hazard-models.html"><a href="fitting-basic-discrete-time-hazard-models.html#the-wald-chi-square-statistic."><i class="fa fa-check"></i><b>11.7.1</b> The <del>Wald chi-square statistic</del>.</a></li>
+<li class="chapter" data-level="11.7.2" data-path="fitting-basic-discrete-time-hazard-models.html"><a href="fitting-basic-discrete-time-hazard-models.html#asymmetric-credible-intervals-for-parameters-and-odds-ratios."><i class="fa fa-check"></i><b>11.7.2</b> [Asymmetric credible intervals] for parameters and odds ratios.</a></li>
+</ul></li>
+<li class="chapter" data-level="" data-path="fitting-basic-discrete-time-hazard-models.html"><a href="fitting-basic-discrete-time-hazard-models.html#reference-10"><i class="fa fa-check"></i>Reference</a></li>
+<li class="chapter" data-level="" data-path="fitting-basic-discrete-time-hazard-models.html"><a href="fitting-basic-discrete-time-hazard-models.html#session-info-10"><i class="fa fa-check"></i>Session info</a></li>
+<li class="chapter" data-level="" data-path="fitting-basic-discrete-time-hazard-models.html"><a href="fitting-basic-discrete-time-hazard-models.html#footnote"><i class="fa fa-check"></i>Footnote</a></li>
+</ul></li>
+<li class="chapter" data-level="12" data-path="extending-the-discrete-time-hazard-model.html"><a href="extending-the-discrete-time-hazard-model.html"><i class="fa fa-check"></i><b>12</b> Extending the Discrete-Time Hazard Model</a><ul>
+<li class="chapter" data-level="12.1" data-path="extending-the-discrete-time-hazard-model.html"><a href="extending-the-discrete-time-hazard-model.html#alternative-specification-for-the-main-effect-of-time"><i class="fa fa-check"></i><b>12.1</b> Alternative specification for the “main effect” of <em>TIME</em></a><ul>
+<li class="chapter" data-level="12.1.1" data-path="extending-the-discrete-time-hazard-model.html"><a href="extending-the-discrete-time-hazard-model.html#an-ordered-series-of-polynomial-specifications-for-time."><i class="fa fa-check"></i><b>12.1.1</b> An ordered series of polynomial specifications for <em>TIME</em>.</a></li>
+<li class="chapter" data-level="12.1.2" data-path="extending-the-discrete-time-hazard-model.html"><a href="extending-the-discrete-time-hazard-model.html#criteria-for-comparing-alternative-specification."><i class="fa fa-check"></i><b>12.1.2</b> Criteria for comparing alternative specification.</a></li>
+<li class="chapter" data-level="12.1.3" data-path="extending-the-discrete-time-hazard-model.html"><a href="extending-the-discrete-time-hazard-model.html#interpreting-parameters-from-linear-quadratic-and-cubic-specifications."><i class="fa fa-check"></i><b>12.1.3</b> Interpreting parameters from linear, quadratic, and cubic specifications.</a></li>
+</ul></li>
+<li class="chapter" data-level="12.2" data-path="extending-the-discrete-time-hazard-model.html"><a href="extending-the-discrete-time-hazard-model.html#using-the-complementary-log-log-link-to-specify-a-discrete-time-hazard-model"><i class="fa fa-check"></i><b>12.2</b> Using the complementary log-log link to specify a discrete-time hazard model</a><ul>
+<li class="chapter" data-level="12.2.1" data-path="extending-the-discrete-time-hazard-model.html"><a href="extending-the-discrete-time-hazard-model.html#the-clog-log-transformation-when-and-why-it-is-useful."><i class="fa fa-check"></i><b>12.2.1</b> The clog-log transformation: When and why it is useful.</a></li>
+<li class="chapter" data-level="12.2.2" data-path="extending-the-discrete-time-hazard-model.html"><a href="extending-the-discrete-time-hazard-model.html#a-discrete-time-hazard-model-using-the-complementary-log-log-link."><i class="fa fa-check"></i><b>12.2.2</b> A discrete-time hazard model using the complementary log-log link.</a></li>
+<li class="chapter" data-level="12.2.3" data-path="extending-the-discrete-time-hazard-model.html"><a href="extending-the-discrete-time-hazard-model.html#choosing-between-logit-and-clog-log-links-for-discrete-time-hazard-models."><i class="fa fa-check"></i><b>12.2.3</b> Choosing between logit and clog-log links for discrete-time hazard models.</a></li>
+</ul></li>
+<li class="chapter" data-level="12.3" data-path="extending-the-discrete-time-hazard-model.html"><a href="extending-the-discrete-time-hazard-model.html#time-varying-predictors-1"><i class="fa fa-check"></i><b>12.3</b> Time-varying predictors</a><ul>
+<li class="chapter" data-level="12.3.1" data-path="extending-the-discrete-time-hazard-model.html"><a href="extending-the-discrete-time-hazard-model.html#assumptions-underlying-a-model-with-time-varying-predictors."><i class="fa fa-check"></i><b>12.3.1</b> Assumptions underlying a model with time-varying predictors.</a></li>
+<li class="chapter" data-level="12.3.2" data-path="extending-the-discrete-time-hazard-model.html"><a href="extending-the-discrete-time-hazard-model.html#interpreting-and-displaying-time-varying-predictors-effects."><i class="fa fa-check"></i><b>12.3.2</b> Interpreting and displaying time-varying predictors’ effects.</a></li>
+<li class="chapter" data-level="12.3.3" data-path="extending-the-discrete-time-hazard-model.html"><a href="extending-the-discrete-time-hazard-model.html#two-caveats-the-problems-of-state-and-rate-dependence."><i class="fa fa-check"></i><b>12.3.3</b> Two caveats: The problems of state and rate dependence.</a></li>
+</ul></li>
+<li class="chapter" data-level="12.4" data-path="extending-the-discrete-time-hazard-model.html"><a href="extending-the-discrete-time-hazard-model.html#the-linear-additivity-assumption-uncovering-violations-and-simple-solutions"><i class="fa fa-check"></i><b>12.4</b> The linear additivity assumption: Uncovering violations and simple solutions</a><ul>
+<li class="chapter" data-level="12.4.1" data-path="extending-the-discrete-time-hazard-model.html"><a href="extending-the-discrete-time-hazard-model.html#interactions-between-substantive-predictors."><i class="fa fa-check"></i><b>12.4.1</b> Interactions between substantive predictors.</a></li>
+<li class="chapter" data-level="12.4.2" data-path="extending-the-discrete-time-hazard-model.html"><a href="extending-the-discrete-time-hazard-model.html#nonlinear-effects."><i class="fa fa-check"></i><b>12.4.2</b> Nonlinear effects.</a></li>
+</ul></li>
+<li class="chapter" data-level="12.5" data-path="extending-the-discrete-time-hazard-model.html"><a href="extending-the-discrete-time-hazard-model.html#the-proportionality-assumption-uncovering-violations-and-simple-solutions"><i class="fa fa-check"></i><b>12.5</b> The proportionality assumption: Uncovering violations and simple solutions</a><ul>
+<li class="chapter" data-level="12.5.1" data-path="extending-the-discrete-time-hazard-model.html"><a href="extending-the-discrete-time-hazard-model.html#discrete-time-hazard-models-that-do-not-invoke-a-proportionality-assumption."><i class="fa fa-check"></i><b>12.5.1</b> Discrete-time hazard models that do not invoke a proportionality assumption.</a></li>
+<li class="chapter" data-level="12.5.2" data-path="extending-the-discrete-time-hazard-model.html"><a href="extending-the-discrete-time-hazard-model.html#investigating-the-proportionality-assumption-in-practice."><i class="fa fa-check"></i><b>12.5.2</b> Investigating the proportionality assumption in practice.</a></li>
+</ul></li>
+<li class="chapter" data-level="12.6" data-path="extending-the-discrete-time-hazard-model.html"><a href="extending-the-discrete-time-hazard-model.html#the-no-unobserved-heterogeneity-assumption-no-simple-solution"><i class="fa fa-check"></i><b>12.6</b> The no unobserved heterogeneity assumption: No simple solution</a></li>
+<li class="chapter" data-level="12.7" data-path="extending-the-discrete-time-hazard-model.html"><a href="extending-the-discrete-time-hazard-model.html#residual-analysis"><i class="fa fa-check"></i><b>12.7</b> Residual analysis</a></li>
+<li class="chapter" data-level="" data-path="extending-the-discrete-time-hazard-model.html"><a href="extending-the-discrete-time-hazard-model.html#reference-11"><i class="fa fa-check"></i>Reference</a></li>
+<li class="chapter" data-level="" data-path="extending-the-discrete-time-hazard-model.html"><a href="extending-the-discrete-time-hazard-model.html#session-info-11"><i class="fa fa-check"></i>Session info</a></li>
+<li class="chapter" data-level="" data-path="extending-the-discrete-time-hazard-model.html"><a href="extending-the-discrete-time-hazard-model.html#footnote-1"><i class="fa fa-check"></i>Footnote</a></li>
+</ul></li>
+</ul>
+
+      </nav>
+    </div>
+
+    <div class="book-body">
+      <div class="body-inner">
+        <div class="book-header" role="navigation">
+          <h1>
+            <i class="fa fa-circle-o-notch fa-spin"></i><a href="./"><em>Applied Longitudinal Data Analysis</em> in brms and the tidyverse</a>
+          </h1>
+        </div>
+
+        <div class="page-wrapper" tabindex="-1" role="main">
+          <div class="page-inner">
+
+            <section class="normal" id="section-">
+<div id="a-framework-for-investigating-event-occurrence" class="section level1">
+<h1><span class="header-section-number">9</span> A Framework for Investigating Event Occurrence</h1>
+<blockquote>
+<p>Researchers who want to study event occurrence must learn how to think about their data in new and unfamiliar ways. Even traditional methods for data description–the use of means and standard deviations–fail to serve researchers well. In this chapter we introduce the essential features of event occurrence data, explaining how and why they create the need for new analytic methods. (pp 305–306)</p>
+</blockquote>
+<div id="should-you-conduct-a-survival-analysis-the-whether-and-when-test" class="section level2">
+<h2><span class="header-section-number">9.1</span> Should you conduct a survival analysis? The “whether” and “when” test</h2>
+<blockquote>
+<p>To determine whether a research question calls for survival analysis, we find it helpful to apply a simple mnemonic we refer to as “the whether and when test.” If your research questions include either word–<em>whether</em> or <em>when</em>–you probably need to use survival methods. (p. 306, <em>emphasis</em> added)</p>
+</blockquote>
+<div id="time-to-relapse-among-recently-treated-alcoholics." class="section level3">
+<h3><span class="header-section-number">9.1.1</span> Time to relapse among recently treated alcoholics.</h3>
+<p>Within the addictive-behaviors literature, researchers often study if and when participants relapse (i.e., begin using the substance(s) again).</p>
+</div>
+<div id="length-of-stay-in-teaching." class="section level3">
+<h3><span class="header-section-number">9.1.2</span> Length of stay in teaching.</h3>
+<p>Education researchers can use survival analysis to study whether and for how long newly-hired teachers stay in their positions.</p>
+</div>
+<div id="age-at-first-suicide-ideation." class="section level3">
+<h3><span class="header-section-number">9.1.3</span> Age at first suicide ideation.</h3>
+<p>Suicide is a major health risk and clinical researchers sometimes use survival analysis to whether and when participants have first considered killing themselves.</p>
+</div>
+</div>
+<div id="framing-a-research-question-about-event-occurrence" class="section level2">
+<h2><span class="header-section-number">9.2</span> Framing a research question about event occurrence</h2>
+<p>Survival analyses share three common characteristics.</p>
+<blockquote>
+<p>Each has a clearly defined:</p>
+<ul>
+<li><em>Target event</em>, whose occurrence is being studies</li>
+<li><em>Beginning of time</em>, an initial starting point when no one under study has yet experienced the target event</li>
+<li><em>Metrics for clocking time</em>, a meaningful scale in which event occurrence is recorded (p. 310, <em>emphasis</em> in the original)</li>
+</ul>
+</blockquote>
+<div id="defining-event-occurrence." class="section level3">
+<h3><span class="header-section-number">9.2.1</span> Defining event occurrence.</h3>
+<p>“Event occurrence represents an individual’s transition from one ‘state’ to another ‘state’” (p. 310). Though our primary focus will be on binary states (e.g., drinking/abstinent), survival analyses can handle more categories (e.g., whether/when marriages end in divorce or death).</p>
+</div>
+<div id="identifying-the-beginning-of-time." class="section level3">
+<h3><span class="header-section-number">9.2.2</span> Identifying the “beginning of time.”</h3>
+<blockquote>
+<p>The “beginning of time” is a moment when <em>everyone</em> in the population occupies one, and only one, of the possible states… Over time, as individuals move from the original state to the next, they experience the target event. The timing of this transition–the distance from the “beginning of time” until the event occurrence–is referred to as the <em>event time</em>.</p>
+<p>To identify the “beginning of time” in a given study, imagine placing everyone in the population on a time-line, an axis with the “beginning of time” at one end and the last moment when event occurrence could be observed at the other. The goal is to “start the clock” when on one in the population has yet experienced the event but everyone is at least (theoretically) eligible to do so. In the language of survival analysis, you want to start the clock when everyone in the population is <em>at risk</em> of experiencing the event. (pp. 311–312, <em>emphasis</em> in the original)</p>
+</blockquote>
+</div>
+<div id="specifying-a-metric-for-time." class="section level3">
+<h3><span class="header-section-number">9.2.3</span> Specifying a metric for time.</h3>
+<blockquote>
+<p>We distinguish between data recorded in thin precise units and those recorded in thicker intervals by calling the former <em>continuous time</em> and the latter <em>discrete time</em>.</p>
+<p>[Though survival methods can handle both discrete and continuous time,] time should be recorded in the smallest possible units relevant to the process under study. No single metric is universally appropriate, and even different studies of the identical event might use different scales. (p. 313, <em>emphasis</em> in the original)</p>
+</blockquote>
+</div>
+</div>
+<div id="censoring-how-complete-are-the-data-on-event-occurrence" class="section level2">
+<h2><span class="header-section-number">9.3</span> Censoring: How complete are the data on event occurrence?</h2>
+<blockquote>
+<p>No matter when data collection begins, and no matter how long it lasts, some sample members are likely to have unknown event times. Statisticians call this problem <em>censoring</em> and they label the people with the unknown event times <em>censored observations</em>. Because censoring is inevitable–and a fundamental conundrum in the study of event occurrence–we now explore it in detail. (p. 316, <em>emphasis</em> in the original)</p>
+</blockquote>
+<div id="how-and-why-does-censoring-arise" class="section level3">
+<h3><span class="header-section-number">9.3.1</span> How and why does censoring arise?</h3>
+<blockquote>
+<p>Censoring occurs whenever a researcher does not know an individual’s event time. There are two major reasons for censoring: (1) some individuals will <em>never</em> experience the target event; and (2) others will experience the event, but not during the study’s data collection. Some of these latter individuals will experience the event shortly after data collection ends while others will do so at a much later time. As a practical matter, though, these distinctions matter little because you cannot distinguish among them. That, unfortunately, is the nature of censoring: it prevents you from knowing the very quantity of interest–<em>whether</em> and, if so, <em>when</em> the target event occurs for a subset of the sample. (pp. 316–317, <em>emphasis</em> in the original)</p>
+</blockquote>
+</div>
+<div id="different-types-of-censoring." class="section level3">
+<h3><span class="header-section-number">9.3.2</span> Different types of censoring.</h3>
+<p>“Methodologists make two major types of distinctions: first, between <em>non-informative</em> and <em>informative</em> censoring mechanisms, and second, between <em>right</em>- and <em>left</em>-censoring” (p. 318, <em>emphasis</em> in the original).</p>
+<div id="noninformative-versus-informative-censoring." class="section level4">
+<h4><span class="header-section-number">9.3.2.1</span> Noninformative versus informative censoring.</h4>
+<blockquote>
+<p>A noninformative censoring mechanism operates independent of event occurrence and the risk of event occurrence. If censoring is under an investigator’s control, determined in advance by design–as it usually is–then it is noninformative… [Under this mechanism] we can therefore assume that all individuals who remain in the study after the censoring date are representative of everyone who <em>would have remained in the study</em> had censoring not occurred.</p>
+<p>If censoring occurs because individuals have experienced the event or are likely to do so in the future, the censoring mechanism is informative… Under these circumstances, we can no longer assume that those people who remain in the study after this tie are representative of all individuals who would have remained in the study had censoring not occurred. The noncensored individuals differ systematically from the censored individuals. (pp. 318–319, <em>emphasis</em> in the original)</p>
+</blockquote>
+</div>
+<div id="right--versus-left-censoring." class="section level4">
+<h4><span class="header-section-number">9.3.2.2</span> Right- versus left-censoring.</h4>
+<blockquote>
+<p>Right-censoring arises when an event time is unknown because event occurrence is not observed. Left-censoring arises when an event time is unknown because <em>the beginning of time</em> is not observed…. Because [right-censoring] is the one typically encountered in practice, and because it is the type for which survival methods were developed, references to censoring, unencumbered by a directional modifier, usually refer to right-censoring.</p>
+<p>How to left-censored observations arise? Often they arise because researchers have not paid sufficient attention to identifying the beginning of time during the design phase. If the beginning of time is defined well–as that moment when all individuals in the population are eligible to experience the event but none have yet done so–left-censoring can be eliminated….</p>
+<p>Left-censoring presents challenges not easily addressed even with the most sophisticated of survival methods (<a href="http://people.stat.sfu.ca/~joanh/jhpaper/HuLawless_1996Biomk.pdf">Hu &amp; Lawless, 1996</a>). Little progress has been made in this area since Turnbull (<a href="https://www.tandfonline.com/doi/abs/10.1080/01621459.1974.10480146">1974</a>, <a href="https://apps.dtic.mil/dtic/tr/fulltext/u2/a030940.pdf">1976</a>) offered some basic descriptive approaches and <a href="https://www.jstor.org/stable/270719?seq=1">Flinn and Heckman (1982)</a> and <a href="https://www.crcpress.com/Analysis-of-Survival-Data/Cox-Oakes/p/book/9780412244902">Cox and Oakes (1984)</a> offered some directions for fitting models under a restrictive set of assumptions. The most common advice, followed by Fichman, is to set the left-censored spells aside from analysis…. Redefining the beginning of time to coincide with a precipitating event… is often the best way of resolving the otherwise intractable problems that left-censored data pose. Whenever possible, we suggest that researchers consider such a redefinition or otherwise eliminate left-censored data through design. (pp. 319–320, <em>emphasis</em> in the original)</p>
+</blockquote>
+</div>
+</div>
+<div id="how-does-censoring-affect-statistical-analysis" class="section level3">
+<h3><span class="header-section-number">9.3.3</span> How does censoring affect statistical analysis?</h3>
+<p>Here we load the <code>teachers.csv</code> data <a href="https://journals.sagepub.com/doi/10.1177/001440299305900309">(Singer, 1992)</a>.</p>
+<div class="sourceCode" id="cb737"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb737-1" data-line-number="1"><span class="kw">library</span>(tidyverse)</a>
+<a class="sourceLine" id="cb737-2" data-line-number="2"></a>
+<a class="sourceLine" id="cb737-3" data-line-number="3">teachers &lt;-<span class="st"> </span><span class="kw">read_csv</span>(<span class="st">&quot;data/teachers.csv&quot;</span>)</a>
+<a class="sourceLine" id="cb737-4" data-line-number="4"></a>
+<a class="sourceLine" id="cb737-5" data-line-number="5"><span class="kw">glimpse</span>(teachers)</a></code></pre></div>
+<pre><code>## Rows: 3,941
+## Columns: 3
+## $ id     &lt;dbl&gt; 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24,…
+## $ t      &lt;dbl&gt; 1, 2, 1, 1, 12, 1, 12, 1, 2, 2, 7, 12, 1, 12, 12, 2, 12, 1, 3, 2, 12, 12, 9, 12, 2…
+## $ censor &lt;dbl&gt; 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 0, 1, 1, 0, 1, 0, 0, 0, 0…</code></pre>
+<p>Make a version of Figure 9.1.</p>
+<div class="sourceCode" id="cb739"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb739-1" data-line-number="1">teachers <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb739-2" data-line-number="2"><span class="st">  </span><span class="kw">count</span>(censor, t) <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb739-3" data-line-number="3"><span class="st">  </span><span class="kw">mutate</span>(<span class="dt">censor =</span> <span class="kw">if_else</span>(censor <span class="op">==</span><span class="st"> &quot;0&quot;</span>, <span class="st">&quot;not censored&quot;</span>, <span class="st">&quot;censored&quot;</span>)) <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb739-4" data-line-number="4"><span class="st">  </span></a>
+<a class="sourceLine" id="cb739-5" data-line-number="5"><span class="st">  </span><span class="kw">ggplot</span>(<span class="kw">aes</span>(<span class="dt">x =</span> t)) <span class="op">+</span></a>
+<a class="sourceLine" id="cb739-6" data-line-number="6"><span class="st">  </span><span class="kw">geom_col</span>(<span class="kw">aes</span>(<span class="dt">y =</span> n)) <span class="op">+</span></a>
+<a class="sourceLine" id="cb739-7" data-line-number="7"><span class="st">  </span><span class="kw">geom_text</span>(<span class="kw">aes</span>(<span class="dt">y =</span> n <span class="op">+</span><span class="st"> </span><span class="dv">25</span>, <span class="dt">label =</span> n)) <span class="op">+</span></a>
+<a class="sourceLine" id="cb739-8" data-line-number="8"><span class="st">  </span><span class="kw">scale_x_continuous</span>(<span class="st">&quot;years&quot;</span>, <span class="dt">breaks =</span> <span class="dv">1</span><span class="op">:</span><span class="dv">12</span>) <span class="op">+</span></a>
+<a class="sourceLine" id="cb739-9" data-line-number="9"><span class="st">  </span><span class="kw">scale_y_continuous</span>(<span class="ot">NULL</span>, <span class="dt">breaks =</span> <span class="ot">NULL</span>) <span class="op">+</span></a>
+<a class="sourceLine" id="cb739-10" data-line-number="10"><span class="st">  </span><span class="kw">theme</span>(<span class="dt">panel.grid =</span> <span class="kw">element_blank</span>()) <span class="op">+</span></a>
+<a class="sourceLine" id="cb739-11" data-line-number="11"><span class="st">  </span><span class="kw">facet_wrap</span>(<span class="op">~</span>censor, <span class="dt">nrow =</span> <span class="dv">2</span>)</a></code></pre></div>
+<p><img src="09_files/figure-gfm/unnamed-chunk-3-1.png" width="576" style="display: block; margin: auto;" /></p>
+<p>Here’s a descriptive breakdown of those censored or not.</p>
+<div class="sourceCode" id="cb740"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb740-1" data-line-number="1">teachers <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb740-2" data-line-number="2"><span class="st">  </span><span class="kw">group_by</span>(censor) <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb740-3" data-line-number="3"><span class="st">  </span><span class="kw">summarise</span>(<span class="dt">n    =</span> <span class="kw">n</span>(),</a>
+<a class="sourceLine" id="cb740-4" data-line-number="4">            <span class="dt">mean =</span> <span class="kw">mean</span>(t),</a>
+<a class="sourceLine" id="cb740-5" data-line-number="5">            <span class="dt">sd   =</span> <span class="kw">sd</span>(t)) <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb740-6" data-line-number="6"><span class="st">  </span><span class="kw">mutate</span>(<span class="dt">percent =</span> <span class="dv">100</span> <span class="op">*</span><span class="st"> </span>n <span class="op">/</span><span class="st"> </span><span class="kw">sum</span>(n))</a></code></pre></div>
+<pre><code>## # A tibble: 2 x 5
+##   censor     n  mean    sd percent
+##    &lt;dbl&gt; &lt;int&gt; &lt;dbl&gt; &lt;dbl&gt;   &lt;dbl&gt;
+## 1      0  2207  3.73  2.41    56.0
+## 2      1  1734  9.60  1.78    44.0</code></pre>
+<p>Whereas the distribution of the censored occasions is flattish with a bit of a spike at 12, the distribution of the non-censored times has a bit of an exponential look to it. Recall that the exponential distribution is controlled by a single parameter, its rate, and the mean of the exponential distribution is the reciprocal of that rate. If we take the empirical mean and <span class="math inline">\(n\)</span> of the non-censored data and plot those in to the <code>rexp()</code> function, we can simulate exponential data and plot.</p>
+<div class="sourceCode" id="cb742"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb742-1" data-line-number="1"><span class="kw">set.seed</span>(<span class="dv">9</span>)</a>
+<a class="sourceLine" id="cb742-2" data-line-number="2"></a>
+<a class="sourceLine" id="cb742-3" data-line-number="3"><span class="kw">tibble</span>(<span class="dt">years =</span> <span class="kw">rexp</span>(<span class="dt">n =</span> <span class="dv">2207</span>, <span class="dt">rate =</span> <span class="dv">1</span> <span class="op">/</span><span class="st"> </span><span class="fl">3.7</span>)) <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb742-4" data-line-number="4"><span class="st">  </span></a>
+<a class="sourceLine" id="cb742-5" data-line-number="5"><span class="st">  </span><span class="kw">ggplot</span>(<span class="kw">aes</span>(<span class="dt">x =</span> years)) <span class="op">+</span></a>
+<a class="sourceLine" id="cb742-6" data-line-number="6"><span class="st">  </span><span class="kw">geom_histogram</span>(<span class="dt">binwidth =</span> <span class="dv">1</span>, <span class="dt">boundary =</span> <span class="dv">0</span>) <span class="op">+</span></a>
+<a class="sourceLine" id="cb742-7" data-line-number="7"><span class="st">  </span><span class="kw">scale_x_continuous</span>(<span class="dt">breaks =</span> <span class="dv">1</span><span class="op">:</span><span class="dv">12</span>) <span class="op">+</span></a>
+<a class="sourceLine" id="cb742-8" data-line-number="8"><span class="st">  </span><span class="kw">coord_cartesian</span>(<span class="dt">xlim =</span> <span class="kw">c</span>(<span class="dv">0</span>, <span class="dv">12</span>)) <span class="op">+</span></a>
+<a class="sourceLine" id="cb742-9" data-line-number="9"><span class="st">  </span><span class="kw">theme</span>(<span class="dt">panel.grid =</span> <span class="kw">element_blank</span>())</a></code></pre></div>
+<p><img src="09_files/figure-gfm/unnamed-chunk-5-1.png" width="576" style="display: block; margin: auto;" /></p>
+<p>That simulation looks pretty similar to our non-censored data. If we stopped there, we might naïvely presume <span class="math inline">\(\operatorname{Exponential}(1/3.7)\)</span> is a good model for our data. But this would ignore the censored data. One of the solutions researchers have used is</p>
+<blockquote>
+<p>to assign the censored cases the event time they possess at the end of the data collection (e.g., <a href="https://eric.ed.gov/?id=EJ306852">Frank &amp; Keith, 1984</a>). Applying this to our teacher career data (e.g., assigning a career length of 7 years to the 280 teachers censored in the year 7, etc.) yields an estimated mean career duration of 7.5 years. (pp. 322–323)</p>
+</blockquote>
+<p>Here’s what that looks like.</p>
+<div class="sourceCode" id="cb743"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb743-1" data-line-number="1">teachers <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb743-2" data-line-number="2"><span class="st">  </span><span class="kw">summarise</span>(<span class="dt">mean   =</span> <span class="kw">mean</span>(t),</a>
+<a class="sourceLine" id="cb743-3" data-line-number="3">            <span class="dt">median =</span> <span class="kw">median</span>(t),</a>
+<a class="sourceLine" id="cb743-4" data-line-number="4">            <span class="dt">sd     =</span> <span class="kw">sd</span>(t))</a></code></pre></div>
+<pre><code>## # A tibble: 1 x 3
+##    mean median    sd
+##   &lt;dbl&gt;  &lt;dbl&gt; &lt;dbl&gt;
+## 1  6.31      7  3.63</code></pre>
+<p>I have no idea where the 7.5 value Singer and Willett presented came from. It’s larger than both the mean and the median in the data. But anyway, this method is patently wrong, so it doesn’t matter:</p>
+<blockquote>
+<p>Imputing event times for censored cases simply changes all “nonevents” into “events” and further assumes that all these new “events” occur at the earliest time possible–that is, at the moment of censoring. Surely these decisions are most likely wrong. (p. 323)</p>
+</blockquote>
+<p>Stay tuned for methods that are better than patently wrong.</p>
+</div>
+</div>
+<div id="reference-8" class="section level2 unnumbered">
+<h2>Reference</h2>
+<p><a href="https://www.oxfordscholarship.com/view/10.1093/acprof:oso/9780195152968.001.0001/acprof-9780195152968">Singer, J. D., &amp; Willett, J. B. (2003). <em>Applied longitudinal data analysis: Modeling change and event occurrence</em>. New York, NY, US: Oxford University Press.</a></p>
+</div>
+<div id="session-info-8" class="section level2 unnumbered">
+<h2>Session info</h2>
+<div class="sourceCode" id="cb745"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb745-1" data-line-number="1"><span class="kw">sessionInfo</span>()</a></code></pre></div>
+<pre><code>## R version 3.6.3 (2020-02-29)
+## Platform: x86_64-apple-darwin15.6.0 (64-bit)
+## Running under: macOS Catalina 10.15.3
+## 
+## Matrix products: default
+## BLAS:   /Library/Frameworks/R.framework/Versions/3.6/Resources/lib/libRblas.0.dylib
+## LAPACK: /Library/Frameworks/R.framework/Versions/3.6/Resources/lib/libRlapack.dylib
+## 
+## locale:
+## [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
+## 
+## attached base packages:
+## [1] stats     graphics  grDevices utils     datasets  methods   base     
+## 
+## other attached packages:
+## [1] forcats_0.5.0   stringr_1.4.0   dplyr_0.8.5     purrr_0.3.3     readr_1.3.1     tidyr_1.0.2    
+## [7] tibble_3.0.0    ggplot2_3.3.0   tidyverse_1.3.0
+## 
+## loaded via a namespace (and not attached):
+##  [1] tidyselect_1.0.0 xfun_0.13        haven_2.2.0      lattice_0.20-38  colorspace_1.4-1
+##  [6] vctrs_0.2.4      generics_0.0.2   htmltools_0.4.0  yaml_2.2.1       utf8_1.1.4      
+## [11] rlang_0.4.5      pillar_1.4.3     withr_2.1.2      glue_1.4.0       DBI_1.1.0       
+## [16] dbplyr_1.4.2     modelr_0.1.6     readxl_1.3.1     lifecycle_0.2.0  munsell_0.5.0   
+## [21] gtable_0.3.0     cellranger_1.1.0 rvest_0.3.5      evaluate_0.14    labeling_0.3    
+## [26] knitr_1.28       fansi_0.4.1      broom_0.5.5      Rcpp_1.0.4.6     backports_1.1.6 
+## [31] scales_1.1.0     jsonlite_1.6.1   farver_2.0.3     fs_1.4.1         hms_0.5.3       
+## [36] digest_0.6.25    stringi_1.4.6    bookdown_0.18    grid_3.6.3       cli_2.0.2       
+## [41] tools_3.6.3      magrittr_1.5     crayon_1.3.4     pkgconfig_2.0.3  ellipsis_0.3.0  
+## [46] xml2_1.3.1       reprex_0.3.0     lubridate_1.7.8  assertthat_0.2.1 rmarkdown_2.1   
+## [51] httr_1.4.1       rstudioapi_0.11  R6_2.4.1         nlme_3.1-144     compiler_3.6.3</code></pre>
+
+</div>
+</div>
+            </section>
+
+          </div>
+        </div>
+      </div>
+<a href="modeling-change-using-covariance-structure-analysis.html" class="navigation navigation-prev " aria-label="Previous page"><i class="fa fa-angle-left"></i></a>
+<a href="describing-discrete-time-event-occurrence-data.html" class="navigation navigation-next " aria-label="Next page"><i class="fa fa-angle-right"></i></a>
+    </div>
+  </div>
+<script src="libs/gitbook-2.6.7/js/app.min.js"></script>
+<script src="libs/gitbook-2.6.7/js/lunr.js"></script>
+<script src="libs/gitbook-2.6.7/js/clipboard.min.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-search.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-sharing.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-fontsettings.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-bookdown.js"></script>
+<script src="libs/gitbook-2.6.7/js/jquery.highlight.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-clipboard.js"></script>
+<script>
+gitbook.require(["gitbook"], function(gitbook) {
+gitbook.start({
+"sharing": {
+"github": false,
+"facebook": true,
+"twitter": true,
+"linkedin": false,
+"weibo": false,
+"instapaper": false,
+"vk": false,
+"all": ["facebook", "twitter", "linkedin", "weibo", "instapaper"]
+},
+"fontsettings": {
+"theme": "white",
+"family": "sans",
+"size": 2
+},
+"edit": {
+"link": null,
+"text": null
+},
+"history": {
+"link": null,
+"text": null
+},
+"view": {
+"link": null,
+"text": null
+},
+"download": null,
+"toc": {
+"collapse": "subsection"
+}
+});
+});
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    var src = "true";
+    if (src === "" || src === "true") src = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML";
+    if (location.protocol !== "file:")
+      if (/^https?:/.test(src))
+        src = src.replace(/^https?:/, '');
+    script.src = src;
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+</body>
+
+</html>
