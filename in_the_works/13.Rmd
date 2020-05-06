@@ -577,7 +577,7 @@ p1 <-
   
   ggplot(aes(x = seconds, y = `S(t)`)) +
   geom_step() +
-  scale_x_continuous(NULL, breaks = NULL)
+  scale_x_continuous(NULL, breaks = NULL, limits = c(0, 20))
 ```
 
 Now add the actuarial and discrete-time estimates to make our version of the lower panel of Figure 13.2.
