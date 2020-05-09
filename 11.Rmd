@@ -539,7 +539,7 @@ Here are the LOO weights.
 model_weights(fit11.4, fit11.5, fit11.6, weights = "loo") %>% round(digits = 3)
 ```
 
-## formal representation of the population discrete-time hazard model
+## Formal representation of the population discrete-time hazard model
 
 Earlier equations for the hazard function omitted substantive predictors. Now consider the case where $X_{1ij}, X_{2ij}, . . ., X_{Pij}$ stand for the $P$ predictors which may or may not vary across individuals $i$ and time periods $j$. Thus $x_{pij}$ is the value for the $i^\text{th}$ individual on the $p^\text{th}$ variable during the $j^\text{th}$ period. We can use this to define the conditional hazard function as
 
@@ -739,9 +739,27 @@ It's also the case that when $n = 1$, the right side of the equation for the bin
 
 $$p^z (1 - p)^{1 - z}.$$
 
-Whether you are working with aggregated or un-aggregated data, both are suited to fit logistic regression models with the binomial likelihood. Just specify the necessary information in the model syntax. For **brms**, the primary difference is how you use the `trials()` function. When we fit our logistic regression models using the aggregated data, we specified `trials(total)`, which informed the `brm()` function what the $n$ values were. In the case of unaggregated binomial data, we can just state `trials(1)`. Each sell is the outcome $z$ for a single trial. Here’s how to use that with Models A through D on page 385.
+Whether you are working with aggregated or un-aggregated data, both are suited to fit logistic regression models with the binomial likelihood. Just specify the necessary information in the model syntax. For **brms**, the primary difference is how you use the `trials()` function. When we fit our logistic regression models using the aggregated data, we specified `trials(total)`, which informed the `brm()` function what the $n$ values were. In the case of unaggregated binomial data, we can just state `trials(1)`. Each cell is the outcome $z$ for a single trial. 
 
-```{r fit11.7}
+Before we fit the models, we might talk a bit about priors. When we fit the first model of this kind at the end of Chapter 10, we just used `prior(normal(0, 4), class = b)` without comment. Recall we're modeling probabilities in the log-odds space. In Section 11.1.2.1 we used a plot to compare probability values to their log-odds counterparts. Let's take a more focused look.
+
+```{r, fig.width = 5, fig.height = 3.5}
+tibble(log_odds = -8:8) %>% 
+  mutate(p = inv_logit_scaled(log_odds)) %>% 
+  
+  ggplot(aes(x = log_odds, y = p)) +
+  geom_hline(yintercept = 0:5 / 5, color = "white") +
+  geom_point() +
+  scale_x_continuous(breaks = -8:8) +
+  scale_y_continuous(breaks = 0:5 / 5) +
+  theme(panel.grid = element_blank())
+```
+
+When $\operatorname{log-odds} p = 0$, $p = .5$. Once $\operatorname{log-odds} p$ approaches the $\mp 4$ neighborhood, the corresponding values for $p$ asymptote at the boundaries $[0, 1]$. By using a $\operatorname{Normal} (0, 4)$ prior for $\operatorname{log-odds} p$, we’re putting bulk of the prior mass in the $\operatorname{log-odds} p$ space between, say, -8 and 8. In the absence of other information, this might be a good place to start. A little further down, we'll reexamine this set-up. For now, here's how to use `brm()` to fit Models A through D from page 385.
+
+```{r fit11.7, warning = F, message = F}
+library(brms)
+
 # model a
 fit11.7 <-
   brm(data = sex_pp,
@@ -1024,29 +1042,101 @@ sex_pp <-
   unnest(data)
 ```
 
-Fit the model with the dummies `pt1`, `pt2`, and `pt3`.
+Before we fit the model with the `pt*` dummies, let's backup and talk about priors, again. When we fit the last four models, our discussion about priors for $p$ focused on the posterior implications for those parameters in the log-odds space. Things get odd when we consider the implications in the probability space. To demonstrate, let’s simulate from $\operatorname{Normal} (0, 4)$ and see what it looks like when we transform the draws back into the probability metric.
 
-```{r fit11.11}
-fit11.11 <-
-  brm(data = sex_pp,
-      family = binomial,
-      event | trials(1) ~ 0 + d7 + d8 + d9 + d10 + d11 + d12 + pt1 + pt2 + pt3,
-      prior(normal(0, 4), class = b),
-      chains = 4, cores = 4, iter = 2000, warmup = 1000,
-      seed = 11,
-      file = "fits/fit11.11")
+```{r, fig.width = 4, fig.height = 2.5}
+set.seed(11)
+
+tibble(log_odds = rnorm(1e6, mean = 0, sd = 4)) %>% 
+  mutate(p = inv_logit_scaled(log_odds)) %>% 
+  ggplot(aes(x = p)) +
+  geom_histogram(bins = 50) +
+  scale_y_continuous(NULL, breaks = NULL) +
+  theme(panel.grid = element_blank())
 ```
 
-Here is the model summary.
+Perhaps unexpectedly, our log-odds $\operatorname{Normal} (0, 4)$ prior ended up bunching up the prior mass at the boundaries. Depending on what we want, this may or may not make sense. If we want to regularize the coefficients toward zero in the probability space, something closer to $\operatorname{Normal} (0, 1)$ would be a better idea. Here's a look at what happens when we compare three simulations in that range. 
+
+```{r, fig.width = 8, fig.height = 2.5}
+set.seed(11)
+
+tibble(sd = c(2, 1.5, 1)) %>% 
+  mutate(log_odds = map(sd, ~rnorm(1e6, mean = 0, sd = .))) %>% 
+  unnest(log_odds) %>% 
+  mutate(sd = str_c("sd = ", sd),
+         p  = inv_logit_scaled(log_odds)) %>% 
+
+  ggplot(aes(x = p)) +
+  geom_histogram(bins = 50) +
+  scale_y_continuous(NULL, breaks = NULL) +
+  theme(panel.grid = element_blank()) +
+  facet_wrap(~sd)
+```
+
+It looks like the log-odds $\operatorname{Normal} (0, 1)$ gently regularizes $p$ toward .5, but still allows for stronger values. This might be a good prior to use for our substantive covariates, what Singer and Willett referred to as the $\beta$ parameters. But I don't know that this makes sense for our $\alpha$ parameters. If you've been following along with the model output, the life tables, and so on, you'll have noticed those tend to drift toward the lower end of the probability range. Regularizing toward $p = .5$ might not be a good idea. In the absence of good substantive or statistical theory, perhaps it's best to use a flat prior. The log-odds $\operatorname{Normal} (0, 1.5)$ prior is nearly flat on the probability space, but it does still push the mass away from the boundaries. 
+
+Maybe we can come up with something better. What if we simulated a large number of draws from the $\operatorname{Uniform} (0, 1)$ distribution, converted those draws to the log-odds metric, and fit a simple Student's $t$ model? If we wanted to stay within the Student-$t$ family of priors, of which the normal is a special case, that would give us a sense of the what prior values would approximate a uniform distribution on the probability scale.
+
+```{r fit11.11}
+set.seed(11)
+
+dat <- 
+  tibble(p = runif(1e5, 0, 1)) %>% 
+  mutate(g = log_odds(p)) 
+
+fit11.11 <-
+  brm(data = dat,
+      family = student,
+      g ~ 1,
+      chains = 4, cores = 4)
+```
+
+Check the summary.
 
 ```{r}
 print(fit11.11)
 ```
 
+Now we can reverse the process. Here's what it would look like if we simulated from the Student $t$-distribution based on those posterior means and then converted the results into the probability metric.
+
+```{r, fig.width = 4, fig.height = 2.5}
+set.seed(11)
+
+tibble(g = rt(1e6, df = 7.61) * 1.57) %>% 
+  mutate(p = inv_logit_scaled(g)) %>% 
+  
+  ggplot(aes(x = p)) +
+  geom_histogram(bins = 50) +
+  scale_y_continuous(NULL, breaks = NULL) +
+  theme(panel.grid = element_blank())
+```
+
+Now here's what it might look like if fit the next model with the $\operatorname{Normal} (0, 1)$ prior for the $\beta$ parameters and $\text{Student-} t (7.61, 0, 1.57)$ prior for the $\alpha$ parameters.
+
+```{r fit11.12}
+fit11.12 <-
+  brm(data = sex_pp,
+      family = binomial,
+      event | trials(1) ~ 0 + d7 + d8 + d9 + d10 + d11 + d12 + pt1 + pt2 + pt3,
+      prior = c(prior(student_t(7.61, 0, 1.57), class = b), 
+                prior(normal(0, 1), class = b, coef = pt1), 
+                prior(normal(0, 1), class = b, coef = pt2), 
+                prior(normal(0, 1), class = b, coef = pt3)),
+      chains = 4, cores = 4, iter = 2000, warmup = 1000,
+      seed = 11,
+      file = "fits/fit11.12")
+```
+
+Here is the model summary.
+
+```{r}
+print(fit11.12)
+```
+
 We can use the `tidy()` function and a few lines of wrangling code to make a version of the table in the middle of page 391.
 
 ```{r}
-tidy(fit11.11) %>% 
+tidy(fit11.12) %>% 
   filter(str_detect(term, "b_pt")) %>% 
   mutate(predictor    = str_remove(term, "b_"),
          `odds ratio` = exp(estimate)) %>% 
@@ -1201,7 +1291,7 @@ p3 <-
                color = "white", linetype = 2) +
   geom_ribbon(aes(ymin = s_lower, ymax = s_upper),
               size = 0, alpha = 1/6) +
-  geom_line(aes(y = s)) +
+  geom_line(aes(y = s)) + 
   scale_y_continuous(NULL, breaks = c(0, .5, 1)) +
   labs(subtitle = "fitted survival probability") +
   coord_cartesian(ylim = c(0, 1)) +
@@ -1571,7 +1661,7 @@ sessionInfo()
 
 ```{r, echo = F, message = F}
 # here we'll remove our objects
-rm(sex, fit11.1, fit11.2, fit11.3, make_lt, lt, p1, p2, make_iml, odds, log_odds, p3, sex_pp, sex_aggregated, fit11.4, fit11.5, fit11.6, f, fit11.7, fit11.8, fit11.9, fit11.10, fit11.11, nd, imls, ll, post)
+rm(sex, fit11.1, fit11.2, fit11.3, make_lt, lt, p1, p2, make_iml, odds, log_odds, p3, sex_pp, sex_aggregated, fit11.4, fit11.5, fit11.6, f, fit11.7, fit11.8, fit11.9, fit11.10, dat, fit11.11, fit11.12, nd, imls, ll, post)
 
 pacman::p_unload(pacman::p_loaded(), character.only = TRUE)
 ```
