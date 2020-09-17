@@ -15,7 +15,7 @@ options(width = 110)
 
 # Introducing the Multilevel Model for Change
 
-> In this chapter [Singer and Willett introduced] the multilevel model for change, demonstrating how it allows us to address within-person and between-person questions about change simultaneously. Although there are several ways of writing the statistical model, here we adopt a simple and common approach that has much substantive appeal. We specify the multilevel model for change by simultaneously postulating a pair of subsidiary models—a level-1 submodel that describes how each person changes over time, and a level-2 model that describes how these changes differ across people ([Bryk & Raudenbush, 1987](http://personal.psu.edu/jxb14/M554/articles/Bryk%26Raudenbush1987.pdf); [Rogosa & Willett, 1985](https://link.springer.com/content/pdf/10.1007/BF02294247.pdf)). (p. 3) 
+> In this chapter [Singer and Willett introduced] the multilevel model for change, demonstrating how it allows us to address within-person and between-person questions about change simultaneously. Although there are several ways of writing the statistical model, here we adopt a simple and common approach that has much substantive appeal. We specify the multilevel model for change by simultaneously postulating a pair of subsidiary models—a level-1 submodel that describes how each person changes over time, and a level-2 model that describes how these changes differ across people [@bryk1987application; @rogosaUnderstandingCorrelatesChange1985]. [@singerAppliedLongitudinalData2003, p. 3]
 
 ## What is the purpose of the multilevel model for change?
 
@@ -157,9 +157,9 @@ f %>%
   theme(panel.grid = element_blank())
 ```
 
-> In-specifying a level-1 submodel that attempts to describe everyone (all the $i$’s) in the population, we implicitly assume that all the true individual change trajectories have a common algebraic form. But we do not assume that everyone has the same exact trajectory. Because each person has his or her own individual growth parameters (intercepts and slopes), different people can have their own distinct change trajectories. (pp. 53--54)
+> In-specifying a level-1 submodel that attempts to describe everyone (all the $i$'s) in the population, we implicitly assume that all the true individual change trajectories have a common algebraic form. But we do not assume that everyone has the same exact trajectory. Because each person has his or her own individual growth parameters (intercepts and slopes), different people can have their own distinct change trajectories. (pp. 53--54)
 
-In this way, the multilevel model’s level-1 submodel is much like an interaction/moderation model with interaction terms for each level of $i$. 
+In this way, the multilevel model's level-1 submodel is much like an interaction/moderation model with interaction terms for each level of $i$. 
 
 ### The stochastic part of the level-1 submodel.
 
@@ -176,7 +176,7 @@ We should point out that another way to express this is
 \mu_{ij}   & = \pi_{0i} + \pi_{1i} (\text{age}_{ij} - 1).
 \end{align*}
 
-This won't be a huge deal in the context of the models Singer and Willett presented in the initial chapters of the text but expressing the models this way can help one think in terms of likelihood functions. That's a major advantage when you start working with data which are natural to model using other distributions (e.g., count data and the Poisson, binary data and the binomial). For more on this approach, check out McElreath's [*Statistical Rethinking*](https://xcelab.net/rm/statistical-rethinking/) and my [companion project](https://bookdown.org/connect/#/apps/1850/access) translating his work into **brms** and **tidyverse** code. Also, thinking in terms of likelihoods will pay off starting around Chapter 10 when we start fitting discrete-time survival models.
+This won't be a huge deal in the context of the models Singer and Willett presented in the initial chapters of the text but expressing the models this way can help one think in terms of likelihood functions. That's a major advantage when you start working with data which are natural to model using other distributions (e.g., count data and the Poisson, binary data and the binomial). For more on this approach, check out either edition of McElreath's [-@mcelreathStatisticalRethinkingBayesian2015; -@mcelreathStatisticalRethinkingBayesian2020] [*Statistical Rethinking*](https://xcelab.net/rm/statistical-rethinking/) and my [-@kurzStatisticalRethinkingBrms2020; -@kurzStatisticalRethinkingSecondEd2020] companion ebook([here](https://bookdown.org/content/3890/) and [here](https://bookdown.org/content/4857/)) translating his work into **brms** and **tidyverse** code. Also, thinking in terms of likelihoods will pay off starting around [Chapter 10][Describing Discrete-Time Event Occurrence Data] when we start fitting discrete-time survival models.
 
 ### Relating the level-1 submodel to the OLS exploratory methods of chapter 2.
 
@@ -208,7 +208,7 @@ by_id <-
 head(by_id)
 ```
 
-Now we'll use the great helper functions from the [**broom** package](https://cran.r-project.org/web/packages/broom/index.html), `tidy()` and `glance()`, to store the coefficient information and model fit information, respectively, in a tidy data format (see [here](http://r4ds.had.co.nz/tidy-data.html) and also [here](https://www.youtube.com/watch?v=rz3_FDVt9eg&t=3458s)).
+Now we'll use the great helper functions from the [**broom** package](https://cran.r-project.org/web/packages/broom/index.html) [@R-broom], `tidy()` and `glance()`, to store the coefficient information and model fit information, respectively, in a tidy data format (see [here](http://r4ds.had.co.nz/tidy-data.html) and also [here](https://www.youtube.com/watch?v=rz3_FDVt9eg&t=3458s)).
 
 ```{r, warning = F, message = F}
 # install.packages("broom")
@@ -286,7 +286,7 @@ early_int_sim %>%
 
 Given the simplicity of the shapes, the bottom panels of Figure 3.4 will take a bit of preparatory work. First, we'll need to wrangle the data a bit to get the necessary points. If we were working with a Bayesian model fit with **brms**, we'd use the `fitted()` function. But since we're working with models fit with base **R**'s OLS estimator, `lm()`, we'll use `predict()`, which accommodates a `newdata` argument. That'll be crucial because in order to get the shapes correct, we'll need to evaluate the minimum and maximum values across the fitted lines across a densely-packed sequence of `age_c` values.
 
-```{r}
+```{r, message = F}
 # how may `age_c` values do we need?
 n <- 30
 
@@ -377,45 +377,46 @@ We'll discuss the details about the $\zeta$ terms in a bit.
 
 > Each part of the level-2 submodel contains a residual that allows the value of each person’s growth parameters to be scattered around the relevant population averages. These residuals, $\zeta_{0i}$ and $\zeta_{1i}$ in [the] equation [above], represent those portions of the level-2 outcomes--the individual growth parameters--that remain unexplained by the level-2 predictor(s). (p. 61)
 
-We often summarize the $\zeta_{0i}$ and $\zeta_{1i}$ deviations as $\sigma_0^2$ and $\sigma_1^2$, respectively. And importantly, these variance parameters have a covariance $\sigma_{01}$. However, *and this next part is quite important*, **brms** users should know that unlike the convention in many frequentist software packages (e.g., **lme4**) and in the text, **brms** parameterizes these in the standard-deviation metric. That is, in **brms**, these are expressed as $\sigma_0$ and $\sigma_1$. Similarly, the $\sigma_{01}$ presented in **brms** output is in a correlation metric, rather than a covariance. There are technical reasons for this are outside of the scope of the present situation (see [Bürkner, 2017](https://www.jstatsoft.org/article/view/v080i01)). The consequences is that we'll make frequent use of squares and square roots in this project when comparing our `brms::brm()` results to those in the text.
+We often summarize the $\zeta_{0i}$ and $\zeta_{1i}$ deviations as $\sigma_0^2$ and $\sigma_1^2$, respectively. And importantly, these variance parameters have a covariance $\sigma_{01}$. However, *and this next part is quite important*, **brms** users should know that unlike the convention in many frequentist software packages [e.g., **lme4**, @R-lme4; @batesFittingLinearMixedeffects2015] and in the text, **brms** parameterizes these in the standard-deviation metric. That is, in **brms**, these are expressed as $\sigma_0$ and $\sigma_1$. Similarly, the $\sigma_{01}$ presented in **brms** output is in a correlation metric, rather than a covariance. There are technical reasons for this are outside of the scope of the present situation [see @burknerBrmsPackageBayesian2017]. The consequences is that we'll make frequent use of squares and square roots in this project when comparing our `brms::brm()` results to those in the text.
 
 As on page 63 of the text, the typical way to express the multivariate distribution of the $\zeta$ parameters would be
 
 \begin{align*}
 \begin{bmatrix} \zeta_{0i} \\ \zeta_{1i} \end{bmatrix} & 
 \sim \operatorname{N} 
-\bigg ( \begin{bmatrix} 0 \\ 0 \end{bmatrix},  
-\begin{bmatrix} \sigma_0^2 & \sigma_{01}\\ \sigma_{01} & \sigma_1^2 \end{bmatrix}
-\bigg ),
+\begin{pmatrix} 
+\begin{bmatrix} 0 \\ 0 \end{bmatrix},  
+\begin{bmatrix} \sigma_0^2 & \sigma_{01}\\ \sigma_{01} & \sigma_1^2 \end{bmatrix} 
+\end{pmatrix},
 \end{align*}
 
 where the bracketed matrix on the right part of the equation is the variance/covariance matrix. If we summarize the vector of $\zeta$ terms as $u$ and so on, we can re-express the above equation as
 
 $$
-u \sim \operatorname{N} (\mathbf{0}, \mathbf{\Sigma}),
+u \sim \operatorname N (\mathbf 0, \mathbf \Sigma),
 $$
 
-where $\mathbf{0}$ is the vector of 0 means and $\mathbf{\Sigma}$ is the variance/covariance matrix. In Stan, and thus **brms**, we typically decompose $\mathbf{\Sigma}$ as
+where $\mathbf 0$ is the vector of 0 means and $\mathbf \Sigma$ is the variance/covariance matrix. In Stan, and thus **brms**, we typically decompose $\mathbf \Sigma$ as
 
 \begin{align*}
-\mathbf{\Sigma} & = \mathbf{D} \mathbf{\Omega} \mathbf{D}, \text{where} \\
-\mathbf{D}      & = \begin{bmatrix} \sigma_0 & 0 \\ 0 & \sigma_1 \end{bmatrix} \text{and} \\
-\mathbf{\Omega} & = \begin{bmatrix} 1 & \rho \\ \rho & 1 \end{bmatrix}.
+\mathbf \Sigma & = \mathbf D \mathbf \Omega \mathbf D, \text{where} \\
+\mathbf D      & = \begin{bmatrix} \sigma_0 & 0 \\ 0 & \sigma_1 \end{bmatrix} \text{and} \\
+\mathbf \Omega & = \begin{bmatrix} 1 & \rho \\ \rho & 1 \end{bmatrix}.
 \end{align*}
 
-Thus $\mathbf{D}$ is the diagonal matrix of standard deviations and $\mathbf{\Omega}$ is the correlation matrix.
+Thus $\mathbf D$ is the diagonal matrix of standard deviations and $\mathbf \Omega$ is the correlation matrix.
 
 ## Fitting the multilevel model for change to data
 
-Singer and Willett discussed how in the 90s, we saw a bloom of software for fitting multilevel models. Very notably, they mentioned BUGS ([Gilks, Richardson, & Spiegelhalter, 1996](https://www.crcpress.com/Markov-Chain-Monte-Carlo-in-Practice/Gilks-Richardson-Spiegelhalter/p/book/9780412055515)) which stands for 'Bayesian inference using Gibbs sampling' and was a major advance in Bayesian software. As we learn in Kruschke ([2015](http://www.indiana.edu/~kruschke/DoingBayesianDataAnalysis/)):
+Singer and Willett discussed how in the 90s, we saw a bloom of software for fitting multilevel models. Very notably, they mentioned BUGS [@gilksMCMCinPractice1995] which stands for 'Bayesian inference using Gibbs sampling' and was a major advance in Bayesian software. As we learn in @kruschkeDoingBayesianData2015:
 
-> In 1997, BUGS had a Windows-only version called WinBUGS, and later it was reimplemented in OpenBUGS which also runs best on Windows operating systems. JAGS (Plummer, [2003](http://www.ci.tuwien.ac.at/Conferences/DSC-2003/Drafts/Plummer.pdf), [2012](http://blue.for.msu.edu/CSTAT_13/jags_user_manual.pdf)) retained many of the design features of BUGS, but with different samplers under the hood and better usability across different computer-operating systems (Windows, MacOS, and other forms of Linux/Unix). (pp. 193--194)
+> In 1997, BUGS had a Windows-only version called WinBUGS, and later it was reimplemented in OpenBUGS which also runs best on Windows operating systems. JAGS [@plummer2003jags; @plummer2012jags] retained many of the design features of BUGS, but with different samplers under the hood and better usability across different computer-operating systems (Windows, MacOS, and other forms of Linux/Unix). (pp. 193--194)
 
-There's also Stan. From their [homepage](https://mc-stan.org), we read "Stan is a state-of-the-art platform for statistical modeling and high-performance statistical computation." Stan is free and open-source and you can find links to various documentation resources, such as the current *User's Guide* and *Stan Language Reference Manual*, at [https://mc-stan.org/users/documentation/](https://mc-stan.org/users/documentation/). Unlike BUGS and JAGS, Stan samples from the posterior via Hamiltonian Monte Carlo, which tends to scale particularly well for complex multilevel models. However, in this project we won't be working with Stan directly. Rather, we’ll interface with it indirectly through [**brms**](https://github.com/paul-buerkner/brms). To my knowledge, **brms** is the most flexible and user-friendly interface for Stan within the **R** ecosystem. 
+There's also Stan. From their homepage, [https://mc-stan.org](https://mc-stan.org), we read "Stan is a state-of-the-art platform for statistical modeling and high-performance statistical computation." Stan is free and open-source and you can find links to various documentation resources, such as the current *Stan user's guide* [@standevelopmentteamStanUserGuide2020] and *Stan reference manual* [@standevelopmentteamStanReferenceManual2020], at [https://mc-stan.org/users/documentation/](https://mc-stan.org/users/documentation/). Unlike BUGS and JAGS, Stan samples from the posterior via Hamiltonian Monte Carlo, which tends to scale particularly well for complex multilevel models. However, in this project we won't be working with Stan directly. Rather, we'll interface with it indirectly through [**brms**](https://github.com/paul-buerkner/brms). To my knowledge, **brms** is the most flexible and user-friendly interface for Stan within the **R** ecosystem.
 
 Talking about the various software options, Singer and Willett wrote:
 
-> All have their strengths, and we use many of them in our research and in this book. At their core, each program does the same job; it fits the multilevel model for change to data and provides parameter estimates, measures of precision, diagnostics, and so on. There is also some evidence that all the different packages produce the same, or similar, answers to a given problem ([Kreft & de Leeuw, 1990](https://files.eric.ed.gov/fulltext/ED340731.pdf)). So, in one sense, it does not matter which program you choose. (p. 64)
+> All have their strengths, and we use many of them in our research and in this book. At their core, each program does the same job; it fits the multilevel model for change to data and provides parameter estimates, measures of precision, diagnostics, and so on. There is also some evidence that all the different packages produce the same, or similar, answers to a given problem [@kreftComparingFourDifferent1990]. So, in one sense, it does not matter which program you choose. (p. 64)
 
 But importantly, in the next paragraph the authors clarified their text focused on "one particular method of estimation--*maximum likelihood*" (p. 64, *emphasis* in the original). This is quite important because, whereas we might expect various maximum-likelihood-based packages to yield the same or similar results, this will not necessarily hold when working with Bayesian software which, in addition to point estimates and expressions of uncertainty, yields an entire posterior distribution as a consequence of Bayes' theorem,
 
@@ -425,15 +426,15 @@ $$
 
 where $p(\theta | d)$ is the posterior distribution, $p(d | \theta)$ is the likelihood (i.e., the star of maximum likelihood), $p(\theta)$ are the priors, and $p(d)$ is the normalizing constant, the probability of the data which transforms the numerator to a probability metric.
 
-Given that multilevel models are a fairly advanced topic, it’s not my goal in this project to offer a tutorial on the foundations of applied Bayesian statistics. I’m taking it for granted you’re familiar with the basics. But if you’re very ambitious and this is new or if you’re just rusty, I recommend you back up and lean the ropes with [Richard McElreath](https://twitter.com/rlmcelreath)’s excellent introductory text, [*Statistical Rethinking*](http://xcelab.net/rm/statistical-rethinking/). He has great [freely-available lectures](https://www.youtube.com/channel/UCNJK6_DZvcMqNSzQdEkzvzA/playlists) that augment the text and I also have a [ebook](https://bookdown.org/content/3890/) translating his book in to **brms** and **tidyverse**-style code.
+Given that multilevel models are a fairly advanced topic, it is not my goal in this project to offer a tutorial on the foundations of applied Bayesian statistics. I'm taking it for granted you are familiar with the basics. But if you're very ambitious and this is new or if you're just rusty, I recommend you back up and lean the ropes with [Richard McElreath](https://twitter.com/rlmcelreath)'s excellent introductory text, [*Statistical Rethinking*](http://xcelab.net/rm/statistical-rethinking/). He has great [freely-available lectures](https://www.youtube.com/channel/UCNJK6_DZvcMqNSzQdEkzvzA/playlists) that augment the text and I also have ebooks ([here](https://bookdown.org/content/3890/) and [here](https://bookdown.org/content/4857/)) translating both editions of his text into **brms** and **tidyverse**-style code.
 
 ### The advantages of ~~maximum likelihood~~ Bayesian estimation.
 
-I just don't think I have the strength to evangelize Bayes, at the moment. McElreath covered that a little bit in [*Statistical Rethinking*](http://xcelab.net/rm/statistical-rethinking/), but he mainly took it for granted. Kruschke has been more of a Bayesian evangelist, examples of which are his [2015 text](http://www.indiana.edu/~kruschke/DoingBayesianDataAnalysis/) or his coauthored paper with Torrin Liddell, [*The Bayesian New Statistics: Hypothesis testing, estimation, meta-analysis, and power analysis from a Bayesian perspective*](https://link.springer.com/article/10.3758/s13423-016-1221-4). My assumption is if you’re reading this, you're already interested.
+I just don't think I have the strength to evangelize Bayes, at the moment. McElreath covered that a little bit in [*Statistical Rethinking*](http://xcelab.net/rm/statistical-rethinking/), but he mainly took it for granted. Kruschke has been more of a Bayesian evangelist, examples of which are his [2015 text](http://www.indiana.edu/~kruschke/DoingBayesianDataAnalysis/) or his [-@kruschkeBayesianNewStatistics2018] coauthored paper with Torrin Liddell, [*The Bayesian New Statistics: Hypothesis testing, estimation, meta-analysis, and power analysis from a Bayesian perspective*](https://link.springer.com/article/10.3758/s13423-016-1221-4). My assumption is if you’re reading this, you're already interested.
 
 ### Using ~~maximum likelihood~~ modern Bayesian methods to fit a multilevel model.
 
-Just as with maximum likelihood, you have to specify a likelihood function with Bayes, too. The likelihood, $p(d | \theta)$, is half of the numerator of Bayes's theorem and its meaning in Bayes is that same as with maximum likelihood estimation. The likelihood "describes the probability of observing the sample data as a function of the model's unknown parameters" (p. 66). But unlike with maximum likelihood, we multiply the likelihood with the prior(s) and normalize the results so they're in a probability metric.
+Just as with maximum likelihood, you have to specify a likelihood function with Bayes, too. The likelihood, $p(d | \theta)$, is half of the numerator of Bayes' theorem and its meaning in Bayes is that same as with maximum likelihood estimation. The likelihood "describes the probability of observing the sample data as a function of the model's unknown parameters" (p. 66). But unlike with maximum likelihood, we multiply the likelihood with the prior(s) and normalize the results so they're in a probability metric.
 
 ## Examining estimated fixed effects
 
@@ -455,24 +456,24 @@ fit3.2 <-
       family = gaussian,
       formula = cog ~ 0 + Intercept + age_c + program + age_c:program + (1 + age_c | id),
       iter = 2000, warmup = 1000, chains = 4, cores = 4,
-      control = list(adapt_delta = 0.9),
+      control = list(adapt_delta = 0.95),
       seed = 3,
       file = "fits/fit03.02")
 ```
 
 Compared to last chapter, we've added a few arguments. Notice the second line, `family = gaussian`. Remember all that likelihood talk from the last few sections? Well, with `family = gaussian` we've indicated we want to use the Gaussian likelihood function. As this is the **brms** default, we didn't actually need to type out the argument. But we'll follow this convention for the remainder of the text for two reasons. First, I hope it's pedagogically useful to remind you of what likelihood you're working with. Second, I think it's generally a good idea to explicate your likelihood. In the context of the initial chapters of this text, this might seem unnecessary. We'll constantly be using the Gaussian. But that's largely a pedagogical decision made by the authors. There are lots of every-day applications for multilevel models with other likelihood functions, such as those suited for discrete data. And when the day comes you'll need to fit a multilevel logistic regression model, you'll need to use a different setting in the `family` argument. Plus, we will have some practice using other likelihood functions in the survival chapters later in the text.
 
-Here's the big new thing: our `formula` line specified a multilevel model! Check out the `(1 + age_c | id)` syntax on the right. This syntax is designed to be similar to the that of the widely-used frequentist **lme4** package. In the **brms** [reference manual](https://cran.r-project.org/web/packages/brms/brms.pdf), we lean this syntax follows the generic form `(gterms | group)` where "the optional `gterms` part may contain effects that are assumed to vary across grouping variables specified in `group`. We call them 'group-level' effects or (adopting frequentist vocabulary) 'random' effects, although the latter name is misleading in a Bayesian context" (p. 35). And like with base **R**'s `lm()` function or with **lme4**, the `1` portion is a stand-in for the intercept. Thus, with `1 + age_c`, we indicated we wanted the intercept and `age_c` slope to vary across groups. On the right side of the `|`, we defined our grouping variable as `id`.
+Here's the big new thing: our `formula` line specified a multilevel model! Check out the `(1 + age_c | id)` syntax on the right. This syntax is designed to be similar to the that of the widely-used frequentist **lme4** package. In the [**brms** reference manual](https://CRAN.R-project.org/package=brms/brms.pdf) [@brms2020RM], we lean this syntax follows the generic form `(gterms | group)` where "the optional `gterms` part may contain effects that are assumed to vary across grouping variables specified in `group`. We call them 'group-level' or 'varying' effects, or (adopting frequentist vocabulary) 'random' effects, although the latter name is misleading in a Bayesian context" (p. 35). And like with base **R**'s `lm()` function or with **lme4**, the `1` portion is a stand-in for the intercept. Thus, with `1 + age_c`, we indicated we wanted the intercept and `age_c` slope to vary across groups. On the right side of the `|`, we defined our grouping variable as `id`.
 
-Another important part of the `formula` syntax concerns the intercept for the fixed effects. See the `0 + Intercept` part? Here's the deal: If we were using default behavior, we'd have coded either `1 + ...` or just left that part out entirely. Both would have estimated the fixed intercept according to **brms** default behavior. But that's the issue. By default, `brms::brm()` presumes your predictors are mean centered. This is critical because the default priors set by `brms::brm()` are also set based on this assumption. As it turns out, neither our `age_c` nor `program` variables are centered that way. `program` is a dummy variable and `age_c` is centered on 1, not the mean. Now since the `brm()` default priors are rather broad and uninformative, This probably wouldn't have made much of a difference, here. However, we may as well address this issue now and avoid bad practices. So, with our `0 + Intercept` solution, we told `brm()` to suppress the default intercept and replace it with our smartly-named `Intercept` parameter. This is our fixed effect for the population intercept and, importantly, `brms()` will assign default priors to it based on the data themselves without assumptions about centering. 
+Another important part of the `formula` syntax concerns the intercept for the fixed effects. See the `0 + Intercept` part? Here's the deal: If we were using default behavior, we'd have coded either `1 + ...` or just left that part out entirely. Both would have estimated the fixed intercept according to **brms** default behavior. But that's the issue. By default, `brms::brm()` presumes your predictors are mean centered. This is critical because the default priors set by `brms::brm()` are also set based on this assumption. As it turns out, neither our `age_c` nor `program` variables are centered that way. `program` is a dummy variable and `age_c` is centered on 1, not the mean. Now since the `brm()` default priors are rather broad and uninformative, This probably wouldn't have made much of a difference, here. However, we may as well address this issue now and avoid bad practices. So, with our `0 + Intercept` solution, we told `brm()` to suppress the default intercept and replace it with our smartly-named `Intercept` parameter. This is our fixed effect for the population intercept and, importantly, `brms()` will assign default priors to it based on the data themselves without assumptions about centering.
 
 I'd like to acknowledge at this point that if **brms** and/or the multilevel model are new to you, this can be disorienting and confusing. I'm sorry. The world is unfair and Singer and Willett didn't write their text with **brms** in mind. Had they done so, they'd have used mean-centered predictors for the first few models to put off this technical issue until later chapters. Yet here we are. So if you're feeling frustrated, that mainly just means you're paying attention. Good job! Forge on, friends. It'll get better.
 
 The line starting with `iter` largely explicates `brms::brm()` default settings. The only change from the defaults is `cores = 4`, which allow you to sample from all four `chains` simultaneously.
 
-The `control` line opens up a can of worms I just don't want to address at this point in the text. It's a technical setting that helped us do a better job sampling form the posterior. We'll have more opportunities to talk about it later. For now, know that the default setting for `adapt_delta` is `0.8`. That parameter ranges from 0 to 1. 
+The `control` line opens up a can of worms I just don't want to address at this point in the text. It's a technical setting that helped us do a better job sampling form the posterior. We'll have more opportunities to talk about it later. For now, know that the default setting for `adapt_delta` is `0.8`. The value ranges from 0 to 1.
 
-The last line of interest is `seed = 3`. Markov chain Monte Carlo methods use pseudo-random number generators to sample from the posterior. To make the results of a pseudo-random process reproducible, you set the seed. There's nothing special about setting it to 3. I just did so because that's the chapter we're on. Play around with other values and see what happens. 
+The last line of interest is `seed = 3`. Markov chain Monte Carlo methods use pseudo-random number generators to sample from the posterior. To make the results of a pseudo-random process reproducible, you set the seed. There's nothing special about setting it to 3. I just did so because that's the chapter we're on. Play around with other values and see what happens.
 
 Okay, that's a lot of boring technical talk. Let's use `print()` to see what we did!
 
@@ -482,7 +483,7 @@ print(fit3.2)
 
 Now we're in multilevel-model land, we have three main sections in the output. Let's start in the middle. The 'Population-Level Effects:' section contains our **brms** analogues to the "Fixed Effects" portion of Singer and Willett's Table 3.3. These are our $\gamma$ parameter summaries. Like we briefly covered in the last chapter, **brms** does not give $z$- or $p$-values. But we do get high-quality percentile-based Bayesian 95% intervals. Perhaps somewhat frustratingly, our 'Estimate' values are a little different from those in the text. In this instance, this is more due to us not having access to the original data than differences between Bayesian and maximum likelihood estimation. They'll be closer in many other examples.
 
-The bottom section, 'Family Specific Parameters:', is our analogue to the first line in Table 3.3's "Variance Components" section. What Singer and Willett referred to as $\epsilon_{ij}$, the **brms** package calls `sigma`. But importantly, do recall that Stan and **brms** parameterize variance components in the standard-deviation metric. So you'd have to square our `sigma` to put it in a similar metric to the estimate in the text. This will be the case throughout this project. But why call this section 'Family Specific Parameters'? Well, not all likelihoods have a $\sigma$ parameter. In the Poisson likelihood, for example, the mean and variance scale together as one parameter called $\lambda$. Since **brms** is designed to handle a whole slew of likelihood functions (see the [*Parameterization of Response Distributions in brms*](https://cran.r-project.org/web/packages/brms/vignettes/brms_families.html) vignette), it behooved [Bürkner](https://twitter.com/paulbuerkner) to give this section a generic name.
+The bottom section, 'Family Specific Parameters:', is our analogue to the first line in Table 3.3's "Variance Components" section. What Singer and Willett referred to as $\epsilon_{ij}$, the **brms** package calls `sigma`. But importantly, do recall that Stan and **brms** parameterize variance components in the standard-deviation metric. You'd have to square our `sigma` to put it in a similar metric to the estimate in the text. This will be the case throughout this project. But why call this section 'Family Specific Parameters'? Well, not all likelihoods have a $\sigma$ parameter. In the Poisson likelihood, for example, the mean and variance scale together as one parameter called $\lambda$. Since **brms** is designed to handle a whole slew of likelihood functions [see the [*Parameterization of response distributions in brms*](https://cran.r-project.org/web/packages/brms/vignettes/brms_families.html) vignette, @Bürkner2020Parameterization] it behooved [Bürkner](https://twitter.com/paulbuerkner) to give this section a generic name.
 
 Now we're ready to draw our attention to the topmost section. The 'Group-Level Effects:' are our **brms** variants of the Level 2 section of Singer and Willett's "Variance Components" section in Table 3.3. Our `sd(Intercept)` corresponds to their $\sigma_0^2$ and our `sd(age_c)` corresponds to their $\sigma_1^2$. But recall, ours are in a standard-deviation metric. The estimates in the book are expressed as variances. Finally, our `cor(Intercept,age_c)` parameter is a correlation among the varying-effects, whereas Singer and Willett's $\sigma_{01}$ is a covariance.
 
@@ -550,7 +551,7 @@ crossing(age_c   = 0:1,
 
 > As in regular regression, you can conduct a hypothesis test on each fixed effect (each $\gamma$) using a single parameter text. Although you can equate the parameter value to any pre-specified value in your hypothesis text, most commonly you examine the null hypothesis that, controlling for all other predictors in the model, the population value of the parameter is 0, $H_0: \gamma = 0$, against the two-sided alternative that it is not, $H_1: \gamma \neq 0$. (p. 71)
 
-You can do this with **brms** with the `hypothesis()` function. I'm not a fan of this method and am not going to showcase it in this project. If you insist on the NHST paradigm, you'll have to go that alone. 
+You can do this with **brms** with the `hypothesis()` function. I'm not a fan of this method and am not going to showcase it in this ebook If you insist on the NHST paradigm, you'll have to go that alone.
 
 Within the Bayesian paradigm, we have an entire posterior distribution. So let's just look at that. Recall that in the `print()` and `fixef()` outputs, we get the parameter estimates for our $\gamma$'s summarized in terms of the posterior mean (i.e., 'Estimate'), the posterior standard deviation (i.e., 'Est.error'), and the percentile-based 95% credible intervals (i.e., 'Q2.5' and 'Q97.5'). But we can get much richer output with the `posterior_samples()` function.
 
@@ -593,7 +594,7 @@ post %>%
   facet_wrap(~name, scales = "free")
 ```
 
-Sure, you could fixate on zero if you wanted to. But of more interest is the overall shape of each parameter's posterior distribution. Look at each's central tendency and spread. Look at where each is in the parameter space. To my mind, that story is so much richer than fixating on zero. 
+Sure, you could fixate on zero if you wanted to. But of more interest is the overall shape of each parameter's posterior distribution. Look at each's central tendency and spread. Look at where each is in the parameter space. To my mind, that story is so much richer than fixating on zero.
 
 We’ll have more to say along these lines in subsequent chapters.
 
@@ -660,13 +661,13 @@ As it turns out, the multilevel variance components are often markedly non-Gauss
 
 ### Single parameter tests for the variance components.
 
-> Statisticians disagree as to the nature, form, and effectiveness of these tests. [Miller (1986)](https://www.crcpress.com/Beyond-ANOVA-Basics-of-Applied-Statistics/Jr/p/book/9780412070112), [Raudenbush and Bryk (2002)](https://us.sagepub.com/en-us/nam/hierarchical-linear-models/book9230), and others have long questioned their utility because of their sensitivity to departures from normality. Longford (1999) describes their sensitivity to sample size and imbalance (unequal numbers of observations per person) and argues that they are so misleading that they should be abandoned completely. (p. 73)
+> Statisticians disagree as to the nature, form, and effectiveness of these tests. @millerBeyondANOVA1997, @raudenbushHLM2002, and others have long questioned their utility because of their sensitivity to departures from normality. Longford (1999) describes their sensitivity to sample size and imbalance (unequal numbers of observations per person) and argues that they are so misleading that they should be abandoned completely. (p. 73)
 
-This reminds me of parts from Gelman and Hill's [(2007) text on multilevel models](http://www.stat.columbia.edu/~gelman/arm/). In section 12.7 on the topic of model building and statistical significance, they wrote:
+This reminds me of parts from Gelman and Hill's [-@gelmanDataAnalysisUsing2006] [text on multilevel models](http://www.stat.columbia.edu/~gelman/arm/). In Section 12.7 on the topic of model building and statistical significance, they wrote:
 
 > It is *not* appropriate to use statistical significance as a criterion for including particular group indicators in a multilevel model....
 
-[They go on to discuss a particular example from the text, regarding radon levels in housed in various counties.]
+[They went on to discuss a particular example from the text, regarding radon levels in housed in various counties.]
 
 > However, we should include all 85 counties in the model, and nothing is lost by doing so. The purpose of the multilevel model is not to use whether radon levels in county 1 are statistically significantly different from those in county 2, or from the Minnesota average. Rather, we seek the best possible estimate in each county, with appropriate accounting for uncertainty. Rather that make some significance threshold, we allow all the intercepts to vary and recognize that we may not have much precision in many of the individual groups....
 >
@@ -678,9 +679,9 @@ For context, `lmer()` is the primary function in the frequentist **lme4** packag
 
 ## Bonus: How did you simulate that data?
 
-What makes our task difficult is the multilevel model we'd like to simulate our data for has both varying intercepts and slopes. And worst yet, those varying intercepts and slopes have a correlation structure. Also of note, Singer and Willett presented their summary statistics in the form of a variance/covariance matrix in Table 3.3. 
+What makes our task difficult is the multilevel model we'd like to simulate our data for has both varying intercepts and slopes. And worst yet, those varying intercepts and slopes have a correlation structure. Also of note, Singer and Willett presented their summary statistics in the form of a variance/covariance matrix in Table 3.3.
 
-As it turns out, the `mvnorm()` function from the [**MASS** package](https://CRAN.R-project.org/package=MASS) will allow us to simulate multivariate normal data from a given mean structure and variance/covariance matrix. So our first step in simulating our data is to simulate the $103 – 8 = 95$ $\zeta$ values. We'll name the results `z`.
+As it turns out, the `mvnorm()` function from the [**MASS** package](https://cran.r-project.org/package=MASS) [@R-MASS; @MASS2002] will allow us to simulate multivariate normal data from a given mean structure and variance/covariance matrix. So our first step in simulating our data is to simulate the $103 – 8 = 95$ $\zeta$ values. We'll name the results `z`.
 
 ```{r}
 # how many people are we simulating?
@@ -719,7 +720,7 @@ head(g)
 
 Note how they're the same for each row. That's the essence of the meaning of a fixed effect.
 
-Anyway, this next block is a big one. After we combine `g` and `z`, we add in the appropriate `program` and `age_c` values. You can figure out those from pages 46 and 47. We then insert our final model parameter, $\epsilon$, and combine the $\gamma$'s and $\zeta$'s to make our two $\pi$ parameters (see page 60). Once that's all in place, we're ready to use the model formula to calculate the expected `cog` values from the $\pi$'s, `age_c`, and $\epsilon$. 
+Anyway, this next block is a big one. After we combine `g` and `z`, we add in the appropriate `program` and `age_c` values. You can figure out those from pages 46 and 47. We then insert our final model parameter, $\epsilon$, and combine the $\gamma$'s and $\zeta$'s to make our two $\pi$ parameters (see page 60). Once that's all in place, we're ready to use the model formula to calculate the expected `cog` values from the $\pi$'s, `age_c`, and $\epsilon$.
 
 ```{r}
 # set the seed for the second `mutate()` line
@@ -769,10 +770,6 @@ Here we save our results in an external file for use later.
 save(early_int_sim,
      file = "data/early_int_sim.rda")
 ```
-
-## Reference {-}
-
-[Singer, J. D., & Willett, J. B. (2003). *Applied longitudinal data analysis: Modeling change and event occurrence*. New York, NY, US: Oxford University Press.](https://www.oxfordscholarship.com/view/10.1093/acprof:oso/9780195152968.001.0001/acprof-9780195152968)
 
 ## Session info {-}
 
