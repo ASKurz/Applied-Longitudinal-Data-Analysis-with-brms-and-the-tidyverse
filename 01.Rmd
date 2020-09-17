@@ -8,11 +8,11 @@ output:
 
 # A Framework for Investigating Change over Time
 
-> It is possible to measure change, and to do it well, *if you have longitudinal data* ([Rogosa, Brandt, & Zimowski, 1982](https://www.researchgate.net/publication/232478172_A_Growth_Curve_Approach_to_the_Measurement_of_Change); [Willett, 1989](https://journals.sagepub.com/doi/pdf/10.1177/001316448904900309?casa_token=WvtBn5saBD0AAAAA:LIkgb_cU4Ou_pJrUTG9Z3cEVdXCJhxCIo6UYuTCs7uwcM2_haiBZPb9yOxtb4yEXKxJXHPZJOF4ilA)). Cross-sectional data--so easy to collect and so widely available--will not suffice. In this chapter, we describe why longitudinal data are necessary for studying change. (p. 3, *emphasis* in the original)
+> It is possible to measure change, and to do it well, *if you have longitudinal data* [@rogosaGrowthCurveApproach1982; @willettResultsReliabilityLongitudinal1989]. Cross-sectional data--so easy to collect and so widely available--will not suffice. In this chapter, we describe why longitudinal data are necessary for studying change. [@singerAppliedLongitudinalData2003, p. 3, *emphasis* in the original]
 
 ## When might you study change over time?
 
-Perhaps a better question is *When wouldn't you?*
+Perhaps a better question is: *When wouldn't you?*
 
 ## Distinguishing between two types of questions about change
 
@@ -37,9 +37,9 @@ Within the hierarchical framework, we often speak about two levels of change. We
 
 Singer and Willett criticized two-waves data on two grounds.
 
-> First, it cannot tell us about the *shape* of each person's individual growth trajectory, the focus of our level-1 question. Did all the change occur immediately after the first assessment? Was progress steady or delayed? Second, it cannot distinguish true change from measurement error. If measurement error renders pretest scores too low and posttest scores too high, you might conclude erroneously that scores increase over time when a longer temporal view would suggest the opposite. In statistical terms, two-waves studies cannot describe individual trajectories of change and they confound true change with measurement error (see Rogosa, Brandt, & Zimowski, 1982). (p. 10, *emphasis* in the original)
+> First, it cannot tell us about the *shape* of each person's individual growth trajectory, the focus of our level-1 question. Did all the change occur immediately after the first assessment? Was progress steady or delayed? Second, it cannot distinguish true change from measurement error. If measurement error renders pretest scores too low and posttest scores too high, you might conclude erroneously that scores increase over time when a longer temporal view would suggest the opposite. In statistical terms, two-waves studies cannot describe individual trajectories of change and they confound true change with measurement error [see @rogosaGrowthCurveApproach1982]. (p. 10, *emphasis* in the original)
 
-I am not a fan of this 'true change/measurement error' way of speaking and would rather speak in terms of systemic and [seemingly] un-systemic changes among means and variances. Otherwise put, I'd rather speak in terms of trait and state. Two waves of data do not allow us to disentangle systemic mean differences from stable means and substantial variances for those means. Two waves of data do not allow us to disentangle changes in traits from stable traits but important differences in states. For an introduction to this way of thinking, check out Nezlek's (2007) [*A multilevel framework for understanding relationships among traits, states, situations and behaviors*](https://www.researchgate.net/publication/228079300_A_Multilevel_Framework_for_Understanding_Relationships_Among_Traits_States_Situations_and_Behaviours).
+I am not a fan of this 'true change/measurement error' way of speaking and would rather speak in terms of systemic and [seemingly] un-systemic changes among means and variances. Otherwise put, I'd rather speak in terms of trait and state. Two waves of data do not allow us to disentangle systemic mean differences from stable means and substantial variances for those means. Two waves of data do not allow us to disentangle changes in traits from stable traits but important differences in states. For an introduction to this way of thinking, check out Nezlek's [-@nezlekMultilevelFrameworkUnderstanding2007] [*A multilevel framework for understanding relationships among traits, states, situations and behaviors*](https://www.researchgate.net/publication/228079300_A_Multilevel_Framework_for_Understanding_Relationships_Among_Traits_States_Situations_and_Behaviours).
 
 ### A sensible metric for time.
 
@@ -55,13 +55,9 @@ Data collection waves can be evenly spaced or not. E.g., if you anticipate a tim
 
 To my eye, the most interesting part of this section is the discussion of measurement validity over time. E.g.,
 
-> When we say the metric in which the outcome is measured must be preserved across time, we mean that the outcome scores must be equatable over time--a given value of the outcome on any occasion must represent the same "amount" of the outcome on every occasion. Outcome equatability is easiest to ensure when you use the identical instrument for measurement repeatedly over time. (p. 13)
+> when we say the metric in which the outcome is measured must be preserved across time, we mean that the outcome scores must be equatable over time--a given value of the outcome on any occasion must represent the same "amount" of the outcome on every occasion. Outcome equatability is easiest to ensure when you use the identical instrument for measurement repeatedly over time. (p. 13)
 
-This isn't as simple as is sounds. Though it's beyond the scope of this project, you might learn more about this from a study of the longitudinal measurement invariance literature. To dive in, see the first couple chapters in Newsom's (2015) text, [*Longitudinal Structural Equation Modeling: A Comprehensive Introduction*](http://www.longitudinalsem.com/).
-
-## Reference {-}
-
-[Singer, J. D., & Willett, J. B. (2003). *Applied longitudinal data analysis: Modeling change and event occurrence*. New York, NY, US: Oxford University Press.](https://www.oxfordscholarship.com/view/10.1093/acprof:oso/9780195152968.001.0001/acprof-9780195152968)
+This isn't as simple as is sounds. Though it's beyond the scope of this project, you might learn more about this from a study of the longitudinal measurement invariance literature. To dive in, see the first couple chapters in Newsom's [-@newsom2015longitudinal] text, [*Longitudinal structural equation modeling: A comprehensive introduction*](http://www.longitudinalsem.com/).
 
 ## Session info {-}
 
