@@ -14,7 +14,7 @@ options(width = 120)
 
 # Exploring Longitudinal Data on Change
 
-> Wise researchers conduct descriptive exploratory analyses of their data before fitting statistical models. As when working with cross-sectional data, exploratory analyses of longitudinal data con reveal general patterns, provide insight into functional form, and identify individuals whose data do not conform to the general pattern. The exploratory analyses presented in this chapter are based on numerical and graphical strategies already familiar from cross-sectional work. Owing to the nature of longitudinal data, however, they are inevitably more complex in this new setting. (p. 16)
+> Wise researchers conduct descriptive exploratory analyses of their data before fitting statistical models. As when working with cross-sectional data, exploratory analyses of longitudinal data con reveal general patterns, provide insight into functional form, and identify individuals whose data do not conform to the general pattern. The exploratory analyses presented in this chapter are based on numerical and graphical strategies already familiar from cross-sectional work. Owing to the nature of longitudinal data, however, they are inevitably more complex in this new setting. [@@singerAppliedLongitudinalData2003, p. 16]
 
 ## Creating a longitudinal data set
 
@@ -30,7 +30,7 @@ As you will see, we will use two primary functions from the **tidyverse** to con
 
 ### The person-level data set.
 
-Here we load the person-level data from [this UCLA web site](https://stats.idre.ucla.edu/r/examples/alda/r-applied-longitudinal-data-analysis-ch-2/). These are the NLY data (see [Raudenbush & Chan, 1992](https://journals.sagepub.com/doi/10.1177/0022427892029004001)) shown in the top of Figure 2.1.
+Here we load the person-level data from [this UCLA web site](https://stats.idre.ucla.edu/r/examples/alda/r-applied-longitudinal-data-analysis-ch-2/). These are the NLY data [see @raudenbushGrowthCurveAnalysis2016] shown in the top of Figure 2.1.
 
 ```{r, warning = F, message = F}
 library(tidyverse)
@@ -61,7 +61,7 @@ cor(tolerance[ , 2:6]) %>%
   round(digits = 2)
 ```
 
-We used `round()` to limit the number of decimal places in the output. Leave it off and you'll see `cor()` returns up to seven decimal places instead. It can be hard to see the patters within a matrix of numerals. It might be easier in a plot.
+We used the `round()` function to limit the number of decimal places in the output. Leave it off and you'll see `cor()` returns up to seven decimal places instead. It can be hard to see the patters within a matrix of numerals. It might be easier in a plot.
 
 ```{r, fig.width = 3.75, fig.height = 2.25}
 cor(tolerance[ , 2:6]) %>%
@@ -82,13 +82,13 @@ cor(tolerance[ , 2:6]) %>%
   theme(axis.ticks = element_blank())
 ```
 
-If all you wanted was the lower diagonal, you could use the `lowerCor()` function from the [**psych** package](https://personality-project.org/r/).
+If all you wanted was the lower diagonal, you could use the `lowerCor()` function from the [**psych** package](https://CRAN.R-project.org/package=psych) [@R-psych].
 
 ```{r}
 psych::lowerCor(tolerance[ , 2:6])
 ```
 
-For more ways to compute, organize, and visualize correlations within the **tidyverse** paradigm, check out the [**corr** package](https://tidymodels.github.io/corrr/).
+For more ways to compute, organize, and visualize correlations within the **tidyverse** paradigm, check out the [**corrr** package](https://tidymodels.github.io/corrr/) [@R-corrr].
 
 ### The person-period data set.
 
@@ -145,7 +145,7 @@ The following "descriptive analyses [are intended to] reveal the nature and idio
 
 ### Empirical growth plots.
 
-*Empirical growth plots* show individual-level sequence in a variable of interest over time. We'll put `age` on the x-axis, `tolerance` on the y-axis, and make our variant of Figure 2.2 with `geom_point()`. It's the `facet_wrap()` part of the code that splits the plot up by `id`.
+*Empirical growth plots* show individual-level sequence in a variable of interest over time. We'll put `age` on the $x$-axis, `tolerance` on the y-axis, and make our variant of Figure 2.2 with `geom_point()`. It's the `facet_wrap()` part of the code that splits the plot up by `id`.
 
 ```{r, fig.width = 4.5, fig.height = 5}
 tolerance_pp %>%
@@ -156,7 +156,7 @@ tolerance_pp %>%
   facet_wrap(~id)
 ```
 
-By default, **ggplot2** sets the scales of the x- and y-axes to the same values across subpanels. If you'd like to free that constraint, play around with the `scales` argument within `facet_wrap()`.
+By default, **ggplot2** sets the scales of the $x$- and $y$-axes to the same values across subpanels. If you'd like to free that constraint, play around with the `scales` argument within `facet_wrap()`.
 
 ### Using a trajectory to summarize each person's empirical growth record.
 
@@ -210,7 +210,7 @@ You can get a sense of what we did with `head()`.
 by_id %>% head()
 ```
 
-As indexed by `id`, each participant now has their own data set stored in the `data` column. To get a better sense, we'll use our double-bracket subsetting skills to open up the first data set, the one for `id == 9`. If you're not familiar with this skill, you can learn more from [Chapter 9](https://bookdown.org/rdpeng/rprogdatascience/subsetting-r-objects.html) of [Roger Peng](https://twitter.com/rdpeng?lang=en)'s great online book, [*R Programming for Data Science*](https://bookdown.org/rdpeng/rprogdatascience/), or [Jenny Bryan](https://twitter.com/JennyBryan)'s fun and useful talk, [*Behind every great plot there's a great deal of wrangling*](https://www.youtube.com/watch?v=4MfUCX_KpdE).
+As indexed by `id`, each participant now has their own data set stored in the `data` column. To get a better sense, we'll use our double-bracket subsetting skills to open up the first data set, the one for `id == 9`. If you're not familiar with this skill, you can learn more from [Chapter 9](https://bookdown.org/rdpeng/rprogdatascience/subsetting-r-objects.html) of [Roger Peng](https://twitter.com/rdpeng?lang=en)'s great [-@pengProgrammingDataScience2019] online book, [*R programming for data science*](https://bookdown.org/rdpeng/rprogdatascience/), or [Jenny Bryan](https://twitter.com/JennyBryan)'s fun and useful talk, [*Behind every great plot there's a great deal of wrangling*](https://www.youtube.com/watch?v=4MfUCX_KpdE).
 
 ```{r}
 by_id$data[[1]]
@@ -267,6 +267,7 @@ Okay, so that was the model for just one participant. We want to do that for all
 fit2.2 <-
   update(fit2.1, 
          newdata = by_id$data[[2]],
+         control = list(adapt_delta = .9),
          file = "fits/fit02.02")
 ```
 
@@ -316,9 +317,9 @@ bayes_R2(fit2.2, summary = F) %>%
 
 By default, `bayes_R2()` returns the mean. You can get the median with the `robust = T` argument. To pull the mode, you'll need to use `summary = F` and feed the results into a mode function, like `tidybayes::Mode()`.
 
-I should also point out the **brms** package did not get these $R^2$ values by traditional method used in, say, OLS estimation. To learn more about how the Bayesian $R^2$ sausage is made, check out Gelman, Goodrich, Gabry, and Vehtari's (2017) paper, [*R-squared for Bayesian regression models*](https://www.tandfonline.com/doi/abs/10.1080/00031305.2018.1549100?journalCode=utas20).
+I should also point out the **brms** package did not get these $R^2$ values by traditional method used in, say, OLS estimation. To learn more about how the Bayesian $R^2$ sausage is made, check out Gelman, Goodrich, Gabry, and Vehtari's [-@gelmanRsquaredBayesianRegression2019] paper, [*R-squared for Bayesian regression models*]https://www.tandfonline.com/doi/full/10.1080/00031305.2018.1549100).
 
-With a little tricky programing, we can use the `purrr::map()` function to serially fit this model to each of our participant-level data sets. We'll save the results as `models`.
+With a little tricky programming, we can use the `purrr::map()` function to serially fit this model to each of our participant-level data sets. We'll save the results as `models`.
 
 ```{r, eval = F}
 models <- 
@@ -546,7 +547,7 @@ If you're new to the multilevel model, the ideas in this section are foundationa
 
 Here are the means and standard deviations presented in Table 2.3.
 
-```{r}
+```{r, message = F}
 mean_structure %>% 
   pivot_longer(ends_with("est")) %>% 
   group_by(name) %>% 
@@ -733,7 +734,7 @@ p2 <-
 p2
 ```
 
-Did you notice how we saved those last two plots as `p1` and `p2`? We can use syntax from the [**patchwork** package](https://github.com/thomasp85/patchwork) to combine them into one compound plot.
+Did you notice how we saved those last two plots as `p1` and `p2`? We can use syntax from the [**patchwork** package](https://patchwork.data-imaginist.com/) [@R-patchwork] to combine them into one compound plot.
 
 ```{r, fig.width = 5, fig.height = 5}
 library(patchwork)
@@ -753,11 +754,7 @@ Later we read:
 
 > Unlike precision which describes how well an individual slope estimate measures that person's true rate of change, reliability describes how much the rate of change varies across people. Precision has meaning for the individual; reliability has meaning for the group. (p. 42)
 
-I have to protest. True, if we were working within a Classical Test Theory paradigm, this would be correct. But this places reliability with the context of group-based cross-sectional design. Though this is a popular design, it is not the whole story (i.e., see this book!). For introductions to more expansive and person-specific notions of reliability, check out Cronbach's Generalizability Theory ([Cronbach, Gleser, Nanda, & Rajaratnam, 1972](https://www.amazon.com/Dependability-Behavioral-Measurements-Generalizability-Profiles/dp/0471188506); [Brennan, 2001](https://www.springer.com/us/book/9780387952826); also [Cranford, Shrout, Iida, Rafaeli, Yip, & Bolger, 2006](https://journals.sagepub.com/doi/pdf/10.1177/0146167206287721?casa_token=okVoJxGFt0UAAAAA:4TWd7Imln0hZc3f2VDPlMvaI5omrI_F_9lUDtkd8i6nn0h_VE-g-f_ZrwB608HWaUqT0v1eJgcD_JA); [LoPilato, Carter, & Wang , 2015](https://journals.sagepub.com/doi/pdf/10.1177/0149206314554215?casa_token=AYMEPAKydVQAAAAA:oqFgrMlto2rhdlZrgdLaOUvvJO9s9BJ5jek4UA6eVL7Zz5tmKqYgoX_jGvKd9ZX9_bdgV39ZcJXlmQ); [Shrout & Lane, 2012](https://psycnet.apa.org/record/2012-05165-017)).
-
-## Reference {-}
-
-[Singer, J. D., & Willett, J. B. (2003). *Applied longitudinal data analysis: Modeling change and event occurrence*. New York, NY, US: Oxford University Press.](https://www.oxfordscholarship.com/view/10.1093/acprof:oso/9780195152968.001.0001/acprof-9780195152968)
+I have to protest. True, if we were working within a Classical Test Theory paradigm, this would be correct. But this places reliability with the context of group-based cross-sectional design. Though this is a popular design, it is not the whole story (i.e., see this book!). For introductions to more expansive and person-specific notions of reliability, check out [Lee Cronbach](https://en.wikipedia.org/wiki/Lee_Cronbach)'s Generalizability Theory [@cronbachDependabilityBehavioralMeasurements1972; @brennanGeneralizabilityTheory2001; also @cranfordProcedureEvaluatingSensitivity2006; @lopilatoUpdatingGeneralizabilityTheory2015; @shroutPsychometrics2012].
 
 ## Session info {-}
 
