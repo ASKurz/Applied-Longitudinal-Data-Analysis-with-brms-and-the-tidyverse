@@ -14,7 +14,8 @@ options(width = 100)
 
 # A Framework for Investigating Event Occurrence
 
-> Researchers who want to study event occurrence must learn how to think about their data in new and unfamiliar ways. Even traditional methods for data description--the use of means and standard deviations--fail to serve researchers well. In this chapter we introduce the essential features of event occurrence data, explaining how and why they create the need for new analytic methods. (pp 305--306)
+> Researchers who want to study event occurrence must learn how to think about their data in new and unfamiliar ways. Even traditional methods for data description--the use of means and standard deviations--fail to serve researchers well. In this chapter we introduce the essential features of event occurrence data, explaining how and why they create the need for new analytic methods.
+[@singerAppliedLongitudinalData2003, pp 305--306]
 
 ## Should you conduct a survival analysis? The "whether" and "when" test
 
@@ -30,7 +31,7 @@ Education researchers can use survival analysis to study whether and for how lon
 
 ### Age at first suicide ideation.
 
-Suicide is a major health risk and clinical researchers sometimes use survival analysis to whether and when participants have first considered killing themselves. 
+Suicide is a major health risk and clinical researchers sometimes use survival analysis to whether and when participants have first considered killing themselves.
 
 ## Framing a research question about event occurrence
 
@@ -78,15 +79,15 @@ Survival analyses share three common characteristics.
 
 #### Right- versus left-censoring.
 
-> Right-censoring arises when an event time is unknown because event occurrence is not observed. Left-censoring arises when an event time is unknown because *the beginning of time* is not observed.... Because [right-censoring] is the one typically encountered in practice, and because it is the type for which survival methods were developed, references to censoring, unencumbered by a directional modifier, usually refer to right-censoring. 
+> Right-censoring arises when an event time is unknown because event occurrence is not observed. Left-censoring arises when an event time is unknown because *the beginning of time* is not observed.... Because [right-censoring] is the one typically encountered in practice, and because it is the type for which survival methods were developed, references to censoring, unencumbered by a directional modifier, usually refer to right-censoring.
 >
 > How to left-censored observations arise? Often they arise because researchers have not paid sufficient attention to identifying the beginning of time during the design phase. If the beginning of time is defined well--as that moment when all individuals in the population are eligible to experience the event but none have yet done so--left-censoring can be eliminated....
 >
-> Left-censoring presents challenges not easily addressed even with the most sophisticated of survival methods ([Hu & Lawless, 1996](http://people.stat.sfu.ca/~joanh/jhpaper/HuLawless_1996Biomk.pdf)). Little progress has been made in this area since Turnbull ([1974](https://www.tandfonline.com/doi/abs/10.1080/01621459.1974.10480146), [1976](https://apps.dtic.mil/dtic/tr/fulltext/u2/a030940.pdf)) offered some basic descriptive approaches and [Flinn and Heckman (1982)](https://www.jstor.org/stable/270719?seq=1) and [Cox and Oakes (1984)](https://www.crcpress.com/Analysis-of-Survival-Data/Cox-Oakes/p/book/9780412244902) offered some directions for fitting models under a restrictive set of assumptions. The most common advice, followed by Fichman, is to set the left-censored spells aside from analysis.... Redefining the beginning of time to coincide with a precipitating event... is often the best way of resolving the otherwise intractable problems that left-censored data pose. Whenever possible, we suggest that researchers consider such a redefinition or otherwise eliminate left-censored data through design. (pp. 319--320, *emphasis* in the original)
+> Left-censoring presents challenges not easily addressed even with the most sophisticated of survival methods [@huEstimationTruncatedLifetime1996]. Little progress has been made in this area since Turnbull [-@turnbullNonparametricEstimationSurvivorship1974, -@turnbullEmpiricalDistributionFunction1976] offered some basic descriptive approaches and Flinn and Heckman [-@flinnNewMethodsAnalyzing1982] and Cox and Oakes [-@cox1984analysis] offered some directions for fitting models under a restrictive set of assumptions. The most common advice, followed by Fichman, is to set the left-censored spells aside from analysis.... Redefining the beginning of time to coincide with a precipitating event... is often the best way of resolving the otherwise intractable problems that left-censored data pose. Whenever possible, we suggest that researchers consider such a redefinition or otherwise eliminate left-censored data through design. (pp. 319--320, *emphasis* in the original)
 
 ### How does censoring affect statistical analysis?
 
-Here we load the `teachers.csv` data [(Singer, 1992)](https://journals.sagepub.com/doi/10.1177/001440299305900309).
+Here we load the `teachers.csv` data @singerAreSpecialEducators2016.
 
 ```{r, warning = F, message = F}
 library(tidyverse)
@@ -114,7 +115,7 @@ teachers %>%
 
 Here's a descriptive breakdown of those censored or not.
 
-```{r}
+```{r, message = F}
 teachers %>% 
   group_by(censor) %>% 
   summarise(n    = n(),
@@ -137,9 +138,9 @@ tibble(years = rexp(n = 2207, rate = 1 / 3.7)) %>%
   theme(panel.grid = element_blank())
 ```
 
-That simulation looks pretty similar to our non-censored data. If we stopped there, we might naïvely presume $\operatorname{Exponential}(1/3.7)$ is a good model for our data. But this would ignore the censored data. One of the solutions researchers have used is 
+That simulation looks pretty similar to our non-censored data. If we stopped there, we might naïvely presume $\operatorname{Exponential}(1/3.7)$ is a good model for our data. But this would ignore the censored data. One of the solutions researchers have used is
 
-> to assign the censored cases the event time they possess at the end of the data collection (e.g., [Frank & Keith, 1984](https://eric.ed.gov/?id=EJ306852)). Applying this to our teacher career data (e.g., assigning a career length of 7 years to the 280 teachers censored in the year 7, etc.) yields an estimated mean career duration of 7.5 years. (pp. 322--323)
+> to assign the censored cases the event time they possess at the end of the data collection [e.g., @frank1984academic]. Applying this to our teacher career data (e.g., assigning a career length of 7 years to the 280 teachers censored in the year 7, etc.) yields an estimated mean career duration of 7.5 years. (pp. 322--323)
 
 Here's what that looks like.
 
@@ -155,10 +156,6 @@ I have no idea where the 7.5 value Singer and Willett presented came from. It's 
 > Imputing event times for censored cases simply changes all "nonevents" into "events" and further assumes that all these new "events" occur at the earliest time possible--that is, at the moment of censoring. Surely these decisions are most likely wrong. (p. 323) 
 
 Stay tuned for methods that are better than patently wrong.
-
-## Reference {-}
-
-[Singer, J. D., & Willett, J. B. (2003). *Applied longitudinal data analysis: Modeling change and event occurrence*. New York, NY, US: Oxford University Press.](https://www.oxfordscholarship.com/view/10.1093/acprof:oso/9780195152968.001.0001/acprof-9780195152968)
 
 ## Session info {-}
 
