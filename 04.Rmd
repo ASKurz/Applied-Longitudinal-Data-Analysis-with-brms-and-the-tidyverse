@@ -169,7 +169,7 @@ In this section, the authors introduced generalized least squares (GLS) estimati
 I suppose the only thing to add is that whereas GLS estimates come from minimizing a weighted function of the residuals and maximum likelihood estimates come from maximizing the log-likelihood function, the results of our Bayesian analyses (i.e., the posterior distribution) come from the consequences of Bayes' theorem,
 
 $$
-p(\theta | d) = \frac{p(d | \theta) \; p(\theta)}{p(d)}.
+p(\theta | d) = \frac{p(d | \theta)\ p(\theta)}{p(d)}.
 $$
 
 If you really want to dive into the details of this, I suggest referencing a proper introductory Bayesian textbook, such as McElreath [-@mcelreathStatisticalRethinkingBayesian2015; -@mcelreathStatisticalRethinkingBayesian2020], Kruschke [-@kruschkeDoingBayesianData2015], or @gelman2013bayesian. I haven't had time to check it out, but I've heard Labmert's [-@lambertAStudentsGuidetoBayes2018] text is good, too. And for details specific to Stan, and thus **brms**, you might check out the documentation resources at [https://mc-stan.org/users/documentation/](https://mc-stan.org/users/documentation/).
@@ -320,7 +320,7 @@ Concerning $\rho$, Singer and Willett pointed out
 
 > it summarizes the size of the residual autocorrelation in the composite unconditional means mode....
 >
-> Each person has a different composite residual on each occasion of measurement. But notice the difference in the subscripts of the pieces of the composite residual: while the level-1 residual, $\epsilon_{ij}$ has two subscripts ($i$ and $j$), the level-2 residual, $\zeta_{0i}$, has only one ($i$). Each person can have a different $\epsilon_{ij}$ on each occasion, but has only one $\zeta_{0i}$ across every occasion. The repeated presence of $\zeta_{0i}$ in individual $i$’s composite residual links his or her composite residuals across occasions. The error autocorrelation coefficient quantifies the magnitude of this linkage; in the unconditional means model, the error autocorrelation coefficient *is* the intraclass correlation coefficient. Thus, we estimate that, for each person, the average correlation between any pair of composite residuals--between occasions 1 and 2, or 2 and 3, or 1 and 3--is [.5]. (pp. 96--97, *emphasis* in the original)
+> Each person has a different composite residual on each occasion of measurement. But notice the difference in the subscripts of the pieces of the composite residual: while the level-1 residual, $\epsilon_{ij}$ has two subscripts ($i$ and $j$), the level-2 residual, $\zeta_{0i}$, has only one ($i$). Each person can have a different $\epsilon_{ij}$ on each occasion, but has only one $\zeta_{0i}$ across every occasion. The repeated presence of $\zeta_{0i}$ in individual $i$'s composite residual links his or her composite residuals across occasions. The error autocorrelation coefficient quantifies the magnitude of this linkage; in the unconditional means model, the error autocorrelation coefficient *is* the intraclass correlation coefficient. Thus, we estimate that, for each person, the average correlation between any pair of composite residuals--between occasions 1 and 2, or 2 and 3, or 1 and 3--is [.5]. (pp. 96--97, *emphasis* in the original)
 
 Because of the differences in how they're estimated with and presented by `brm()`, we focused right on the variance components. But before we move on to the next section, we should back up a bit. On page 93, Singer and Willett discussed their estimate for $\gamma_{00}$. Here's ours.
 
@@ -424,7 +424,7 @@ get_prior(data = alcohol1_pp,
 
 Several things of note: First, notice how we continue to use the `student_t(3, 0, 2.5)` for all three of our standard-deviation-metric variance parameters. Since we're now estimating $\sigma_0$ and $\sigma_1$, which themselves have a correlation, $\rho_{01}$, we have a prior of `class = cor`. I'm going to put off what is meant by the name `lkj`, but for the moment just realize that this prior is essentially noninformative within this context.
 
-There's a major odd development with this output. Notice how there’s the `prior` column is empty for the rows for our two coefficients of class `b`. And if you're a little confused, recall that because our predictor `age_14` is not mean-centered, we've used the `0 + Intercept` syntax, which switches the model intercept parameter to the class of `b`. Anyway, it might seem odd that the `prior` values for those rows are blank. From the `set_prior` section of the [reference manual](https://cran.r-project.org/web/packages/brms/brms.pdf) for **brms** version 2.12.0, we read: "The default prior for population-level effects (including monotonic and category specific effects) is an improper flat prior over the reals" (p. 179). At present, these priors are uniform across the entire parameter space. They're not just weak, their entirely noninformative. That is, the likelihood dominates the posterior for those parameters.
+There's a major odd development with this output. Notice how the `prior` column is `(flat)` for the rows for our two coefficients of class `b`. And if you're a little confused, recall that because our predictor `age_14` is not mean-centered, we've used the `0 + Intercept` syntax, which switches the model intercept parameter to the class of `b`. From the `set_prior` section of the [reference manual](https://cran.r-project.org/web/packages/brms/brms.pdf) for **brms** version 2.12.0, we read: "The default prior for population-level effects (including monotonic and category specific effects) is an improper flat prior over the reals" (p. 179). At present, these priors are uniform across the entire parameter space. They're not just weak, their entirely noninformative. That is, the likelihood dominates the posterior for those parameters.
 
 Here's how to fit the model with these priors.
 
@@ -458,7 +458,7 @@ Staying with `conditional_effects()` allows users some flexibility for customizi
 ```{r, fig.width = 2.5, fig.height = 3}
 conditional_effects(fit4.2,
                     robust = F,
-                    probs = c(.1, .9))
+                    prob = .8)
 ```
 
 We'll explore more options with `brms::conditional_effects()` with Model C. For now, let's turn our focus on the stochastic elements in the model. Here we extract the posterior samples and do the conversions to see how they compare with Singer and Willett's.
@@ -650,9 +650,9 @@ Here are the full posteriors.
 
 ```{r, fig.width = 6, fig.height = 4}
 tibble(occasion = 1:3) %>% 
-  mutate(age_c  = occasion - 1,
-         j      = c(1, 2, 1) - 1,
-         jp     = c(2, 3, 3) - 1) %>% 
+  mutate(age_c = occasion - 1,
+         j     = c(1, 2, 1) - 1,
+         jp    = c(2, 3, 3) - 1) %>% 
   mutate(r = map2(j, jp, make_rho_rj_rjp)) %>% 
   unnest(r) %>% 
   mutate(label = str_c("occasions ", j + 1, " and ", jp + 1)) %>% 
@@ -661,7 +661,7 @@ tibble(occasion = 1:3) %>%
   # just for reference
   geom_vline(xintercept = c(.5, .75), color = "white") +
   geom_density(fill = "grey25", color = "transparent") +
-  scale_x_continuous(expression(rho[Residual[italic(j)]][Residual[italic(j*minute)]]), limits = c(0, 1)) +
+  scale_x_continuous(expression(rho[Residual[italic(j)]][Residual[italic(j*minute)]]), limits = 0:1) +
   scale_y_continuous(NULL, breaks = NULL) +
   ggtitle("Behold the shapes of our autocorrelations!") +
   theme(panel.grid = element_blank()) +
@@ -679,8 +679,7 @@ Because of the way the multilevel model partitions off variance into different s
 Singer and Willett called this $R_{y, \hat y}^2$. They then walked through an example with their Model B (`fit4.2`), the unconditional growth model. Within our **brms** paradigm, we typically use the `fitted()` function to return predicted outcome values for cases within the data. The default option for the `fitted()` function is to return these predictions after accounting for the level-2 clustering. As we will see, Singer and Willett's $R_{y, \hat y}^2$ statistic only accounts for predictors (i.e., `age_14`, in this case), not clustering variables (i.e., `id`, in this case). To follow Singer and Willett's specification, we need to set `re_formula = NA`, which will instruct `fitted()` to return the expected values without reference to the level-2 clustering. Here's a look at the first six rows of that output.
 
 ```{r}
-fitted(fit4.2,
-       re_formula = NA) %>% 
+fitted(fit4.2, re_formula = NA) %>% 
   head()
 ```
 
@@ -727,7 +726,7 @@ f %>%
             r2 = cor(fitted, alcuse)^2)
 ```
 
-This is close to the $R_{y, \hat y}^2 = .043$ Singer and Willett reported in the text. It might seem unsatisfying how this seemingly ignores model uncertainty by collapsing across HMC iterations. Here’s a look at what happens is we compute the $R_{y, \hat y}^2$ separately for each iteration.
+This is close to the $R_{y, \hat y}^2 = .043$ Singer and Willett reported in the text. It might seem unsatisfying how this seemingly ignores model uncertainty by collapsing across HMC iterations. Here's a look at what happens is we compute the $R_{y, \hat y}^2$ separately for each iteration.
 
 ```{r, message = F}
 f %>% 
@@ -739,7 +738,7 @@ f %>%
 
 Now for every level of `iter`, $R_{y, \hat y}^2 = .0434$, which matches up nicely with the text. But it seems odd that the value should be the same for each of the 4,000 HMC draws. Sadly, my efforts to debug my workflow have been unsuccessful. If you see a flaw in this method, please [share on GitHub](https://github.com/ASKurz/Applied-Longitudinal-Data-Analysis-with-brms-and-the-tidyverse/issues).
 
-Just for kicks, here's a more compact alternative to our `fitted()` + `left_join()` approach that more closely resembles the work flow Singer and Willett showed on pages 102 and 103. 
+Just for kicks, here's a more compact alternative to our `fitted()` + `left_join()` approach that more closely resembles the work flow Singer and Willett showed on pages 102 and 103.
 
 ```{r, message = F}
 tibble(age_14 = 0:2) %>% 
@@ -875,7 +874,7 @@ fit4.3$data %>%
   glimpse()
 ```
 
-Coding it as an integer further complicated things for the third plot returned by `conditional_effects()`, the one for the interaction of `age_14` and `coa`, $\gamma_{11}$. 
+Coding it as an integer further complicated things for the third plot returned by `conditional_effects()`, the one for the interaction of `age_14` and `coa`, $\gamma_{11}$.
 
 Since `coa` is binary, the natural way to express its interaction with `age_14` would be with `age_14` on the $x$-axis and two separate trajectories, one for each value of `coa`. That's what Singer and Willett very sensibly did with the middle panel of Figure 4.3. However, the `conditional_effects() `function defaults to expressing interactions such that the first variable in the term--in this case,`age_14`--is on the $x$-axis and the second variable in the term--`coa`, treated as an integer--is depicted in three lines corresponding its mean and its mean $\pm$ one standard deviation. This is great for continuous variables, but incoherent for categorical ones. The fix is to adjust the data and refit the model.
 
@@ -1186,7 +1185,7 @@ post %>%
   summarise(posterior_mean = mean(value) %>% round(digits = 3))
 ```
 
-We already plotted these trajectories and their 95% intervals a few sections up. If we want to work with the full composite model to predict $Y_{ij}$ (i.e., `alcuse`) directly, we multiply the `b_coa`, `b_age_14`, and `b_age_14:coa` vectors by the appropriate values of `coa` and `peer`. For example, here's what you'd code if you wanted the initial `alcuse` status for when `coa == 1`. 
+We already plotted these trajectories and their 95% intervals a few sections up. If we want to work with the full composite model to predict $Y_{ij}$ (i.e., `alcuse`) directly, we multiply the `b_coa`, `b_age_14`, and `b_age_14:coa` vectors by the appropriate values of `coa` and `peer`. For example, here's what you'd code if you wanted the initial `alcuse` status for when `coa == 1`.
 
 ```{r}
 post %>%
@@ -1215,7 +1214,7 @@ They next discuss the right panel of Figure 4.3. We could continue to work direc
 
 In `fit4.2` (i.e., Model C), `age_14` is the only predictor. Here we'll specify the values along the range in the original data, ranging from 0 to 2. However, we end up specifying a bunch of values within that range in addition to the two endpoints. This is because the 95% intervals typically have a bow tie shape. To depict that shape well, we need more than a couple values. We save those values as a tibble called `nd` (i.e., new data). We make use of them within fitted with the `newdata = nd` argument.
 
-Since we're only interested in the general trajectory, the consequence of the $\gamma$'s, we end up coding `re_formula = NA`. In so doing, we ask `fitted()` to ignore the group-level effects. In this example, that means we are ignoring the `id`-level deviations from the overall trajectories. If you're confused by that that means, don’t worry. That part of the model should become more clear as we go along in the text.
+Since we're only interested in the general trajectory, the consequence of the $\gamma$'s, we end up coding `re_formula = NA`. In so doing, we ask `fitted()` to ignore the group-level effects. In this example, that means we are ignoring the `id`-level deviations from the overall trajectories. If you're confused by that that means, don't worry. That part of the model should become more clear as we go along in the text.
 
 Since `fitted()` returns an array, we then convert the results into a data frame for use within the **tidyverse** framework. For plotting, it's handy to bind those results together with the `nd`, the predictor values we used to compute the fitted values with. In the final wrangling step, we use our `age_14` values to compute the `age` values.
 
@@ -1455,7 +1454,7 @@ The main information criterion within our Stan ecosystem paradigm is the Widely 
 >
 > And this value is yet another estimate of out-of-sample deviance. (pp. 191--192, emphasis in the original)
 
-In [Chapter 6 of my ebook](https://bookdown.org/content/3890/overfitting-regularization-and-information-criteria.html) translating McElreath's *Statistical Rethinking* into **brms** and **tidyverse** code, I walk out how to hand compute the WAIC for a `brm()` fit. I'm not going to repeat the exercise, here. But do see the project and McElreath's text if you’re interested. Rather, I'd like to get down to business. In **brms**, you can get a model's WAIC with the `waic()` function. 
+In [Chapter 6 of my ebook](https://bookdown.org/content/3890/overfitting-regularization-and-information-criteria.html) translating McElreath's *Statistical Rethinking* into **brms** and **tidyverse** code, I walk out how to hand compute the WAIC for a `brm()` fit. I'm not going to repeat the exercise, here. But do see the project and McElreath's text if you’re interested. Rather, I'd like to get down to business. In **brms**, you can get a model's WAIC with the `waic()` function.
 
 ```{r}
 waic(fit4.1)
@@ -1479,7 +1478,7 @@ You might notice how that value is similar to the AIC and BIC values for Model A
 
 #### Leave-one-out cross-validation (LOO-CV).
 
-We have another big option for model comparison within the Stan ecosystem. It involves leave-one-out cross-validation (LOO-CV). It's often the case that we aren't just interested in modeling the data we have in hand. The hope is our findings would generalize to other data we could have collected or may collect in the future. We'd like our findings to tell us something more general about the world at large. But unless you're studying something highly uniform like the weights of hydrogen atoms, chances are your data have idiosyncrasies that won't generalize well to other data. Sure, if we had all the information on all the relevant variables, we could explain the discrepancies across samples with hidden moderators and such. But we don’t have all the data and we typically don't even know what all the relevant variables are.
+We have another big option for model comparison within the Stan ecosystem. It involves leave-one-out cross-validation (LOO-CV). It's often the case that we aren't just interested in modeling the data we have in hand. The hope is our findings would generalize to other data we could have collected or may collect in the future. We'd like our findings to tell us something more general about the world at large. But unless you're studying something highly uniform like the weights of hydrogen atoms, chances are your data have idiosyncrasies that won't generalize well to other data. Sure, if we had all the information on all the relevant variables, we could explain the discrepancies across samples with hidden moderators and such. But we don't have all the data and we typically don't even know what all the relevant variables are.
 
 Welcome to science.
 
@@ -1489,7 +1488,7 @@ The problem is we often have time and funding constraints. We only have sample A
 
 Note how as $k$ increases, the number of cases with a fold get smaller. In the extreme, $k = N$, the number of cases within the data. At that point, $k$-fold cross-validation turns into leave-one-out cross-validation (LOO-CV).
 
-But there's a practical difficulty with LOO-CV: it's costly. As you may have noticed, it takes some time to fit a Bayesian multilevel model. For large data and/or complicated models, sometimes it takes hours or days. Most of us just don’t have enough time or computational resources to fit that many models. Happily, we have an approximation to pure LOO-CV. Vehtari, Gelman, and Gabry [-@vehtariPracticalBayesianModel2017] proposed Pareto smoothed importance-sampling leave-one-out cross-validation (PSIS-LOO) as an efficient way to approximate true LOO-CV. At this point, it's probably best to let the statisticians speak for themselves:
+But there's a practical difficulty with LOO-CV: it's costly. As you may have noticed, it takes some time to fit a Bayesian multilevel model. For large data and/or complicated models, sometimes it takes hours or days. Most of us just don't have enough time or computational resources to fit that many models. Happily, we have an approximation to pure LOO-CV. Vehtari, Gelman, and Gabry [-@vehtariPracticalBayesianModel2017] proposed Pareto smoothed importance-sampling leave-one-out cross-validation (PSIS-LOO) as an efficient way to approximate true LOO-CV. At this point, it's probably best to let the statisticians speak for themselves:
 
 > To maintain comparability with the given dataset and to get easier interpretation of the differences in scale of effective number of parameters, we define a measure of predictive accuracy for the $n$ data points taken one at a time: 
 >
@@ -1547,7 +1546,7 @@ pareto_k_ids(l_fit4.1, threshold = .7)
 Note our use of the `threshold` argument. Play around with it to see how it works. In case you're curious, here are those rows.
 
 ```{r}
-alcohol1_pp[c(27, 33), ]
+alcohol1_pp[c(27, 229), ]
 ```
 
 If you want an explicit look at those $k$ values, execute `l_fit4.1$diagnostics$pareto_k`. For the sake of space, I'm going to omit the output.
@@ -1675,7 +1674,7 @@ f %>%
   mutate_all(round, digits = 2)
 ```
 
-Works like a champ. But we haven't fully covered part of Singer and Willett's joint hypothesis text. They proposed a joint Null that included the $\gamma_{10} = 0$. Though it’s clear from the plot that the trajectory increases, we can address the issue more directly with a difference score. For our difference, we'll subtract the estimate at `age = 14` from the one at `age = 15`. But to that, we'll have to return to `fitted()`. So far, we’ve been using the default output which returns summaries of the posterior. To compute a proper difference score, we’ll need to work with all the posterior draws in order to approximate the full distribution. We do that by setting `summary = F`. And since we're only interested in the estimates from these two `age` values, we’ll streamline our `nd` data.
+Works like a champ. But we haven't fully covered part of Singer and Willett's joint hypothesis text. They proposed a joint Null that included the $\gamma_{10} = 0$. Though it's clear from the plot that the trajectory increases, we can address the issue more directly with a difference score. For our difference, we'll subtract the estimate at `age = 14` from the one at `age = 15`. But to that, we'll have to return to `fitted()`. So far, we've been using the default output which returns summaries of the posterior. To compute a proper difference score, we'll need to work with all the posterior draws in order to approximate the full distribution. We do that by setting `summary = F`. And since we're only interested in the estimates from these two `age` values, we'll streamline our `nd` data.
 
 ```{r}
 nd <-
@@ -1706,7 +1705,7 @@ f %>%
   scale_y_continuous(NULL, breaks = NULL) +
   labs(subtitle = "Based on 4,000 posterior draws, not a single one\nsuggests the slope is even close to zero. Rather, the\nposterior mass is concentrated around 0.25.",
        x = expression(paste(gamma[0][1], " (i.e., the difference between the two time points)"))) +
-  coord_cartesian(xlim = c(0, 1)) +
+  coord_cartesian(xlim = 0:1) +
   theme(panel.grid = element_blank())
 ```
 
@@ -1719,7 +1718,7 @@ f %>%
             ul   = quantile(difference, probs = .975))
 ```
 
-On page 125, Singer and Willett further mused: 
+On page 125, Singer and Willett further mused:
 
 > When we examined the OLS estimated change trajectories in figure 4.2, we noticed that among children of non-alcoholic parents, those with low values of *CPEER* tended to have a lower initial status and steeper slopes than those with high values of *CPEER*. We might therefore ask whether the former group "catches up" to the latter. This is a question about the "vertical" separation between these two groups['] true change trajectories at some later age, say 16. 
 
@@ -1910,7 +1909,7 @@ z[[1]][1:6, , "Intercept"]
 z[[1]][1:6, , "age_14"]
 ```
 
-For our `fit5`, the `ranef()` function returned a list of 1, indexed by `id`. Therein lay a 3-dimensional array. The first two dimensions are the same as what we got from `residuals()`, above. The third dimension had two levels: `Intercept` and `age_14`. In other words, the third dimension is the one that differentiated between $\hat{\zeta}_{0i}$ and $\hat{\zeta}_{1i}$. to make this thing a little more useful, let’s convert it to a long-formatted data frame.
+For our `fit5`, the `ranef()` function returned a list of 1, indexed by `id`. Therein lay a 3-dimensional array. The first two dimensions are the same as what we got from `residuals()`, above. The third dimension had two levels: `Intercept` and `age_14`. In other words, the third dimension is the one that differentiated between $\hat{\zeta}_{0i}$ and $\hat{\zeta}_{1i}$. to make this thing a little more useful, let's convert it to a long-formatted data frame.
 
 ```{r}
 z <-
