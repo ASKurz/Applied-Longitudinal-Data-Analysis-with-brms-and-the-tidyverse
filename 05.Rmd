@@ -315,14 +315,12 @@ To get a sense of the diversity in the number of occasions per `id`, use `group_
 
 ```{r, fig.width = 6, fig.height = 3}
 wages_pp %>% 
-  group_by(id) %>% 
-  count() %>% 
+  count(id) %>% 
    
-  ggplot(aes(x = n)) +
+  ggplot(aes(y = n)) +
   geom_bar() +
-  scale_x_continuous("# measurement occasions", breaks = 1:13) +
-  ylab("count of cases") +
-  coord_flip() +
+  scale_y_continuous("# measurement occasions", breaks = 1:13) +
+  xlab("count of cases") +
   theme(panel.grid = element_blank())
 ```
 
@@ -488,7 +486,7 @@ wages_pp %>%
   facet_wrap(~name, scales = "free")
 ```
 
-We see `black` is a dummy variable coded "Black" = 1, "Non-black" = 0. `hgc_9` is a somewhat Gaussian ordinal centered around zero. For context, it might also help to check its standard deviation. 
+We see `black` is a dummy variable coded "Black" = 1, "Non-black" = 0. `hgc_9` is a somewhat Gaussian ordinal centered around zero. For context, it might also help to check its standard deviation.
 
 ```{r}
 sd(wages_pp$hgc_9)
@@ -729,14 +727,12 @@ Here's the distribution of the number of measurement occasions for our small dat
 
 ```{r, fig.width = 6, fig.height = 3}
 wages_small_pp %>% 
-  group_by(id) %>% 
-  count() %>% 
+  count(id) %>% 
    
-  ggplot(aes(x = n)) +
+  ggplot(aes(y = n)) +
   geom_bar() +
-  scale_x_continuous("# measurement occasions", breaks = 1:13, limits = c(.5, 13)) +
-  ylab("count of cases") +
-  coord_flip() +
+  scale_y_continuous("# measurement occasions", breaks = 1:13, limits = c(.5, 13)) +
+  xlab("count of cases") +
   theme(panel.grid = element_blank())
 ```
 
@@ -840,7 +836,7 @@ Now do note that for both `fit5.6` and `fit5.7`, our effective sample sizes for 
 
 In Model B in Table 5.5, Singer and Willett gave the results of a model with the boundary constraints on the $\sigma^2$ parameters removed. I am not going to attempt something like that with **brms**. If you're interested, you're on your own.
 
-But we will fit a version of their Model C where we've removed the $\sigma_1$ parameter. Notice that this results in our removal of the LKJ prior for $\rho_{01}$, too. Without a $\sigma_1$, there's no other parameter for our lonely $\sigma_0$ to correlate with.
+But we will fit a version of their Model C where we've removed the $\sigma_1$ parameter. Notice that this results in our removal of the LKJ prior for $\rho_{01}$, too. Without a $\sigma_1$, there's no other parameter with which our lonely $\sigma_0$ might covary.
 
 ```{r fit5.8}
 fit5.8 <-
@@ -903,7 +899,7 @@ In their paper, they covered both penalized maximum likelihood and full Bayesian
 
 > We recommend a class of log-gamma penalties (or gamma priors) that in our default setting (the log-gamma(2, $\lambda$) penalty with $\lambda \rightarrow 0$) produce maximum penalized likelihood (MPL) estimates (or Bayes modal estimates) approximately one standard error away from zero when the maximum likelihood estimate is at zero. We consider these priors to be weakly informative in the sense that they supply some direction but still allow inference to be driven by the data. The penalty has little influence when the number of groups is large or when the data are informative about the variance, and the asymptotic mean squared error of the proposed estimator is the same as that of the maximum likelihood estimator. (p. 686)
 
-In the upper left panel of Figure 3, Chung and colleagues gave an example of what they mean by $\lambda \rightarrow 0$: $\lambda = 0.1$. Here's an example of what $\operatorname{Gamma}(2, 0.1)$ looks like across the parameter space of 0 to 100. 
+In the upper left panel of Figure 3, Chung and colleagues gave an example of what they mean by $\lambda \rightarrow 0$: $\lambda = 0.1$. Here's an example of what $\operatorname{Gamma}(2, 0.1)$ looks like across the parameter space of 0 to 100.
 
 ```{r, fig.width = 4, fig.height = 1.75}
 tibble(x = c(0, 100)) %>% 
@@ -1055,7 +1051,7 @@ tibble(`full data, student_t(3, 0, 1) prior`  = VarCorr(fit5.3, summary = F)[[1]
   facet_wrap(~name, ncol = 1)
 ```
 
-One thing to notice is that when you're working with full Bayesian estimation with even a rather vague prior with a boundary on zero, the measure of central tendency in the posterior is away from zero. Things get more compact when you’re working in the $\sigma^2$ metric. But remember that when we're fitting our models with **brms**, we're in the $\sigma$ metric, anyway. And with either of these three options, you don't have a compelling reason to set the $\sigma_\theta$ parameter to zero the way you would with ML. Even a rather vague prior will add enough information to the model that we can feel confident about keeping our theoretically-derived $\sigma_1$ parameter.
+One thing to notice is that when you're working with full Bayesian estimation with even a rather vague prior with a boundary on zero, the measure of central tendency in the posterior is away from zero. Things get more compact when you're working in the $\sigma^2$ metric. But remember that when we're fitting our models with **brms**, we're in the $\sigma$ metric, anyway. And with either of these three options, you don't have a compelling reason to set the $\sigma_\theta$ parameter to zero the way you would with ML. Even a rather vague prior will add enough information to the model that we can feel confident about keeping our theoretically-derived $\sigma_1$ parameter.
 
 #### Nonconvergence [i.e., it's time to talk chains and such].
 
@@ -1133,7 +1129,7 @@ Trace plots are connected to other important concepts, like autocorrelation and 
 
 ##### Autocorrelation.
 
-When using Markov chain Monte Carlo methods, of which HMC is a special case, the notions of autocorrelation and effective sample size are closely connected. Both have to do with the question, How many post-warmup draws from the posterior do I need to take? If you take too few, you won’t have a good sense of the shape of the posterior. If you take more than necessary, you’re just wasting time and computer memory. Here’s how McElreath introduced the topic in his [-@mcelreathStatisticalRethinkingBayesian2015] text:
+When using Markov chain Monte Carlo methods, of which HMC is a special case, the notions of autocorrelation and effective sample size are closely connected. Both have to do with the question, How many post-warmup draws from the posterior do I need to take? If you take too few, you won't have a good sense of the shape of the posterior. If you take more than necessary, you're just wasting time and computer memory. Here’s how McElreath introduced the topic in his [-@mcelreathStatisticalRethinkingBayesian2015] text:
 
 > So how many samples do we need for accurate inference about the posterior distribution? It depends. First, what really matters is the *effective* number of samples, not the raw number. The effective number of samples is an estimate of the number of independent samples from the posterior distribution. Markov chains are typically *autocorrelated*, so that sequential samples are not entirely independent. Stan chains tend to be less autocorrelated than those produced by other engines [e.g., the Gibbs sampler], but there is always some autocorrelation. (p. 255, *emphasis* in the original)
 
@@ -1351,7 +1347,7 @@ unemployment_pp %>%
   summarise(never_employed = 254 - n)
 ```
 
-In case it wasn't clear, participants had up to 3 interviews. 
+In case it wasn't clear, participants had up to 3 interviews.
 
 > By recruiting 254 participants from local unemployment offices, the researchers were able to interview individuals soon after job loss (within the first 2 months). Follow-up interviews were conducted between 3 and 8 months and 10 and 16 months after job loss. (p. 161)
 
@@ -1389,7 +1385,7 @@ unemployment_pp %>%
   group_by(int_1, int_2, int_3) %>%
   count() %>%
   arrange(desc(n)) %>%
-  knitr::kable()
+  flextable::flextable()
 ```
 
 It takes a little work to see how Singer and Willett came to the conclusion "62 were always working after the first interview" (p. 161). Based on an analysis of those who had complete data, that corresponds to the pattern in the top row, [1, 0, 0], which we have counted as 55 (i.e., row 2). If you add to that the two rows with missingness on one of the critical values (i.e., [1, 0, NA], [1, NA, 0], and [NA, 1, 1]), that gets you $55 + 4 + 2 + 1 = 62$.
@@ -1400,7 +1396,7 @@ Before we configure our unconditional growth model, we might familiarize ourselv
 
 > Each time participants completed the Center for Epidemiologic Studies' Depression (CES-D) scale [@radloffCESDScaleSelfReport1977], which asks them to rate, on a four-point scale, the frequency with which they experience each of the 20 depressive symptoms. The CES-D scores can vary from a low or 0 for someone with no symptoms to a high of 80 for someone in serious distress. (p. 161)
 
-In addition to Radloff's original article, you can get a copy of the CES-D [here](http://www.chcr.brown.edu/pcoc/cesdscale.pdf). 
+In addition to Radloff's original article, you can get a copy of the CES-D [here](http://www.chcr.brown.edu/pcoc/cesdscale.pdf).
 
 To help us pick our priors, [Brown and Gary [-@brownPredictorsDepressiveSymptoms1985] listed the means and standard deviations of the CES-D scores for unemployed African-American adults. They gave the summary statistics broken down by sex:
 
@@ -1427,9 +1423,11 @@ Based the variables in the data set and the descriptions of it in the text, we d
 
 \gamma_{00}                                      & \sim \operatorname{Normal}(14.5, 20) \\
 \gamma_{10}                                      & \sim \operatorname{Normal}(0, 10) \\
-\sigma_\epsilon, \sigma_0, \text{ and } \sigma_1 & \sim \operatorname{Student-t} (3, 0, 10) \\
+\sigma_\epsilon, \sigma_0, \text{ and } \sigma_1 & \sim \operatorname{Student-t}(3, 0, 11.9) \\
 \rho_{01}                                        & \sim \operatorname{LKJ} (4).
 \end{align*}
+
+Those $\operatorname{Student-t}(3, 0, 11.9)$ priors for the $\sigma$'s are the defaults, which you can confirm with `get_prior()`. The $\operatorname{LKJ} (4)$ for $\rho_{01}$ will weakly regularize the correlation towards zero.
 
 Here's how we might fit that model.
 
@@ -1440,8 +1438,8 @@ fit5.11 <-
       cesd ~ 0 + Intercept + months + (1 + months | id),
       prior = c(prior(normal(14.5, 20), class = b, coef = Intercept),
                 prior(normal(0, 10), class = b),
-                prior(student_t(3, 0, 10), class = sd),
-                prior(student_t(3, 0, 10), class = sigma),
+                prior(student_t(3, 0, 11.9), class = sd),
+                prior(student_t(3, 0, 11.9), class = sigma),
                 prior(lkj(4), class = cor)),
       iter = 2000, warmup = 1000, chains = 4, cores = 4,
       seed = 5,
@@ -1489,7 +1487,7 @@ We might specify Model B, our first model with a time-varying covariate, like th
 
 \begin{align*}
 \text{cesd}_{ij} & = \big [ \gamma_{00} + \gamma_{10} \text{months}_{ij} + \gamma_{20} \text{unemp}_{ij} \big ] + \big [  \zeta_{0i} + \zeta_{1i} \text{months}_{ij} + \epsilon_{ij} \big ]\\
-\epsilon_{ij}    & \sim \operatorname{Normal} (0, \sigma_\epsilon) \\
+\epsilon_{ij}    & \sim \operatorname{Normal}(0, \sigma_\epsilon) \\
 
 \begin{bmatrix}
 \zeta_{0i} \\ \zeta_{1i} 
@@ -1505,11 +1503,11 @@ We might specify Model B, our first model with a time-varying covariate, like th
 
 \gamma_{00}                                      & \sim \operatorname{Normal}(14.5, 20) \\
 \gamma_{10} \text{ and } \gamma_{20}             & \sim \operatorname{Normal}(0, 10) \\
-\sigma_\epsilon, \sigma_0, \text{ and } \sigma_1 & \sim \operatorname{Student-t} (3, 0, 10) \\
-\rho_{01}                                        & \sim \operatorname{LKJ} (4).
+\sigma_\epsilon, \sigma_0, \text{ and } \sigma_1 & \sim \operatorname{Student-t}(3, 0, 11.9) \\
+\rho_{01}                                        & \sim \operatorname{LKJ}(4).
 \end{align*}
 
-Note a few things about the priors. First, we haven't changed any of the priors from the previous model. All we did was add $\gamma_{20} \sim \text{Normal}(0, 10)$ for our new parameter. Given how weakly-informative our other priors have been for these data, this isn't an unreasonable approach. However, the meaning for our intercept, $\gamma_{01}$, has changed. Now it's the initial status for someone who is *employed* at baseline. But remember that for Model A, we set that prior with unemployed people in mind. A careful researcher might want to dive back into the literature to see if some lower value than 14.5 would be more reasonable to set for the mean of that prior. However, since the standard deviations for our intercepts priors and the covariate priors are all rather wide and permissive, this just won’t be much of a problem, for us. Buy anyway, second, note that we've centered our prior for $\gamma_{20}$ on zero. This is a weakly-regularizing prior, slightly favoring smaller effects over larger ones. And like before, one could easily argue for different priors. 
+Note a few things about the priors. First, we haven't changed any of the priors from the previous model. All we did was add $\gamma_{20} \sim \text{Normal}(0, 10)$ for our new parameter. Given how weakly-informative our other priors have been for these data, this isn't an unreasonable approach. However, the meaning for our intercept, $\gamma_{01}$, has changed. Now it's the initial status for someone who is *employed* at baseline. But remember that for Model A, we set that prior with unemployed people in mind. A careful researcher might want to dive back into the literature to see if some lower value than 14.5 would be more reasonable to set for the mean of that prior. However, since the standard deviations for our intercepts priors and the covariate priors are all rather wide and permissive, this just won't be much of a problem, for us. Buy anyway, second, note that we've centered our prior for $\gamma_{20}$ on zero. This is a weakly-regularizing prior, slightly favoring smaller effects over larger ones. And like before, one could easily argue for different priors.
 
 Here's how to fit the model in **brms**.
 
@@ -1520,8 +1518,8 @@ fit5.12 <-
       cesd ~ 0 + Intercept + months + unemp + (1 + months | id),
       prior = c(prior(normal(14.5, 20), class = b, coef = Intercept),
                 prior(normal(0, 10), class = b),
-                prior(student_t(3, 0, 10), class = sd),
-                prior(student_t(3, 0, 10), class = sigma),
+                prior(student_t(3, 0, 11.9), class = sd),
+                prior(student_t(3, 0, 11.9), class = sigma),
                 prior(lkj(4), class = cor)),
       iter = 2000, warmup = 1000, chains = 4, cores = 4,
       seed = 5,
@@ -1616,9 +1614,9 @@ f %>%
   theme(panel.grid = element_blank())
 ```
 
-The upper right panel will take more care. We'll still use `fitted()`, but we'll have to be tricky with how we define the two segments. When we defined the sequence of `months` values over which we wanted to plot the model trajectory, we just casually set `length.out = 30` within the `seq()` function. But now we need to make sure two of those sequential points are at 5. One way to do so is to use the `by = .5` argument within `seq()`, instead. Since we'll be defining the end points in our range with integer values, dividing up the sequence by every .5^th^ value will ensure we'll both be able to stop at 5 and that we'll have a reasonable amount of values in the sequence to ensure the bowtie-shaped 95% intervals don’t look chunky.
+The upper right panel will take more care. We'll still use `fitted()`, but we'll have to be tricky with how we define the two segments. When we defined the sequence of `months` values over which we wanted to plot the model trajectory, we just casually set `length.out = 30` within the `seq()` function. But now we need to make sure two of those sequential points are at 5. One way to do so is to use the `by = .5` argument within `seq()`, instead. Since we'll be defining the end points in our range with integer values, dividing up the sequence by every .5^th^ value will ensure we'll both be able to stop at 5 and that we'll have a reasonable amount of values in the sequence to ensure the bowtie-shaped 95% intervals don't look chunky.
 
-But anyway, that also means we’ll need to do a good job determining how many values we'll need to repeat our desired `unemp` values over. So here's a quick way to do the math. Since we're using every .5 in the sequence, you just subtract the integer at the beginning of the sequence from the integer at the end of the sequence, multiply that value by 2, and then add 1 to the product. Like this:
+But anyway, that also means we'll need to do a good job determining how many values we'll need to repeat our desired `unemp` values over. So here's a quick way to do the math. Since we're using every .5 in the sequence, you just subtract the integer at the beginning of the sequence from the integer at the end of the sequence, multiply that value by 2, and then add 1 to the product. Like this:
 
 ```{r}
 2 * (5 - 0) + 1
@@ -1857,7 +1855,7 @@ Reworded slightly from the text (p. 169), by adding one residual parameter, $\ze
 \begin{align*}
 \gamma_{00}                          & \sim \operatorname{Normal}(14.5, 20) \\
 \gamma_{10} \text{ and } \gamma_{20} & \sim \operatorname{Normal}(0, 10) \\
-\sigma_\epsilon,..., \sigma_2        & \sim \operatorname{Student-t} (3, 0, 10) \\
+\sigma_\epsilon,..., \sigma_2        & \sim \operatorname{Student-t}(3, 0, 11.9) \\
 \Omega                               & \sim \operatorname{LKJ} (4).
 \end{align*}
 
@@ -1902,12 +1900,13 @@ When you go beyond point estimates and factor in full posterior uncertainty, it 
 
 ### Allowing the effect of a time-varying predictor to vary over time.
 
-"Might unemployment status also affect the trajectory’s slope" (p. 171)? Here's the statistical model:
+"Might unemployment status also affect the trajectory's slope" (p. 171)? Here's the statistical model:
 
 \begin{align*}
-\text{cesd}_{ij} & = \big [ \gamma_{00} + \gamma_{10} \text{months}_{ij} + \gamma_{20} \text{unemp}_{ij} + \gamma_{30} \text{months}_{ij} \times \text{unemp}_{ij} \big ] + \big [  \zeta_{0i} + \zeta_{1i} \text{months}_{ij} + \epsilon_{ij} \big ] \\
+\text{cesd}_{ij} & = \big [ \gamma_{00} + \gamma_{10} \text{months}_{ij} + \gamma_{20} \text{unemp}_{ij} + \gamma_{30} \text{months}_{ij} \times \text{unemp}_{ij} \big ] \\
+& \;\;\; + \big [  \zeta_{0i} + \zeta_{1i} \text{months}_{ij} + \epsilon_{ij} \big ] \\
 
-\epsilon_{ij}    & \sim \operatorname{Normal} (0, \sigma_\epsilon) \\
+\epsilon_{ij}    & \sim \operatorname{Normal}(0, \sigma_\epsilon) \\
 
 \begin{bmatrix} 
 \zeta_{0i} \\ \zeta_{1i} 
@@ -1922,7 +1921,7 @@ When you go beyond point estimates and factor in full posterior uncertainty, it 
 
 \gamma_{00}                                        & \sim \operatorname{Normal}(14.5, 20) \\
 \gamma_{10}, \gamma_{20}, \text{ and } \gamma_{30} & \sim \operatorname{Normal}(0, 10) \\
-\sigma_\epsilon, \sigma_0, \text{ and } \sigma_1   & \sim \operatorname{Student-t}(3, 0, 10) \\
+\sigma_\epsilon, \sigma_0, \text{ and } \sigma_1   & \sim \operatorname{Student-t}(3, 0, 11.9) \\
 \rho_{01}                                          & \sim \operatorname{LKJ}(4).
 \end{align*}
 
@@ -1935,8 +1934,8 @@ fit5.13 <-
       cesd ~ 0 + Intercept + months + unemp + months:unemp + (1 + months | id),
       prior = c(prior(normal(14.5, 20), class = b, coef = Intercept),
                 prior(normal(0, 10), class = b),
-                prior(student_t(3, 0, 10), class = sd),
-                prior(student_t(3, 0, 10), class = sigma),
+                prior(student_t(3, 0, 11.9), class = sd),
+                prior(student_t(3, 0, 11.9), class = sigma),
                 prior(lkj(4), class = cor)),
       iter = 2000, warmup = 1000, chains = 4, cores = 4,
       seed = 5,
@@ -2019,7 +2018,7 @@ The next model follows the form
 
 \gamma_{00}                                      & \sim \operatorname{Normal}(14.5, 20) \\
 \gamma_{20} \text{ and } \gamma_{30}             & \sim \operatorname{Normal}(0, 10) \\
-\sigma_\epsilon, \sigma_0, \text{ and } \sigma_3 & \sim \operatorname{Student-t}(3, 0, 10) \\
+\sigma_\epsilon, \sigma_0, \text{ and } \sigma_3 & \sim \operatorname{Student-t}(3, 0, 11.9) \\
 \rho_{03}                                        & \sim \operatorname{LKJ}(4).
 
 \end{align*}
@@ -2033,8 +2032,8 @@ fit5.14 <-
       cesd ~ 0 + Intercept + unemp + months:unemp + (1 + months:unemp | id),
       prior = c(prior(normal(14.5, 20), class = b, coef = Intercept),
                 prior(normal(0, 10), class = b),
-                prior(student_t(3, 0, 10), class = sd),
-                prior(student_t(3, 0, 10), class = sigma),
+                prior(student_t(3, 0, 11.9), class = sd),
+                prior(student_t(3, 0, 11.9), class = sigma),
                 prior(lkj(4), class = cor)),
       iter = 2000, warmup = 1000, chains = 4, cores = 4,
       seed = 5,
@@ -2085,7 +2084,7 @@ Yep, it appears `fit5.14` is not an improvement on `fit5.13` (i.e., our analogue
 
 \gamma_{00}                          & \sim \operatorname{Normal}(14.5, 20) \\
 \gamma_{20} \text{ and } \gamma_{30} & \sim \operatorname{Normal}(0, 10) \\
-\sigma_\epsilon,..., \sigma_3        & \sim \operatorname{Student-t}(3, 0, 10) \\
+\sigma_\epsilon,..., \sigma_3        & \sim \operatorname{Student-t}(3, 0, 11.9) \\
 \mathbf\Omega                        & \sim \operatorname{LKJ}(4).
 \end{align*}
 
@@ -2098,8 +2097,8 @@ fit5.15 <-
       cesd ~ 0 + Intercept + unemp + months:unemp + (1 + unemp + months:unemp | id),
       prior = c(prior(normal(14.5, 20), class = b, coef = Intercept),
                 prior(normal(0, 10), class = b),
-                prior(student_t(3, 0, 10), class = sd),
-                prior(student_t(3, 0, 10), class = sigma),
+                prior(student_t(3, 0, 11.9), class = sd),
+                prior(student_t(3, 0, 11.9), class = sigma),
                 prior(lkj(4), class = cor)),
       iter = 2000, warmup = 1000, chains = 4, cores = 4,
       seed = 5,
@@ -2318,7 +2317,7 @@ Like in the text, these three models are all close with respect to the WAIC. Bas
 
 ### An important caveat: The problem of reciprocal causation.
 
-In this section, Singer and Willett gave a typology for time-varying covariates. 
+In this section, Singer and Willett gave a typology for time-varying covariates.
 
 * A variable is *defined* if, "in advance to data collection, its values are predetermined for everyone under study" (p. 177). Examples are time and the seasons.
 * A variable is *ancillary* if "its values cannot be influenced by study participants because they are determined by a stochastic process totally external to them" (p. 178). Within the context of a study on people within monogamous relationships, the availability of potential mates within the region would be an example.
@@ -2327,7 +2326,7 @@ In this section, Singer and Willett gave a typology for time-varying covariates.
 
 ## Recentering the effect of *TIME*
 
-Our version of the data from Tomarken, Shelton, Elkins, and Anderson [-@tomarken1997sleep] is saved as `medication_pp.csv`. 
+Our version of the data from Tomarken, Shelton, Elkins, and Anderson [-@tomarken1997sleep] is saved as `medication_pp.csv`.
 
 ```{r, warning = F, message = F}
 medication_pp <- read_csv("data/medication_pp.csv")
@@ -2356,13 +2355,12 @@ medication_pp %>%
   group_by(treat, id) %>% 
   count() %>% 
   
-  ggplot(aes(x = n, fill = treat)) +
+  ggplot(aes(y = n, fill = treat)) +
   geom_bar() +
-  scale_x_continuous(breaks = c(2,12, 15:21)) +
+  scale_y_continuous(breaks = c(2,12, 15:21)) +
   scale_fill_viridis_d(NULL, end = .8) +
-  labs(x = "# measurement occasions",
-       y = "count of cases") +
-  coord_flip() +
+  labs(x = "count of cases",
+       y = "# measurement occasions") +
   theme(panel.grid = element_blank()) 
 ```
 
