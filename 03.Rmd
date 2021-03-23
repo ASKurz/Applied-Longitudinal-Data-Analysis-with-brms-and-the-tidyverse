@@ -36,7 +36,7 @@ early_int <-
 print(early_int)
 ```
 
-Later on, we also fit models using $age - 1$. Here we'll compute that and save it as `age_c`
+Later on, we also fit models using $age - 1$. Here we'll compute that and save it as `age_c`.
 
 ```{r}
 early_int <-
@@ -54,7 +54,7 @@ load("data/early_int_sim.rda")
 
 ## The level-1 submodel for individual change
 
-This part of the model is also called the *individual growth model*. Remember how in last chapter we fit a series of participant-specific models? That’s the essence of this part of the model.
+This part of the model is also called the *individual growth model*. Remember how in last chapter we fit a series of participant-specific models? That's the essence of this part of the model.
 
 Here's our version of Figure 3.1. Note that here we're being lazy and just using OLS estimates.
 
@@ -110,7 +110,7 @@ f <-
 print(f)
 ```
 
-To make all the dashed lines and arrows in the figure, we'll want a few specialty tibbles. 
+To make all the dashed lines and arrows in the figure, we'll want a few specialty tibbles.
 
 ```{r, fig.width = 3.25, fig.height = 4}
 path <-
@@ -195,7 +195,7 @@ early_int_sim %>%
 
 Note that now we're working with our `early_int_sim` data, the one where we added the data of 95 simulated individuals to the real data of 8 `id` levels from Table 3.1. As such, our results will deviate a bit from those in the text.
 
-But anyways, here we go on to fit 103 individual OLS models, one for each of the `id` levels. Don't worry; we'll depart from this madness shortly. 
+But anyways, here we go on to fit 103 individual OLS models, one for each of the `id` levels. Don't worry; we'll depart from this madness shortly.
 
 ```{r}
 by_id <-
@@ -421,7 +421,7 @@ Talking about the various software options, Singer and Willett wrote:
 But importantly, in the next paragraph the authors clarified their text focused on "one particular method of estimation--*maximum likelihood*" (p. 64, *emphasis* in the original). This is quite important because, whereas we might expect various maximum-likelihood-based packages to yield the same or similar results, this will not necessarily hold when working with Bayesian software which, in addition to point estimates and expressions of uncertainty, yields an entire posterior distribution as a consequence of Bayes' theorem,
 
 $$
-p(\theta | d) = \frac{p(d | \theta) \; p(\theta)}{p(d)},
+p(\theta | d) = \frac{p(d | \theta)\ p(\theta)}{p(d)},
 $$
 
 where $p(\theta | d)$ is the posterior distribution, $p(d | \theta)$ is the likelihood (i.e., the star of maximum likelihood), $p(\theta)$ are the priors, and $p(d)$ is the normalizing constant, the probability of the data which transforms the numerator to a probability metric.
@@ -596,7 +596,7 @@ post %>%
 
 Sure, you could fixate on zero if you wanted to. But of more interest is the overall shape of each parameter's posterior distribution. Look at each's central tendency and spread. Look at where each is in the parameter space. To my mind, that story is so much richer than fixating on zero.
 
-We’ll have more to say along these lines in subsequent chapters.
+We'll have more to say along these lines in subsequent chapters.
 
 ## Examining estimated variance components
 
