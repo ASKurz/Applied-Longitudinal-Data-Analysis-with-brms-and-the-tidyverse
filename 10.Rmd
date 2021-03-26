@@ -72,7 +72,7 @@ data.frame(n_risk  = fit10.1$n.risk,
   mutate(n_censored = n_risk - n_event - n_risk_1)
 ```
 
-That is, to get the number of those censored at the end of a given year, you take the number employed at the beginning of that year, subtract the number of those who left (i.e., the number who experienced the "event"), and then subtract the number of those employed at the beginning of the next year. Notice our use of the `dplyr::lead()` function to get the number employed in the next year (learn more about that function [here](https://dplyr.tidyverse.org/reference/lead-lag.html)). 
+That is, to get the number of those censored at the end of a given year, you take the number employed at the beginning of that year, subtract the number of those who left (i.e., the number who experienced the "event"), and then subtract the number of those employed at the beginning of the next year. Notice our use of the `dplyr::lead()` function to get the number employed in the next year (learn more about that function [here](https://dplyr.tidyverse.org/reference/lead-lag.html)).
 
 To get the values in the "Teachers at the beginning of the year who left during the year" column, which is in a proportion metric, we use division.
 
@@ -395,7 +395,7 @@ It works like this.
 line_tbl(lt_cocaine)
 ```
 
-If you look closely at the hazard function plots in the left column of Figure 10.2, you’ll note they share many common settings (e.g., the basic shape, the label of the $y$-axis). But there are several parameters we’ll need to set custom settings for. To my eye, those are:
+If you look closely at the hazard function plots in the left column of Figure 10.2, you'll note they share many common settings (e.g., the basic shape, the label of the $y$-axis). But there are several parameters we’ll need to set custom settings for. To my eye, those are:
 
 * the data;
 * the $x$-axis label, break points, and limits; and
@@ -424,7 +424,7 @@ Now we'll make a similar custom plotting function, `s_plot()`, for the hazard fu
 ```{r}
 s_plot <- function(data = data, xlab = xlab, xbreaks = xbreaks, xlimits = xlimits) {
   
-  # compute the imterpolated median life value
+  # compute the interpolated median life value
   iml <- make_iml(data)
   
   # make the imp line values
@@ -449,7 +449,7 @@ s_plot <- function(data = data, xlab = xlab, xbreaks = xbreaks, xlimits = xlimit
 }
 ```
 
-Now we make the eight subplots in bulk, naming them `p1`, `p2`, and so on. 
+Now we make the eight subplots in bulk, naming them `p1`, `p2`, and so on.
 
 ```{r, fig.width = 6, fig.height = 3, warning = F}
 # cocaine
@@ -521,7 +521,7 @@ Boom! Looks like a dream.
 
 ### Identifying periods of high and low risk using hazard functions.
 
-It can be useful to evaluate hazard functions based on whether they are *monotonic* (i.e., have a single distinctive peak and single distinctive trough) and *nonmonotonic* (i.e., have multiple distinctive peaks or troughs). Globally speaking, the hazard functions for rows `A` and `B` are monotonic and the remaining two are nonmonotonic. 
+It can be useful to evaluate hazard functions based on whether they are *monotonic* (i.e., have a single distinctive peak and single distinctive trough) and *nonmonotonic* (i.e., have multiple distinctive peaks or troughs). Globally speaking, the hazard functions for rows `A` and `B` are monotonic and the remaining two are nonmonotonic.
 
 Singer and Willett remarked "monotonically increasing hazard functions are common when studying events that are ultimately inevitable (or near universal).... [However,] nonmonotonic hazard functions, like those in Panels C and D, generally arise in studies of long duration" (p. 342). 
 
@@ -575,7 +575,7 @@ se_h_hat %>%
         panel.grid = element_blank())
 ```
 
-Standard errors for discrete hazards probabilities share a property with those for other probabilities: they are less certain (i.e., larger) for probability values near .5 and increasingly certain (i.e., smaller) for probability values approaching 0 and 1. To give a sense of that, here are the corresonding $se \big (\hat h(t_j) \big)$ for a series of $\hat h(t_j)$ values ranging from 0 to 1, with $n_j$ held constant at 1,000.
+Standard errors for discrete hazards probabilities share a property with those for other probabilities: they are less certain (i.e., larger) for probability values near .5 and increasingly certain (i.e., smaller) for probability values approaching 0 and 1. To give a sense of that, here are the corresponding $se \big (\hat h(t_j) \big)$ for a series of $\hat h(t_j)$ values ranging from 0 to 1, with $n_j$ held constant at 1,000.
 
 ```{r, fig.width = 4, fig.height = 3}
 tibble(n_j   = 1000,
@@ -613,7 +613,7 @@ Computing the frequentist standard errors for estimated survival probabilities i
 
 $$se \big (\hat S(t_j) \big) = \hat S(t_j)  \sqrt{\frac{\hat h(t_1)}{n_1 \big (1 - \hat h(t_1) \big)} + \frac{\hat h(t_2)}{n_2 \big (1 - \hat h(t_2) \big)} + \cdots + \frac{\hat h(t_j)}{n_j \big (1 - \hat h(t_j) \big)}}.$$
 
-Here we put the formula to work and finish our version of Table 10.2. For the sake of sanity, we're simply calling our "Term under the square root sign" column `term`. Note our use of the `cumsum()` function. 
+Here we put the formula to work and finish our version of Table 10.2. For the sake of sanity, we're simply calling our "Term under the square root sign" column `term`. Note our use of the `cumsum()` function.
 
 ```{r}
 # suspend scientific notation
@@ -759,17 +759,17 @@ teachers_lt  %>%
 
 > The ability to construct a life table using the person-period data set provides a simple strategy for conducting the descriptive analyses outlined in this chapter. This strategy yields appropriate statistics regardless of the amount, or pattern, of censoring. Perhaps even more important, the person-period data set is the fundamental tool for fitting discrete-time hazard models to data, using methods that we describe in the next chapter. (p. 356)
 
-## Bonus: Fit the discrete-time hazard models with brms
+## Bonus: Fit the discrete-time hazard models with **brms**
 
-The frequentists aren't the only ones who can discrete-time hazard models. Bayesians can get in on the fun, too. The first step is to decide on an appropriate likelihood function. Why? Because Bayes' formula requires that we define the likelihood and the priors. As all the parameters in the model are seen through the lens of the likelihood, it's important we consider it with care. 
+The frequentists aren't the only ones who can discrete-time hazard models. Bayesians can get in on the fun, too. The first step is to decide on an appropriate likelihood function. Why? Because Bayes' formula requires that we define the likelihood and the priors. As all the parameters in the model are seen through the lens of the likelihood, it's important we consider it with care.
 
-Happily, the exercises in the last section did a great job preparing us for the task. In Table 10.3, Singer and Willett hand computed the discrete hazards (i.e., the values in the "Proportion *EVENT* = 1" column) by dividing the valued in the "*EVENT* = 1" column by those in the "Total" column. Discrete hazards are proportions. Proportions have two important characteristics; they are continuous and necessarily range between 0 and 1. You know what else has those characteristics? Probabilities. 
+Happily, the exercises in the last section did a great job preparing us for the task. In Table 10.3, Singer and Willett hand computed the discrete hazards (i.e., the values in the "Proportion *EVENT* = 1" column) by dividing the valued in the "*EVENT* = 1" column by those in the "Total" column. Discrete hazards are proportions. Proportions have two important characteristics; they are continuous and necessarily range between 0 and 1. You know what else has those characteristics? Probabilities.
 
 So far in this text, we have primarily focused on models using the Gaussian likelihood. Though it's a workhorse, the Gaussian is inappropriate for modeling proportions/probabilities. Good old Gauss is great at modeling unbounded continuous data, but it can fail miserably when working with bounded data and our proportions/probabilities are most certainly bounded. The binomial likelihood, however, is well-suited for handling probabilities. Imagine you have data that can take on values of 0 and 1, such as failures/successes, no's/yesses, fails/passes, and no-events/events. If you sum up all the 1's and divide them by the total cases, you get a proportion/probability. The simple binomial model takes just that kind of data—the number of 1's and the number of total cases. The formula for the binomial likelihood is
 
 $$\operatorname{Pr} (z | n, p) = \frac{n!}{z!(n - z)!} p^z (1 - p)^{n - z},$$
 
-where $z$ is the number of cases for which the value is 1, $n$ is the total number of cases, and $p$ is the probability of a 1 across cases. As the data provide us with $z$ and $n$, we end up estimating $p$. If we're willing to use what's called a *link function*, we can estimate $p$ with a linear model with any number of predictors. When fitting binomial regression models, you can take your choice among several link functions, the most popular of which is the logit. This will be our approach. As you may have guesses, using the logit link to fit a binomial model is often termed *logistic regression*. Welcome to the generalized linear model. 
+where $z$ is the number of cases for which the value is 1, $n$ is the total number of cases, and $p$ is the probability of a 1 across cases. As the data provide us with $z$ and $n$, we end up estimating $p$. If we're willing to use what's called a *link function*, we can estimate $p$ with a linear model with any number of predictors. When fitting binomial regression models, you can take your choice among several link functions, the most popular of which is the logit. This will be our approach. As you may have guesses, using the logit link to fit a binomial model is often termed *logistic regression*. Welcome to the generalized linear model.
 
 Let's fire up **brms**.
 
@@ -813,7 +813,7 @@ fixef(fit10.6) %>% inv_logit_scaled()
 
 Compare these `Estimate` values with the values in the "Estimated hazard probability" column from Table 10.2 in the text (p. 349). They are very close. We can go further and look at these hazard estimates in a plot. We'll use the `tidybayes::stat_lineribbon()` function to plot their posterior means atop their 50% and 95% intervals.
 
-```{r, fig.width = 6, fig.height = 3}
+```{r, fig.width = 6, fig.height = 3, warning = F, message = F}
 library(tidybayes)
 
 posterior_samples(fit10.6) %>% 
