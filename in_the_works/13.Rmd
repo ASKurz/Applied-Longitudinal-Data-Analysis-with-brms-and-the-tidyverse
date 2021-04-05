@@ -4,17 +4,23 @@ author: "A Solomon Kurz"
 date: "`r format(Sys.Date())`"
 output:
   github_document
+bibliography: bib.bib
+biblio-style: apalike
+csl: apa.csl
+link-citations: yes  
 ---
 
-```{r, echo = FALSE, cache = FALSE}
+```{r, echo = F, cache = F}
+knitr::opts_chunk$set(fig.retina = 2.5)
+knitr::opts_chunk$set(fig.align = "center")
 options(width = 100)
 ```
 
 # Describing Continuous-Time Event Occurrence Data
 
-> In this chapter, we present strategies for describing continuous-time event data. Although survivor and hazard functions continue to form the cornerstone of our work, the challenge in the time scale from discrete to continuous demands that we revise our fundamental definitions and modify estimation strategies….
+> In this chapter, we present strategies for describing continuous-time event data. Although survivor and hazard functions continue to form the cornerstone of our work, the challenge in the time scale from discrete to continuous demands that we revise our fundamental definitions and modify estimation strategies....
 >
-> In the [second half of the chapter], we offer solutions to the core conundrum embedded in contentious-time event data: our inability to estimate the hazard function well. This is a concern as it leads some researchers to conclude that they should not even *try* to ascertain the pattern of risk over time. (pp, 468--469, *emphasis* in the original)
+> In the [second half of the chapter], we offer solutions to the core conundrum embedded in contentious-time event data: our inability to estimate the hazard function well. This is a concern as it leads some researchers to conclude that they should not even *try* to ascertain the pattern of risk over time. [@singerAppliedLongitudinalData2003, pp, 468--469, *emphasis* in the original]
 
 ## 13.1 A framework for characterizing the distribution of continuous-time event data
 
@@ -29,7 +35,7 @@ options(width = 100)
 > * *The probability of observing* any particular event time *is infinitesimally small*. In continuous time, the probability that an event will occur *at any specific instant* approaches 0. The probability may nor reach 0, but as time’s divisions become finer and finer, it becomes smaller and smaller.
 > * *The probability that two or more individuals will share the same event time is also infinitesimally small*. If the probability of event occurrence at each instant is infinitesimally small, the probability of *co*occurrence (a tie) must be smaller still. (p. 470, *emphasis* in the original)
 
-Load the horn honking data from [Diekmann, Jungbauer-Gans, Krassing, and Lorenz (1996)](https://www.researchgate.net/profile/Andreas_Diekmann2/publication/14168210_Social_Status_and_Aggression_A_Field_Study_Analyzed_by_Survival_Analysis/links/54c041be0cf28eae4a696897/Social-Status-and-Aggression-A-Field-Study-Analyzed-by-Survival-Analysis.pdf).
+Load the horn honking data from Diekmann, Jungbauer-Gans, Krassing, and Lorenz [-@diekmann1996social].
 
 ```{r, warning = F, message = F}
 library(tidyverse)
@@ -83,7 +89,7 @@ Heads up: When Singer and Willett "do not distinguish individuals on the basis o
 
 ### 13.1.3 The hazard function.
 
-> The hazard function assesses the *risk*--at a particular moment--that an individual who has not yet done so will experience the target event. In discrete time, the moments are time periods, which allows us to express hazard as a conditional probability. In continuous time, the moments are the infinite numbers of infinitesimally small instants of time that exist within any finite time period, a change that requires us to alter our definition. (pp. 472--473, *emphasis* in the original) 
+> The hazard function assesses the *risk*--at a particular moment--that an individual who has not yet done so will experience the target event. In discrete time, the moments are time periods, which allows us to express hazard as a conditional probability. In continuous time, the moments are the infinite numbers of infinitesimally small instants of time that exist within any finite time period, a change that requires us to alter our definition. (pp. 472--473, *emphasis* in the original)
 
 Singer and Willett the went on to demonstrate the notion of "infinitesimally small instants of time" by dividing a year into days, hours, minutes, and seconds. Here's how we might use **R** to practice dividing up a year into smaller and smaller units.
 
@@ -102,7 +108,7 @@ year * days * hours * minutes * seconds
 
 Building, we define the continuous-time hazard function as
 
-$$h(t_{ij}) = \text{limit as } \Delta t \rightarrow 0 \Bigg \{ \frac{\text{Pr}[T_i \text{ is in the interval } (t_j, t_j + \Delta t) | T_i \geq t_j]}{\Delta t} \Bigg \},$$
+$$h(t_{ij}) = \text{limit as } \Delta t \rightarrow 0 \left \{ \frac{\text{Pr}[T_i \text{ is in the interval } (t_j, t_j + \Delta t) | T_i \geq t_j]}{\Delta t} \right \},$$
 
 where $[t_j, t_j + \Delta t)$ is the $j$th time interval and "the opening phrase '$\text{limit as } \Delta t \rightarrow 0$' indicates that we evaluate the conditional probability in brackets as the interval width modes closer and closer to 0" (p. 474).
 
@@ -114,20 +120,19 @@ Closing out this section, we read:
 
 ## 13.2 Grouped methods for estimating continuous-time survivor and hazard functions
 
-> In principle, in continuous time, we would like to estimate a value for the survivor and hazard functions at every possible instant when an event could occur. In practice, we can do so only if we are willing to adopt constraining parametric assumptions about the distribution of event times. To support this approach, statisticians have identified dozens of different distributions--Weibull, Gompertz, gamma, and log-logistic, to name a few--that event times might follow, and in some fields—industrial product testing, for example--parametric estimation is the dominant mode of analysis (see, e.g., Lawless, 1982).
+> In principle, in continuous time, we would like to estimate a value for the survivor and hazard functions at every possible instant when an event could occur. In practice, we can do so only if we are willing to adopt constraining parametric assumptions about the distribution of event times. To support this approach, statisticians have identified dozens of different distributions--Weibull, Gompertz, gamma, and log-logistic, to name a few--that event times might follow, and in some fields—industrial product testing, for example--parametric estimation is the dominant mode of analysis [see, e.g., @lawless1982StatisticalModels].
 >
 > In many other fields, including most of the social, behavioral, and medical sciences, nonparametric methods are more popular. The fundamental advantage of nonparametric methods is that we need not make constraining assumptions about the distribution of event times. This flexibility is important because: (1) few researchers have a sound basis for preferring one distribution over another; and (2) adopting an *incorrect* assumption can lead to erroneous conclusions. With a nonparametric approach, you essentially trade the *possibility* of a minor increase in efficiency if a particular assumption holds for the guarantee of doing nearly as well for most data sets, regardless of its tenability. 
 >
 > For decades, in a kind of mathematic irony, statisticians obtained nonparametric estimates of the continuous-time survivor and hazard functions by grouping event times into a small number of intervals, constructing a life table, and applying the discrete-time strategies of chapter 10 (with some minor revisions noted below). In this section we describe two of the most popular of these grouped strategies: the *discrete-time* method (section 13.2.1) and the *actuarial* method (section 13.2.2). (pp. 475--476, *emphasis* in the original)
 
-As we'll see, **brms** supports parametric and nonparametric continuous-time survival models. In the sections and chapters to come, we will make extensive use of the Cox model, which is nonparametric. However, if you look through the *Survival models* section of Bürkner's [*Parameterization of Response Distributions in brms*](https://CRAN.R-project.org/package=brms/vignettes/brms_families.html), you'll see **brms** supports survival models with the exponential, inverse-Gaussian, gamma, log-normal, and Weibull likelihoods.
+As we'll see, **brms** supports parametric and nonparametric continuous-time survival models. In the sections and chapters to come, we will make extensive use of the Cox model, which is nonparametric. However, if you look through the *Time-to-event models* section of Bürkner's [-@Bürkner2021Parameterization] vignette, [*Parameterization of response distributions in brms*](https://CRAN.R-project.org/package=brms/vignettes/brms_families.html), you'll see **brms** supports survival models with the exponential, inverse-Gaussian, gamma, log-normal, and Weibull likelihoods.
 
 ### 13.2.1 Constructing a grouped life table.
 
-```{r}
-range(honking$seconds)
-```
+> Grouped estimation strategies begin with a life table that partitions continuous time into a manageable number of contiguous intervals. When choosing a partition, you should seek one that is: (1) substantively meaningful; (2) coarse enough to yield stable estimates; and (3) fine enough to reveal discernible patterns. (p. 476)
 
+For the first step in making the life table of Table 13.2, we'll make variables that partition the `seconds` column of the `honking` data into lower and upper bounds.
 
 ```{r}
 honking <-
@@ -148,13 +153,13 @@ honking <-
 honking %>% head()
 ```
 
+Now we'll transform the data into a life-table format, which we'll save as `honking_aggregated`.
+
 ```{r}
  honking_aggregated <-
   honking %>% 
   mutate(event = ifelse(censor == 0, "n_events", "n_censored")) %>% 
-  group_by(lb) %>% 
-  count(event) %>% 
-  ungroup() %>% 
+  count(lb, event) %>% 
   pivot_wider(names_from = event,
               values_from = n) %>% 
   mutate(ub = if_else(lb == 8, 18, lb + 1)) %>% 
@@ -195,30 +200,31 @@ honking_aggregated <-
   mutate(ub_f = factor(ub))
 ```
 
-In the last chapter, we used the `normal(0, 1.5)` prior, which was flat in the probability metric. Here we'll be more conservative and use a weakly-regularizing `normal(0, 1)`. Otherwise, this model is just like any of the other unconditional discrete-time models we've fit with `brm()`.
+In the last chapter, we used the `normal(0, 4)` prior, which was permissive in the log-odds metric. Here we'll be more conservative and use `normal(0, 1.5)`, which is weakly-regularizing on the log-odds metric, but flat in the probability metric. A plot might help show this.
 
-```{r, fig.width = 5, fig.height = 3, cache = T}
+```{r, fig.width = 6, fig.height = 2.5, cache = T}
 set.seed(13)
 
-tibble(sd = seq(from = 1, to = 2, by = .25)) %>% 
-  mutate(log_odds = map(sd, ~rnorm(1e6, mean = 0, sd = .))) %>% 
-  unnest(log_odds) %>% 
-  mutate(p  = inv_logit_scaled(log_odds),
-         sd = factor(sd)) %>% 
+tibble(`log odds` = rnorm(1e6, mean = 0, sd = 1.5)) %>% 
+  mutate(probability = inv_logit_scaled(`log odds`)) %>% 
+  pivot_longer(everything()) %>% 
   
-  ggplot(aes(x = p, y = sd)) +
-  stat_histintervalh(normalize = "xy") +
-  theme(panel.grid = element_blank())
+  ggplot(aes(x = value, y = 0)) +
+  stat_histinterval(normalize = "panels") +
+  scale_y_continuous(NULL, breaks = NULL) +
+  xlab("prior predictive distribution") +
+  theme(panel.grid = element_blank()) +
+  facet_wrap(~ name, scales = "free")
 ```
 
-
+Otherwise, this model is just like any of the other unconditional discrete-time models we've fit with `brm()`.
 
 ```{r fit13.1}
 fit13.1 <-
   brm(data = honking_aggregated,
       family = binomial,
       n_events | trials(n_at_risk) ~ 0 + ub_f,
-      prior(normal(0, 1), class = b),
+      prior(normal(0, 1.5), class = b),
       chains = 4, cores = 1, iter = 2000, warmup = 1000,
       seed = 13,
       file = "~/Dropbox/Recoding Applied Longitudinal Data Analysis/fits/fit13.01")
@@ -230,7 +236,7 @@ Check the parameter summary.
 print(fit13.1)
 ```
 
-As will become apparent in a bit, our `normal(0, 1)` prior was not inconsequential. Our aggregated data were composed of the event/censoring information of 57 cases, spread across 8 time periods. This left little information in the likelihood, particularly for the later time periods. As a consequence, the prior left clear marks in the posterior.
+As will become apparent in a bit, our `normal(0, 1.5)` prior was not inconsequential. Our aggregated data were composed of the event/censoring information of 57 cases, spread across 8 time periods. This left little information in the likelihood, particularly for the later time periods. As a consequence, the prior left clear marks in the posterior.
 
 As with the discrete-time model, we can formally define the survivor function for the continuous-time model as
 
@@ -249,8 +255,8 @@ s <-
   mutate(iter = 1:n()) %>% 
   pivot_longer(-iter,
                names_to = "time",
-               values_to = "p",
-               names_ptypes = list(time = integer())) %>% 
+               values_to = "p") %>% 
+  mutate(time = time %>% as.integer()) %>% 
   group_by(iter) %>% 
   mutate(survivor = cumprod(1 - p)) %>% 
   ungroup()
@@ -294,7 +300,7 @@ s %>%
   theme(panel.grid = element_blank())
 ```
 
-For a little context, we superimposed the sample (ML) estimates of the survivor function in red. Based on the posterior median, our median lifetime appears to be between the time intervals of $[2, 3)$ and $[3, 4)$. Sticking with those medians, here's the exact number using Miller's ([1981](https://books.google.com/books/about/Survival_Analysis.html?id=cttQAAAAMAAJ)) interpolation approach from Section 10.2.3.
+For a little context, we superimposed the sample (ML) estimates of the survivor function in red. Based on the posterior median, our median lifetime appears to be between the time intervals of $[2, 3)$ and $[3, 4)$. Sticking with those medians, here's the exact number using Miller's [-@miller1981SurvivalAnalysis] interpolation approach from [Section 10.2.2][Median lifetime.].
 
 ```{r}
 s_medians <-
@@ -321,13 +327,13 @@ h <-
   mutate(iter = 1:n()) %>% 
   pivot_longer(-iter,
                names_to = "time",
-               values_to = "p",
-               names_ptypes = list(time = integer()))
+               values_to = "p") %>% 
+  mutate(time = time %>% as.integer())
 
 h
 ```
 
-For continuous-time data, hazard is a rate, which is 
+For continuous-time data, hazard is a rate, which is
 
 > the limit of the conditional probability of event occurrence in a (vanishingly small) interval divided by the interval's width. A logical estimator is thus the ratio of the conditional probability of event occurrence in an interval to the interval's width. (p. 479)
 
@@ -369,7 +375,7 @@ bind_cols(
 )
 ```
 
-Perhaps even more so than with our estimates for the survivor function, our hazard estimates show the influence of our prior on the posterior. Compared to the estimates reported in the text, ours appear pulled toward .5. Also note how our posterior standard deviations tend to be a bit smaller than the standard errors reported in the text. That's from our priors, too. To my mind, plotting the marginal posteriors for the intervals of our hazard function really helps hit this home.
+Perhaps even more so than with our estimates for the survivor function, our hazard estimates show the influence of our prior on the posterior. For example, note how our posterior standard deviations tend to be a bit smaller than the standard errors reported in the text. To my mind, plotting the marginal posteriors for the intervals of our hazard function really helps hit this home.
 
 ```{r, fig.width = 6, fig.height = 3}
 h %>% 
@@ -377,7 +383,7 @@ h %>%
   
   ggplot(aes(x = hazard, y = time)) +
   geom_vline(xintercept = .5, color = "white") +
-  geom_halfeyeh(.width = c(.5, .95), normalize = "xy") +
+  stat_halfeye(.width = c(.5, .95), normalize = "xy") +
   xlim(0, 1) +
   theme(panel.grid = element_blank())
 ```
@@ -486,7 +492,7 @@ I'm not going to bother with computing the ML standard errors for the actuarial 
 
 ## 13.3 The Kaplan-Meier method of estimating the continuous-time survivor function
 
-> A fundamental problem with grouped estimation methods is that they artificially categorize what is now, by definition, a continuous variable.... Shouldn't it be possible to use the *observed* data--the actual event times--to describe the distribution of event occurrences? This compelling idea underlies the Kaplan-Meier method, named for the statisticians who demonstrated (in [1958](http://www.nativefishlab.net/library/internalpdf/21383.pdf)) that the intuitive approach--also known as the *product-limit method*--has maximum likelihood properties as well. Below, we explain how this approach works and why it is preferable. 
+> A fundamental problem with grouped estimation methods is that they artificially categorize what is now, by definition, a continuous variable.... Shouldn't it be possible to use the *observed* data--the actual event times--to describe the distribution of event occurrences? This compelling idea underlies the Kaplan-Meier method, named for the statisticians who demonstrated [in -@kaplan1958NonparametricEstimation] that the intuitive approach--also known as the *product-limit method*--has maximum likelihood properties as well. Below, we explain how this approach works and why it is preferable.
 >
 > The Kaplan-Meier method is a simple extension of the discrete-time method with a fundamental change: instead of rounding event times to construct the intervals, capitalize on the raw event times and construct intervals so that each contains just *one observed event time* (as shown in table 13.3). Each Kaplan-Meier interval begins at one observed event time and ends just before the next. (p. 483, *emphasis* in the original)
 
@@ -639,7 +645,7 @@ print(fit13.2)
 
 Like in the text, it's 3.58.
 
-Even though there is no Kaplan Meier estimate for hazard, we can compute a Kaplan-Meier type hazard with the formula 
+Even though there is no Kaplan-Meier estimate for hazard, we can compute a Kaplan-Meier type hazard with the formula 
 
 $$\hat h_\text{KM} (t_j) = \frac{\hat p_\text{KM} (t_j)}{\text{width}_j}.$$
 
@@ -671,26 +677,26 @@ Erratic, indeed.
 
 ### 13.3.1 Fitting a Bayesian Kaplan-Meier model
 
-It's worth repeating one of the quotes from earlier: 
+It's worth repeating one of the quotes from earlier:
 
 > The Kaplan-Meier method is a simple extension of the discrete-time method with a fundamental change: instead of rounding event times to construct the intervals, capitalize on the raw event times and construct intervals so that each contains just *one observed event time* (as shown in table 13.3). Each Kaplan-Meier interval begins at one observed event time and ends just before the next. (p. 483, *emphasis* in the original)
 
-Whether we're working with one event occurrence at a time or binning them in intervals, the basic product of the model is a conditional probability. The binomial likelihood served us well when we binned the event occurrences into largish time intervals, and it will work just the same when we work them in serial fashion. The biggest obstacle is properly setting up the data. After some experimentation, the easiest way to format the data properly is to just use the summary results from `survfit(data = honking, Surv(seconds, censor_1) ~ 1)`, which we saved as `honking_km`. Take another look. 
+Whether we're working with one event occurrence at a time or binning them in intervals, the basic product of the model is a conditional probability. The binomial likelihood served us well when we binned the event occurrences into largish time intervals, and it will work just the same when we work them in serial fashion. The biggest obstacle is properly setting up the data. After some experimentation, the easiest way to format the data properly is to just use the summary results from `survfit(data = honking, Surv(seconds, censor_1) ~ 1)`, which we saved as `honking_km`. Take another look.
 
 ```{r}
 glimpse(honking_km)
 ```
 
-In the `n_events` column we have the number of cases that experienced the event in a given moment in continuous time. In the `n_risk` column we have the number of possible cases that could have experienced the event at that moment. In the `interval_f` column we’ve saved each moment as a factor, conveniently named $1, 2,..., 42$. Thus we can fit a simple Bayesian Kaplan-Meier model with `brms::brm()` by specifying `formula = n_events | trials(n_risk) ~ 0 + interval_f`.
+In the `n_events` column we have the number of cases that experienced the event in a given moment in continuous time. In the `n_risk` column we have the number of possible cases that could have experienced the event at that moment. In the `interval_f` column we've saved each moment as a factor, conveniently named $1, 2,..., 42$. Thus we can fit a simple Bayesian Kaplan-Meier model with `brms::brm()` by specifying `formula = n_events | trials(n_risk) ~ 0 + interval_f`.
 
-Consider the implications for our priors. Because we’re treating each instance in time as a factor, that means the number of cases experiencing the event in one of those factors will always be 1or some other small number in the unusual case of a tie. But the number in the denominator, `n_risk`, will tend to be relatively large, which means the probabilities will tend to be small. The weakly regularizing prior approach centered on zero might not make sense in this context.
+Consider the implications for our priors. Because we're treating each instance in time as a factor, that means the number of cases experiencing the event in one of those factors will always be 1 or some other small number in the unusual case of a tie. But the number in the denominator, `n_risk`, will tend to be relatively large, which means the probabilities will tend to be small. The weakly regularizing prior approach centered on zero might not make sense in this context.
 
-In earlier models, we used `normal(0, 4)`, `normal(0, 1.5)`, and `normal(0, 1)`. Here’s what those look like when we convert them to the probability metric.
+In earlier models, we used `normal(0, 4)` and `normal(0, 1.5)`. Here's what those look like when we convert them to the probability metric.
 
-```{r, fig.width = 5, fig.height = 3}
+```{r, fig.width = 5, fig.height = 2.75}
 set.seed(13)
 
-tibble(sd = c(4, 1.5, 1)) %>% 
+tibble(sd = c(4, 1.5)) %>% 
   mutate(prior    = factor(str_c("normal(0, ", sd, ")"),
                            levels = str_c("normal(0, ", c(1, 1.5, 4), ")")),
          log_odds = map(sd, rnorm, n = 1e5, mean = 0)) %>% 
@@ -698,14 +704,14 @@ tibble(sd = c(4, 1.5, 1)) %>%
   mutate(p  = inv_logit_scaled(log_odds)) %>% 
   
   ggplot(aes(x = p, y = prior)) +
-  stat_histintervalh(.width = c(.5, .95), normalize = "xy") +
+  stat_histinterval(.width = c(.5, .95), normalize = "xy") +
   labs(x = expression(italic(p)),
-       y = "prior on the log-odds scale") +
-  coord_cartesian(ylim = c(1.5, 3.5)) +
+       y = "prior (log-odds scale)") +
+  coord_cartesian(ylim = c(1.5, 2.5)) +
   theme(panel.grid = element_blank())
 ```
 
-The weakly-regularizing `normal(0, 1)` favors probabilities near .5 and `normal(0, 1.5)` is flat across the probability space. Neither reflect our expectation that the probabilities will tend to be small. Interestingly, `normal(0, 4)` pushes a lot of the prior mass to the edges. What we want is a prior that pushed the mass to the left. Here are some optoins:
+The `normal(0, 4)` prior does not reflect our expectation that the probabilities will tend to be small. Interestingly, `normal(0, 4)` pushes a lot of the prior mass to the edges. What we want is a prior that pushed the mass to the left. Here are some options:
 
 ```{r, fig.width = 8, fig.height = 5}
 crossing(mean = -4:-1,
@@ -718,7 +724,7 @@ crossing(mean = -4:-1,
          sd   = str_c("sd = ", sd)) %>% 
   
   ggplot(aes(x = p, y = 0)) +
-  stat_histintervalh(.width = c(.5, .95), normalize = "panels") +
+  stat_histinterval(.width = c(.5, .95), normalize = "panels") +
   scale_y_continuous(NULL, breaks = NULL) +
   xlab(expression(italic(p))) +
   theme(panel.grid = element_blank()) +
@@ -755,13 +761,13 @@ post <-
 post %>% 
   pivot_longer(everything(),
                names_to = "parameter",
-               values_to = "log_odds",
-               names_ptypes = list(parameter = double())) %>% 
-  mutate(probability = inv_logit_scaled(log_odds)) %>% 
+               values_to = "log_odds") %>% 
+  mutate(parameter   = factor(parameter, levels = 1:42),
+         probability = inv_logit_scaled(log_odds)) %>% 
   pivot_longer(probability:log_odds) %>% 
   
   ggplot(aes(x = value, y = parameter)) +
-  geom_halfeyeh(.width = .95, normalize = "xy", size = 1/2) +
+  stat_halfeye(.width = .95, normalize = "xy", size = 1/2) +
   labs(x = expression(hat(italic(p))[Bayes](italic(t[j]))),
        y = expression(italic(j))) +
   theme(panel.grid = element_blank()) +
@@ -778,8 +784,8 @@ post <-
   mutate(iter = 1:n()) %>% 
   pivot_longer(-iter,
                names_to = "interval",
-               values_to = "p",
-               names_ptypes = list(interval = double())) %>% 
+               values_to = "p") %>% 
+  mutate(interval = interval %>% as.double()) %>% 
   arrange(interval) %>% 
   group_by(iter) %>% 
   mutate(survivor = cumprod(1 - p)) %>% 
@@ -792,6 +798,7 @@ We might want to compare our Bayesian $\hat p(t_j)$ estimates with their Maximum
 
 ```{r, fig.width = 6, fig.height = 3.5}
 post %>% 
+  mutate(interval = factor(interval, levels = 0:42)) %>% 
   group_by(interval) %>% 
   summarise(mean   = mean(survivor),
             median = median(survivor),
@@ -802,7 +809,8 @@ post %>%
   ggplot(aes(x = interval, y = value)) +
   geom_point(aes(color = `posterior estimate`),
              size = 3, shape = 1) +
-  geom_point(data = honking_km,
+  geom_point(data = honking_km %>% 
+               mutate(interval = factor(interval, levels = 0:42)),
              aes(y = `S(t)`)) +
   scale_color_viridis_d(option = "D", begin = .1, end = .8) +
   ylab(expression(hat(italic(p))(italic(t[j])))) +
@@ -822,7 +830,8 @@ post %>%
             mode   = Mode(survivor)) %>% 
   pivot_longer(-interval,
                names_to = "posterior estimate") %>% 
-  left_join(distinct(honking_km, interval, seconds),
+  left_join(honking_km %>% 
+              distinct(interval, seconds),
             by = "interval") %>% 
   mutate(seconds = if_else(is.na(seconds), 0, seconds)) %>% 
   
@@ -830,7 +839,7 @@ post %>%
   geom_step(aes(color = `posterior estimate`),
             size = 1) +
   geom_step(data = honking_km,
-             aes(y = `S(t)`)) +
+            aes(y = `S(t)`)) +
   scale_color_viridis_d(option = "D", begin = .1, end = .8) +
   scale_x_continuous("time", limits = c(0, 20)) +
   ylab(expression(widehat(italic(S(t[j]))))) +
@@ -846,15 +855,19 @@ Again, we showed the ML $\hat S (t_j)$ in black and the Bayesian counterpart as 
 tail(honking_km)
 ```
 
-Based on the `n_risk` column, the number of trials ranged from $n = 9$ at `interval == 37` to $n = 2$ fpr `interval == 42`. With so little information informing the likelihood, you largely get back the prior.
+Based on the `n_risk` column, the number of trials ranged from $n = 9$ at `interval == 37` to $n = 2$ fpr `interval == 42`. With so little information informing the likelihood, you largely get back the prior. Moving forward, here's another version of the survivor function of Figure 13.2, but this time using posterior intervals to highlight uncertainty in the estimates.
 
 ```{r, fig.width = 6, fig.height = 3.5}
-post %>% 
+# augment post
+post <-
+  post %>% 
   bind_rows(
     post %>% 
       filter(interval == 42) %>% 
       mutate(interval = 43)
-    ) %>% 
+    )
+
+post %>% 
   left_join(
     bind_rows(
       distinct(honking_km, interval, seconds),
@@ -884,11 +897,6 @@ Just for giggles, here's how you might depict our $\hat S_\text{Bayes} (t_j)$ wi
 
 ```{r, fig.width = 6, fig.height = 3.5}
 post %>% 
-  bind_rows(
-    post %>% 
-      filter(interval == 42) %>% 
-      mutate(interval = 43)
-    ) %>% 
   left_join(
     bind_rows(
       distinct(honking_km, interval, seconds),
@@ -915,7 +923,7 @@ The cumulative hazard function follows the equation
 
 $$H (t_{ij}) = \underset{\text{between } t_0 \text{ and } t_j}{\text{cumulation}} [h(t_{ij})],$$
 
-"where the phrase 'cumulation between $t_0$ and $t_j$' indicates that cumulative hazard totals the infinite number of specific values of $h(t_{ij})$ that exist between $t_0$ and $t_j$" (p. 488). 
+"where the phrase 'cumulation between $t_0$ and $t_j$' indicates that cumulative hazard totals the infinite number of specific values of $h(t_{ij})$ that exist between $t_0$ and $t_j$" (p. 488).
 
 ### 13.4.1 Understanding the meaning of cumulative hazard.
 
@@ -1012,9 +1020,9 @@ p8 <- d %>%
   theme(panel.grid = element_blank())
 ```
 
-Did you notice our use of the gamma and Fréchet distributions? Both are supported for continuous-time survival models in **brms** (see Bürkner's vignette, [*Parameterization of Response Distributions in brms*](https://cran.r-project.org/web/packages/brms/vignettes/brms_families.html#survival-models)). 
+Did you notice our use of the gamma and Fréchet distributions? Both are supported for continuous-time survival models in **brms** (see Bürkner's vignette, [*Parameterization of response distributions in brms*](https://CRAN.R-project.org/package=brms/vignettes/brms_families.html#time-to-event-models)). 
 
-### 13.4.2 Estimating the cumulative hazard function. 
+### 13.4.2 Estimating the cumulative hazard function.
 
 The two methods to estimate the cumulative hazard function are the Nelson-Aalen method and the negative log survivor function method. The Nelson-Aalen method used Kaplan-Meier-type hazard estimates as follows:
 
@@ -1024,7 +1032,7 @@ where $\hat h_\text{KM} (t_j) \text{width}_j$ is the total hazard during the $j$
 
 $$\hat H_{- \text{LS}} (t_j) = - \log \hat S_\text{KM} (t_{ij}),$$
 
-where $\hat S_\text{KM} (t_{ij})$, recall, is the cumulative survivor function for the Kaplan Meier estimator. Here we put both formulas to use and make our version of Figure 13.4.
+where $\hat S_\text{KM} (t_{ij})$, recall, is the cumulative survivor function for the Kaplan-Meier estimator. Here we put both formulas to use and make our version of Figure 13.4.
 
 ```{r, fig.width = 7, fig.height = 7, message = F}
 # for annotation
@@ -1073,15 +1081,10 @@ p2 <-
 (p1 + scale_x_continuous(NULL, breaks = NULL, limits = c(0, 20))) / p2
 ```
 
-Visualizing the cumulative hazard function from our Bayesian `fit13.3` is a minor extension to the approach we used for the survivor function, above. As an example, here's our plot for $\hat H_{- \text{LS}} (t_j)$. The biggest change in the code is the last line in the second `mutate()` statement, `hazard = -log(survivor)`. 
+Visualizing the cumulative hazard function from our Bayesian `fit13.3` is a minor extension to the approach we used for the survivor function, above. As an example, here's our plot for $\hat H_{- \text{LS}} (t_j)$. The biggest change in the code is the last line in the second `mutate()` statement, `hazard = -log(survivor)`.
 
 ```{r, fig.width = 7, fig.height = 4, message = F}
 post %>% 
-  bind_rows(
-    post %>% 
-      filter(interval == 42) %>% 
-      mutate(interval = 43)
-    ) %>% 
   left_join(
     bind_rows(
       distinct(honking_km, interval, seconds),
@@ -1165,11 +1168,9 @@ tibble(width = 1:3) %>%
   facet_wrap(~width, nrow = 3)
 ```
 
-
 ## 13.6 Developing an intuition about continuous-time survivor, cumulative hazard, and kernel-smoothed hazard functions
 
-
-Buckle up and load the relapse data from Cooney and colleagues ([1991](https://doi.org/10.1037/0022-006X.59.4.598)); the US Supreme Court tenure data from Zorn and van Winkle ([2000](https://doi.org/10.1023/A:1006667601289)); the first depressive episode data from Sorenson, Rutter, and Aneshensel ([1991](https://doi.org/10.1037/0022-006X.59.4.541)); and the health-workers employment data from Singer and colleagues ([1998](https://www.jstor.org/stable/3766886)).
+Buckle up and load the relapse data from Cooney and colleagues [-@cooney1991MatchingAlcoholics]; the US Supreme Court tenure data from Zorn and van Winkle [-@zorn2000CompetingRisks]; the first depressive episode data from Sorenson, Rutter, and Aneshensel [-@sorenson1991DepressionInTheComunity]; and the health-workers employment data from Singer and colleagues [-@singer1998PhysicianRetention].
 
 ```{r, warning = F, message = F}
 alcohol_relapse  <- read_csv("~/Dropbox/Recoding Applied Longitudinal Data Analysis/data/alcohol_relapse.csv") %>% rename_all(str_to_lower)
@@ -1183,7 +1184,7 @@ glimpse(first_depression)
 glimpse(health_workers)
 ```
 
-For our first go, just fit the models with `furvfit()`.
+For our first go, just fit the models with `survfit()`.
 
 ```{r}
  fit13.4 <-
@@ -1457,8 +1458,8 @@ wrangle_samples <- function(brms, survfit) {
     mutate(iter = 1:n()) %>% 
     pivot_longer(-iter,
                  names_to = "interval",
-                 values_to = "p",
-                 names_ptypes = list(interval = double())) %>% 
+                 values_to = "p") %>% 
+    mutate(interval = interval %>% as.double()) %>% 
     arrange(interval) %>% 
     group_by(iter) %>% 
     mutate(S = cumprod(1 - p)) %>% 
@@ -1518,7 +1519,7 @@ geom_H <- function(x_ul, y_lab = NULL, ...) {
 
 Make and save the subplots.
 
-```{r}
+```{r, warning = F, message = F}
 # use `geom_S()` to make and save the top row
 p1 <-
   post %>% 
@@ -1625,10 +1626,6 @@ Finally, combine the subplots and behold our Bayesian alternative version of Fig
 ((p1 / p5 / p9) | (p2 / p6 / p10) | (p3 / p7 / p11) | (p4 / p8 / p12)) &
   theme(panel.grid = element_blank())
 ```
-
-## Reference {-}
-
-[Singer, J. D., & Willett, J. B. (2003). *Applied longitudinal data analysis: Modeling change and event occurrence*. New York, NY, US: Oxford University Press.](https://www.oxfordscholarship.com/view/10.1093/acprof:oso/9780195152968.001.0001/acprof-9780195152968)
 
 ## Session info {-}
 
