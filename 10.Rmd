@@ -14,7 +14,7 @@ options(width = 100)
 
 # Describing Discrete-Time Event Occurrence Data
 
-> In this chapter, [Singer and Willett presented] a framework for describing discrete-time event occurrence data.... As we will [see], the conceptual linchpin for all subsequent survival methods is to approach the analysis on a period-by-period basis. This allows you to examine event occurrence sequentially among those individuals eligible to experience the event at each discrete point in time. (p. 325)
+> In this chapter, [Singer and Willett presented] a framework for describing discrete-time event occurrence data.... As we will [see], the conceptual linchpin for all subsequent survival methods is to approach the analysis on a period-by-period basis. This allows you to examine event occurrence sequentially among those individuals eligible to experience the event at each discrete point in time. [@singerAppliedLongitudinalData2003, p. 325]
 
 ## The life table
 
@@ -30,14 +30,14 @@ teachers <- read_csv("data/teachers.csv")
 glimpse(teachers)
 ```
 
-Perhaps the easiest way to make a life table as presented in Table 10.1 is with help from the [**survival** package](https://CRAN.R-project.org/package=survival).
+Perhaps the easiest way to make a life table as presented in Table 10.1 is with help from the [**survival** package](https://CRAN.R-project.org/package=survival) [@R-survival; @therneau2000ModelingSurvivalData].
 
 ```{r, warning = F, message = F}
 # install.packages("survival", dependencies = T)
 library(survival)
 ```
 
-Here we'll use the `survfit()` function to compute survival curves. Within the `survfit()` function, we'll use the `Surv()` function to make a survival object, which will become the criterion within the model formula. It takes two basic arguments, `time` and `event`. With the `teachers` data, `t` is time in years. In the data, events are encoded in `censor`. However, it's important to understand how the `event` argument expects the data. From the [**survival** reference manual](https://cran.r-project.org/web/packages/survival/survival.pdf), we read that `event` is "the status indicator, normally `0=alive`, `1=dead`. Other choices are `TRUE/FALSE` (`TRUE = death`) or `1/2` (`2=death`)." Note that whereas within our data `censor` is coded `0 = event` `1 = censored`, the `event` argument expects the opposite. A quick way to solve that is to enter `1 - censor`.
+Here we'll use the `survfit()` function to compute survival curves. Within the `survfit()` function, we'll use the `Surv()` function to make a survival object, which will become the criterion within the model formula. It takes two basic arguments, `time` and `event`. With the `teachers` data, `t` is time in years. In the data, events are encoded in `censor`. However, it's important to understand how the `event` argument expects the data. From the [**survival** reference manual](https://CRAN.R-project.org/package=survival/survival.pdf) [@survival2021RM], we read that `event` is "the status indicator, normally `0=alive`, `1=dead`. Other choices are `TRUE/FALSE` (`TRUE = death`) or `1/2` (`2=death`)." Note that whereas within our data `censor` is coded `0 = event` `1 = censored`, the `event` argument expects the opposite. A quick way to solve that is to enter `1 - censor`.
 
 ```{r fit10.1}
 fit10.1 <- survfit(data = teachers,
@@ -195,7 +195,7 @@ d %>%
   select(year, time_int, survivor_fun)
 ```
 
-Using a simple descriptive approach, we'd just say the median lifetime was between years 6 and 7. We could also follow [Miller (1981)](https://books.google.com/books/about/Survival_Analysis.html?id=cttQAAAAMAAJ) and linearly interpolate between the two values of $S(t_j)$ bracketing .5. If we let $m$ be the time interval just before the median lifetime, $\hat S(t_m)$ be the value of the survivor function in that $m^\text{th}$ interval, and $\hat S(t_{m + 1})$ be the survival value in the next interval, the can write
+Using a simple descriptive approach, we'd just say the median lifetime was between years 6 and 7. We could also follow @miller1981SurvivalAnalysis and linearly interpolate between the two values of $S(t_j)$ bracketing .5. If we let $m$ be the time interval just before the median lifetime, $\hat S(t_m)$ be the value of the survivor function in that $m^\text{th}$ interval, and $\hat S(t_{m + 1})$ be the survival value in the next interval, the can write
 
 $$\text{Estimated median lifetime} = m + \Bigg [\frac{\hat S(t_m) - .5}{\hat S(t_m) - \hat S(t_{m + 1})} \Bigg ] \big ((m + 1) - m \big).$$
 
@@ -395,7 +395,7 @@ It works like this.
 line_tbl(lt_cocaine)
 ```
 
-If you look closely at the hazard function plots in the left column of Figure 10.2, you'll note they share many common settings (e.g., the basic shape, the label of the $y$-axis). But there are several parameters we’ll need to set custom settings for. To my eye, those are:
+If you look closely at the hazard function plots in the left column of Figure 10.2, you'll note they share many common settings (e.g., the basic shape, the label of the $y$-axis). But there are several parameters we'll need to set custom settings for. To my eye, those are:
 
 * the data;
 * the $x$-axis label, break points, and limits; and
@@ -523,7 +523,7 @@ Boom! Looks like a dream.
 
 It can be useful to evaluate hazard functions based on whether they are *monotonic* (i.e., have a single distinctive peak and single distinctive trough) and *nonmonotonic* (i.e., have multiple distinctive peaks or troughs). Globally speaking, the hazard functions for rows `A` and `B` are monotonic and the remaining two are nonmonotonic.
 
-Singer and Willett remarked "monotonically increasing hazard functions are common when studying events that are ultimately inevitable (or near universal).... [However,] nonmonotonic hazard functions, like those in Panels C and D, generally arise in studies of long duration" (p. 342). 
+Singer and Willett remarked "monotonically increasing hazard functions are common when studying events that are ultimately inevitable (or near universal).... [However,] nonmonotonic hazard functions, like those in Panels C and D, generally arise in studies of long duration" (p. 342).
 
 However, when risk is constant over time, hazard functions will not have peaks or troughs.
 
@@ -549,7 +549,7 @@ We can quantify the uncertainty in the estimates with standard errors.
 
 The formula for the frequentist standard errors for the hazard probabilities follows the form
 
-$$se \big (\hat h(t_j) \big) = \sqrt{\frac{\hat h(t_j) \big (1 - \hat h(t_j) \big)}{n \text{ at risk}_j}}.$$
+$$se \left (\hat h(t_j) \right) = \sqrt{\frac{\hat h(t_j) \left (1 - \hat h(t_j) \right)}{n \text{ at risk}_j}}.$$
 
 We can express that equation **R** code to recreate the first four columns of Table 10.2. We'll be pulling much of the information from `fit10.1`. But to show our work within a tibble format, we'll be adding a column after $n_j$. Our additional `n_event` column will contain the information pulled from `fit10.1$n.event`, which we'll use to compute the $\hat h(t_j)$.
 
@@ -609,7 +609,7 @@ crossing(n_j   = c(100, 1000, 10000),
 
 ### Standard error of the estimated survival probabilities.
 
-Computing the frequentist standard errors for estimated survival probabilities is more difficult because these are the products of (1 - hazard) for the current and all previous survival probabilities. Computing them is such a pain, Singer and Willett recommend you rely on Greenwood's ([1926](https://www.cabdirect.org/cabdirect/abstract/19272700028)) approximation. This follows the form
+Computing the frequentist standard errors for estimated survival probabilities is more difficult because these are the products of (1 - hazard) for the current and all previous survival probabilities. Computing them is such a pain, Singer and Willett recommend you rely on Greenwood's [-@greenwood1926NaturalDuration] approximation. This follows the form
 
 $$se \big (\hat S(t_j) \big) = \hat S(t_j)  \sqrt{\frac{\hat h(t_1)}{n_1 \big (1 - \hat h(t_1) \big)} + \frac{\hat h(t_2)}{n_2 \big (1 - \hat h(t_2) \big)} + \cdots + \frac{\hat h(t_j)}{n_j \big (1 - \hat h(t_j) \big)}}.$$
 
@@ -668,7 +668,7 @@ options(scipen = 0)
 
 > How can you construct a life table for *your* data set? For preliminary analyses, it is easy to use the prepackaged routines available in the major statistical packages. If you choose this approach, be sure to check whether your package allows you to: (1) select the partition of time; and (2) ignore any actuarial corrections invoked due to continuous-time assumptions (that do not hold in discrete time). When event times have been measured using a discrete-time scale, actuarial corrections (discussed in chapter13) are inappropriate. Although most packages clearly document the algorithm being used, we suggest that you double-check by comparing results with one or two estimates computed by hand. (p. 351, *emphasis* in the original)
 
-For more information about the methods we've been using via the **survival** package, browse through the documentation listed on the CRAN page, [https://CRAN.R-project.org/package=survival](https://CRAN.R-project.org/package=survival), with a paticular emphasis on the [reference manual](https://CRAN.R-project.org/package=survival/survival.pdf) and [*A package for survival analysis in R*](https://CRAN.R-project.org/package=survival/vignettes/survival.pdf). But back to the text:
+For more information about the methods we've been using via the **survival** package, browse through the documentation listed on the CRAN page, [https://CRAN.R-project.org/package=survival](https://CRAN.R-project.org/package=survival), with a particular emphasis on the [reference manual](https://CRAN.R-project.org/package=survival/survival.pdf) and [*A package for survival analysis in R*](https://CRAN.R-project.org/package=survival/vignettes/survival.pdf) [@therneau2021Package4Survival]. But back to the text:
 
 > Despite the simplicity of preprogrammed algorithms, [Singer and Willett] prefer an alternative approach for life table construction. This approach requires construction of a person-period data set, much like the period-period data set used for growth modeling. Once you create the person-period data set, you can compute descriptive statistics sing any standard cross-tabulation routine. (p. 351)
 
@@ -765,7 +765,7 @@ The frequentists aren't the only ones who can discrete-time hazard models. Bayes
 
 Happily, the exercises in the last section did a great job preparing us for the task. In Table 10.3, Singer and Willett hand computed the discrete hazards (i.e., the values in the "Proportion *EVENT* = 1" column) by dividing the valued in the "*EVENT* = 1" column by those in the "Total" column. Discrete hazards are proportions. Proportions have two important characteristics; they are continuous and necessarily range between 0 and 1. You know what else has those characteristics? Probabilities.
 
-So far in this text, we have primarily focused on models using the Gaussian likelihood. Though it's a workhorse, the Gaussian is inappropriate for modeling proportions/probabilities. Good old Gauss is great at modeling unbounded continuous data, but it can fail miserably when working with bounded data and our proportions/probabilities are most certainly bounded. The binomial likelihood, however, is well-suited for handling probabilities. Imagine you have data that can take on values of 0 and 1, such as failures/successes, no's/yesses, fails/passes, and no-events/events. If you sum up all the 1's and divide them by the total cases, you get a proportion/probability. The simple binomial model takes just that kind of data—the number of 1's and the number of total cases. The formula for the binomial likelihood is
+So far in this text, we have primarily focused on models using the Gaussian likelihood. Though it's a workhorse, the Gaussian is inappropriate for modeling proportions/probabilities. Good old Gauss is great at modeling unbounded continuous data, but it can fail miserably when working with bounded data and our proportions/probabilities are most certainly bounded. The binomial likelihood, however, is well-suited for handling probabilities. Imagine you have data that can take on values of 0 and 1, such as failures/successes, no's/yesses, fails/passes, and no-events/events. If you sum up all the 1's and divide them by the total cases, you get a proportion/probability. The simple binomial model takes just that kind of data--the number of 1's and the number of total cases. The formula for the binomial likelihood is
 
 $$\operatorname{Pr} (z | n, p) = \frac{n!}{z!(n - z)!} p^z (1 - p)^{n - z},$$
 
@@ -937,10 +937,6 @@ post %>%
 ```
 
 Like we did with our hazard plot above, we superimposed the frequentist estimates as violet dots atop the Bayesian posterior means and intervals. Because of how narrow the posteriors were, we only showed the 95% intervals, here. As with the hazard estimates, our Bayesian survival estimates are very close to the ones we computed with ML.
-
-## Reference {-}
-
-[Singer, J. D., & Willett, J. B. (2003). *Applied longitudinal data analysis: Modeling change and event occurrence*. New York, NY, US: Oxford University Press.](https://www.oxfordscholarship.com/view/10.1093/acprof:oso/9780195152968.001.0001/acprof-9780195152968)
 
 ## Session info {-}
 
