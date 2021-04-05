@@ -16,11 +16,11 @@ options(width = 110)
 
 > In this chapter and the next, we present statistical models of hazard for data collected in discrete time. The relative simplicity of these models makes them an ideal entrée into the world of survival analysis. In subsequent chapters, we extend these basic ideas to situations in which event occurrence is recorded in continuous time. 
 >
-> Good data analysis involves more than using a computer package to fit a statistical model to data. To conduce a credible discrete-time survival analysis, you must: (1) specify a suitable model for hazard and understand its assumptions; (2) use sample data to estimate the model parameters; (3) interpret results in terms of your research questions; (4) evaluate model fit and [express the uncertainty in the] model parameters; and (5) communicate your findings. (pp. 357--358)
+> Good data analysis involves more than using a computer package to fit a statistical model to data. To conduce a credible discrete-time survival analysis, you must: (1) specify a suitable model for hazard and understand its assumptions; (2) use sample data to estimate the model parameters; (3) interpret results in terms of your research questions; (4) evaluate model fit and [express the uncertainty in the] model parameters; and (5) communicate your findings. [@singerAppliedLongitudinalData2003, pp. 357--358]
 
 ## Toward a statistical model for discrete-time hazard
 
-Time to load [Capaldi, Crosby, and Stoolmiller's (1996)](https://www.ncbi.nlm.nih.gov/pubmed/8625717) `firstsex.csv` data.
+Time to load Capaldi, Crosby, and Stoolmiller's [-@capaldiPredictingTimingFirst1996] `firstsex.csv` data.
 
 ```{r, warning = F, message = F}
 library(tidyverse)
@@ -258,13 +258,13 @@ make_iml(lt %>% filter(pt == "pt = 1"))
 
 #### The bounded nature of hazard.
 
-A conventional way to handle the bounded nature of probabilities is transform the scale of the data. [Cox (1972)]( https://eclass.uoa.gr/modules/document/file.php/MATH394/Papers/%5BCox(1972)%5D%20Regression%20Models%20and%20Life%20Tables.pdf) recommended either the odds and log-odds (i.e., logit) transformations. Given a probability, $p$, we compute the odds as
+A conventional way to handle the bounded nature of probabilities is transform the scale of the data. @cox1972regression recommended either the odds and log-odds (i.e., logit) transformations. Given a probability, $p$, we compute the odds as
 
 $$\text{odds} = \frac{p}{1 - p}.$$
 
 Log-odds is a minor extension; you simply take the log of the odds, which we can formally express as
 
-$$\text{log-odds} = \log \Bigg (\frac{p}{1 - p} \Bigg ).$$
+$$\text{log-odds} = \log \left (\frac{p}{1 - p} \right ).$$
 
 To make the conversions easy, we'll define[^1] a couple convenience functions: `odds()` and `log_odds()`.
 
@@ -388,10 +388,10 @@ sex_aggregated <-
 sex_aggregated
 ```
 
-Note how we saved the grade values in three columns: 
+Note how we saved the grade values in three columns:
 
-* `period` has them as continuous values, which will be hand for plotting; 
-* `period_center` has them as mean-centered continuous values, which will make fitting the linear model in the middle panel easier; and 
+* `period` has them as continuous values, which will be hand for plotting;
+* `period_center` has them as mean-centered continuous values, which will make fitting the linear model in the middle panel easier; and
 * `period_factor` has them saved as a factor, which will help us fit the model in the bottom panel.
 
 Fire up **brms**.
@@ -400,7 +400,7 @@ Fire up **brms**.
 library(brms)
 ```
 
-Before we fit the models, it might be good to acknowledge we’re jumping ahead of the authors, a bit. Singer and Willett didn’t discuss fitting discrete time hazard models until section 11.3.2. Sure, their focus was on the frequentist approach using maximum likelihood. But the point still stands. If these model fitting details feel a bit rushed, they are. 
+Before we fit the models, it might be good to acknowledge we're jumping ahead of the authors, a bit. Singer and Willett didn't discuss fitting discrete time hazard models until section 11.3.2. Sure, their focus was on the frequentist approach using maximum likelihood. But the point still stands. If these model fitting details feel a bit rushed, they are.
 
 Any anxious feelings aside, now fit the three binomial models. We continue to use weakly-regularizing priors for each.
 
@@ -541,11 +541,11 @@ model_weights(fit11.4, fit11.5, fit11.6, weights = "loo") %>% round(digits = 3)
 
 ## Formal representation of the population discrete-time hazard model
 
-Earlier equations for the hazard function omitted substantive predictors. Now consider the case where $X_{1ij}, X_{2ij}, . . ., X_{Pij}$ stand for the $P$ predictors which may or may not vary across individuals $i$ and time periods $j$. Thus $x_{pij}$ is the value for the $i^\text{th}$ individual on the $p^\text{th}$ variable during the $j^\text{th}$ period. We can use this to define the conditional hazard function as
+Earlier equations for the hazard function omitted substantive predictors. Now consider the case where $X_{1ij}, X_{2ij}, \dots , X_{Pij}$ stand for the $P$ predictors which may or may not vary across individuals $i$ and time periods $j$. Thus $x_{pij}$ is the value for the $i^\text{th}$ individual on the $p^\text{th}$ variable during the $j^\text{th}$ period. We can use this to define the conditional hazard function as
 
-$$h(t_{ij}) = \text{Pr} [T_i = j | T \geq j \text{ and } X_{1ij} = x_{1ij}, X_{2ij} = x_{2ij}, ..., X_{Pij} = x_{pij}].$$
+$$h(t_{ij}) = \operatorname{Pr} [T_i = j | T \geq j \text{ and } X_{1ij} = x_{1ij}, X_{2ij} = x_{2ij}, \dots , X_{Pij} = x_{pij}].$$
 
-Building further and keeping the baseline shape of the discrete hazard function flexible, we want a method that allows each of the $j$ time periods to have its own value. Imagine a set of $J$ dummy variables, $D_1, D_2, ..., D_J$, marking off each of the time periods. For example, say $J = 6$, we could depict this in a tibble like so.
+Building further and keeping the baseline shape of the discrete hazard function flexible, we want a method that allows each of the $j$ time periods to have its own value. Imagine a set of $J$ dummy variables, $D_1, D_2, \dots, D_J$, marking off each of the time periods. For example, say $J = 6$, we could depict this in a tibble like so.
 
 ```{r}
 tibble(period = 1:6) %>% 
@@ -574,14 +574,14 @@ fit11.6$formula
 We suppressed the default regression intercept with the `~ 0 +` syntax and the only two predictors were `pt` and `peroid_factor`. Both were saved as factor variables. Functionally, that's why `period_factor` worked as $\alpha_7 D_{7ij} + \alpha_8 D_{8ij} + \cdots + \alpha_{12} D_{12ij}$, a series of 5 dummy variables with no reference category. The same basic thing goes for `pt`. Because `pt` was a factor used in a model `formula` with no conventional intercept, it acted as if it was a series of 2 dummy variables with no reference category. Thus, we might rewrite the model equation for `fit6` as
 
 
-$$\operatorname{logit} h(t_{ij})  =  [\alpha_7 D_{7ij} + \alpha_8 D_{8ij} + \cdots + \alpha_{12} D_{12ij}] + [\beta_0 \text{PT}_{0i} + \beta_1 \text{PT}_{1i} ].$$
+$$\operatorname{logit} h(t_{ij}) = [\alpha_7 D_{7ij} + \alpha_8 D_{8ij} + \cdots + \alpha_{12} D_{12ij}] + [\beta_0 \text{PT}_{0i} + \beta_1 \text{PT}_{1i} ].$$
 
 And since we're practicing fitting these models as Bayesians, the `fit6` equation with a fuller expression of the likelihood and the priors looks like
 
 \begin{align*}
 \text{event}_{ij} & = \operatorname{Binomial}(n = \text{trials}_{ij}, p_{ij}) \\ 
 \operatorname{logit} (p_{ij}) & =  [\alpha_7 D_{7ij} + \alpha_8 D_{8ij} + \cdots + \alpha_{12} D_{12ij}] + [\beta_0 \text{PT}_{0i} + \beta_1 \text{PT}_{1i} ] \\
-\alpha_7, \alpha_8, ..., \alpha_{12} & \sim \operatorname{Normal}(0, 4) \\
+\alpha_7, \alpha_8, \dots, \alpha_{12} & \sim \operatorname{Normal}(0, 4) \\
 \beta_0 \text{ and } \beta_1 & \sim \operatorname{Normal}(0, 4),
 \end{align*}
 
@@ -683,14 +683,15 @@ The `mutate_at()` conversions we made for `p2` and `p3` were based on the guidel
 tibble(`original scale` = c("logit", "odds", "logit"),
        `desired scale`  = c("odds", "probability", "probability"),
        transformation   = c("exp(logit)", "odds / (1 + odds)", "1 / (1 + exp(-1 * logit))")) %>% 
-  knitr::kable()
+  flextable::flextable() %>% 
+  flextable::width(width = c(1.5, 1.5, 2))
 ```
 
 We accomplished the transformation in the bottom row with the `brms::inv_logit_scaled()` function.
 
 ## Fitting a discrete-time hazard model to data
 
-As Singer and Willett wrote, "with data collected on a random sample of individuals from a target population, you can easily fit a discrete-time hazard model, estimate its parameters using maximum likelihood methods, and evaluate goodness-of-fit" (pp. 378--379. As we've already demonstrated, you can fit them with Bayesian software, too. Though we'll be focusing on **brms**, you might also want to check out the **rstanarm** package, about which you can learn more from Brilleman, Elci, Novik, and Wolfe's preprint, [*Bayesian Survival Analysis Using the rstanarm R Package*](https://arxiv.org/abs/2002.09633), Brilleman's [*Estimating Survival (Time-to-Event) Models with rstanarm* vignette](https://github.com/stan-dev/rstanarm/blob/feature/frailty-models/vignettes/surv.Rmd), and the [Survival models in rstanarm thread](https://discourse.mc-stan.org/t/survival-models-in-rstanarm/3998) in the Stan forums.
+As Singer and Willett wrote, "with data collected on a random sample of individuals from a target population, you can easily fit a discrete-time hazard model, estimate its parameters using maximum likelihood methods, and evaluate goodness-of-fit" (pp. 378--379. As we've already demonstrated, you can fit them with Bayesian software, too. Though we'll be focusing on **brms**, you might also want to check out the **rstanarm** package, about which you can learn more from Brilleman, Elci, Novik, and Wolfe's [-@brilleman2020BayesianSurvivalAnalysis] preprint, [*Bayesian survival analysis Using the rstanarm R package*](https://arxiv.org/abs/2002.09633), Brilleman's [-@Brilleman2019EstimatingSurvival] vignette, [*Estimating survival (time-to-event) models with rstanarm*](https://github.com/stan-dev/rstanarm/blob/feature/frailty-models/vignettes/surv.Rmd), and the [Survival models in rstanarm thread](https://discourse.mc-stan.org/t/survival-models-in-rstanarm/3998) in the Stan forums.
 
 ### Adding predictors to the person-period data set.
 
@@ -709,7 +710,7 @@ $$\underbrace{p(\theta | d)}_\text{posterior} \propto \underbrace{p(d | \theta)}
 
 ### Fitting the discrete-time hazard model to data.
 
-In one sense, fitting discrete-hazard models with Bayesian logistic regression is old hat, for us. We’ve been doing that since the end of last chapter. But one thing I haven’t clarified is, up to this point, we have been using the aggregated binomial format. To show what I mean, we might look at the data we used for our last model, `fit11.6`.
+In one sense, fitting discrete-hazard models with Bayesian logistic regression is old hat, for us. We've been doing that since the end of last chapter. But one thing I haven't clarified is, up to this point, we have been using the aggregated binomial format. To show what I mean, we might look at the data we used for our last model, `fit11.6`.
 
 ```{r}
 sex_aggregated
@@ -719,7 +720,7 @@ Now recall the formula for the binomial likelihood from the end of last chapter:
 
 $$\text{Pr} (z | n, p) = \frac{n!}{z!(n - z)!} p^z (1 - p)^{n - z},$$
 
-where $z$ is the number of cases for which the value is 1, $n$ is the total number of cases, and $p$ is the constant chance of a 1 across cases. We refer to binomial data as aggregated with $n > 1$. Our $n$ vector in the `sex_aggregated`, `total`, ranged from 38 to 108. Accordingly, our $z$ vector, `event`, was always some value equal or lower to that in the same row for `total`. 
+where $z$ is the number of cases for which the value is 1, $n$ is the total number of cases, and $p$ is the constant chance of a 1 across cases. We refer to binomial data as aggregated with $n > 1$. Our $n$ vector in the `sex_aggregated`, `total`, ranged from 38 to 108. Accordingly, our $z$ vector, `event`, was always some value equal or lower to that in the same row for `total`.
 
 The person-period data, `sex_pp`, contain the same information but in a different format. Instead, each `event` cell only takes on a value of 0 or 1 (i.e., $n = 1$). If you were to sum up all the values in the `total` column of the `sex_aggregated` data, you'd return 822.
 
@@ -739,7 +740,7 @@ It's also the case that when $n = 1$, the right side of the equation for the bin
 
 $$p^z (1 - p)^{1 - z}.$$
 
-Whether you are working with aggregated or un-aggregated data, both are suited to fit logistic regression models with the binomial likelihood. Just specify the necessary information in the model syntax. For **brms**, the primary difference is how you use the `trials()` function. When we fit our logistic regression models using the aggregated data, we specified `trials(total)`, which informed the `brm()` function what the $n$ values were. In the case of unaggregated binomial data, we can just state `trials(1)`. Each cell is the outcome $z$ for a single trial. 
+Whether you are working with aggregated or un-aggregated data, both are suited to fit logistic regression models with the binomial likelihood. Just specify the necessary information in the model syntax. For **brms**, the primary difference is how you use the `trials()` function. When we fit our logistic regression models using the aggregated data, we specified `trials(total)`, which informed the `brm()` function what the $n$ values were. In the case of unaggregated binomial data, we can just state `trials(1)`. Each cell is the outcome $z$ for a single trial.
 
 Before we fit the models, we might talk a bit about priors. When we fit the first model of this kind at the end of Chapter 10, we just used `prior(normal(0, 4), class = b)` without comment. Recall we're modeling probabilities in the log-odds space. In Section 11.1.2.1 we used a plot to compare probability values to their log-odds counterparts. Let's take a more focused look.
 
@@ -814,23 +815,21 @@ print(fit11.10)
 
 Although the text distinguishes between $\alpha$ and $\beta$ parameters (i.e., intercept and slope parameters, respectively), our **brms** output makes no such distinction. These are all of `class = b`, population-level $\beta$ parameters.
 
-When viewed in bulk, all those `print()` calls yield a lot of output. We can arrange the parameter summaries similar to those in Table 11.3 with help from `broom::tidy()`.
+When viewed in bulk, all those `print()` calls yield a lot of output. We can arrange the parameter summaries similar to those in Table 11.3 with a little tricky wrangling.
 
-```{r, warning = F, message = F}
-library(broom)
-
-bind_rows(tidy(fit11.7) %>% mutate(model = "a"),
-          tidy(fit11.8) %>% mutate(model = "b"),
-          tidy(fit11.9) %>% mutate(model = "c"),
-          tidy(fit11.10) %>% mutate(model = "d")) %>% 
-  filter(term != "lp__") %>% 
-  mutate(term  = str_remove(term, "b_"),
-         model = str_c("model ", model),
-         e_sd  = str_c(round(estimate, digits = 2), " (", round(std.error, digits = 2), ")")) %>% 
-  select(model, term, e_sd) %>% 
-  pivot_wider(names_from = model, 
-              values_from = e_sd) %>% 
-  knitr::kable()
+```{r}
+tibble(model = str_c("model ", letters[1:4]),
+       fit   = str_c("fit11.", 7:10)) %>% 
+  mutate(f = map(fit, ~ get(.) %>% 
+                   fixef() %>% 
+                   data.frame() %>% 
+                   rownames_to_column("parameter"))) %>% 
+  unnest(f) %>% 
+  mutate(e_sd  = str_c(round(Estimate, digits = 2), " (", round(Est.Error, digits = 2), ")")) %>% 
+  select(model, parameter, e_sd) %>% 
+  pivot_wider(names_from = model, values_from = e_sd) %>% 
+  flextable::flextable() %>% 
+  flextable::width(width = 1)
 ```
 
 ### The time indicators.
@@ -840,24 +839,25 @@ bind_rows(tidy(fit11.7) %>% mutate(model = "a"),
 A coefficient plot might help us get a sense of that across the four models.
 
 ```{r, fig.width = 8, fig.height = 1.75}
-bind_rows(tidy(fit11.7) %>% mutate(model = "a"),
-          tidy(fit11.8) %>% mutate(model = "b"),
-          tidy(fit11.9) %>% mutate(model = "c"),
-          tidy(fit11.10) %>% mutate(model = "d")) %>% 
-  filter(str_detect(term, "d")) %>% 
-  mutate(model = str_c("model ", model),
-         term  = factor(str_remove(term, "b_"),
-                       levels = str_c("d", 12:7))) %>%
+tibble(model = str_c("model ", letters[1:4]),
+       fit   = str_c("fit11.", 7:10)) %>% 
+  mutate(f = map(fit, ~ get(.) %>% 
+                   fixef() %>% 
+                   data.frame() %>% 
+                   rownames_to_column("parameter"))) %>% 
+  unnest(f) %>% 
+  filter(str_detect(parameter, "d")) %>% 
+  mutate(parameter = factor(str_remove(parameter, "b_"), 
+                            levels = str_c("d", 12:7))) %>%
   
-  ggplot(aes(x = term, y = estimate, ymin = lower, ymax = upper)) +
+  ggplot(aes(x = Estimate, xmin = Q2.5, xmax = Q97.5, y = parameter)) +
   geom_pointrange(fatten = 2.5) +
-  labs(x = NULL,
-       y = "posterior (log-odds scale)") +
-  coord_flip() +
+  labs(x = "posterior (log-odds scale)",
+       y = NULL) +
   theme(axis.text.y = element_text(hjust = 0),
         axis.ticks.y = element_blank(),
         panel.grid = element_blank()) +
-  facet_wrap(~model, nrow = 1)
+  facet_wrap(~ model, nrow = 1)
 ```
 
 "The fairly steady increase over time in the magnitude of the $\hat \alpha$s in each model [in the coefficient plot] shows that, in this sample of boys, the risk of first intercourse increases over time" (p. 387). When comparing the $\hat \alpha$s across models, it's important to recall that the presence/absence of substantive covariates means each model has a different baseline group.
@@ -865,39 +865,41 @@ bind_rows(tidy(fit11.7) %>% mutate(model = "a"),
 Because they were in the log-odds scale, the model output and our coefficient plot can be difficult to interpret. With the `brms::inv_logit_scaled()`, we can convert the $\hat \alpha$s to the hazard (i.e., probability) metric.
 
 ```{r, fig.width = 8, fig.height = 1.75}
-bind_rows(tidy(fit11.7) %>% mutate(model = "a"),
-          tidy(fit11.8) %>% mutate(model = "b"),
-          tidy(fit11.9) %>% mutate(model = "c"),
-          tidy(fit11.10) %>% mutate(model = "d")) %>% 
-  filter(str_detect(term, "d")) %>% 
-  mutate(model = str_c("model ", model),
-         term  = factor(str_remove(term, "b_"),
-                       levels = str_c("d", 12:7))) %>%
-  mutate_at(vars(estimate:upper), .funs = inv_logit_scaled) %>% 
+tibble(model = str_c("model ", letters[1:4]),
+       fit   = str_c("fit11.", 7:10)) %>% 
+  mutate(f = map(fit, ~ get(.) %>% 
+                   fixef() %>% 
+                   data.frame() %>% 
+                   rownames_to_column("parameter"))) %>% 
+  unnest(f) %>% 
+  filter(str_detect(parameter, "d")) %>% 
+  mutate(parameter = factor(str_remove(parameter, "b_"), 
+                            levels = str_c("d", 12:7))) %>%
+  mutate_at(vars(Estimate:Q97.5), .funs = inv_logit_scaled) %>% 
   
-  ggplot(aes(x = term, y = estimate, ymin = lower, ymax = upper)) +
+  ggplot(aes(x = Estimate, xmin = Q2.5, xmax = Q97.5, y = parameter)) +
   geom_pointrange(fatten = 2.5) +
-  labs(x = NULL,
-       y = "posterior (hazard scale)") +
-  coord_flip() +
+  labs(x = "posterior (hazard scale)",
+       y = NULL) +
   theme(axis.text.y = element_text(hjust = 0),
         axis.ticks.y = element_blank(),
         panel.grid = element_blank()) +
-facet_wrap(~model, nrow = 1)
+  facet_wrap(~ model, nrow = 1)
 ```
 
 Building further, here's our version of Table 11.4.
 
 ```{r}
-tidy(fit11.7) %>% 
-  filter(term != "lp__") %>% 
-  mutate(`time period` = str_remove(term, "b_d") %>% as.double(),
-         predictor     = str_remove(term, "b_")) %>% 
-  select(`time period`, predictor, estimate) %>% 
-  mutate(`fitted odds`   = exp(estimate),
-         `fitted hazard` = inv_logit_scaled(estimate)) %>% 
+fixef(fit11.7) %>% 
+  data.frame() %>% 
+  rownames_to_column("predictor") %>% 
+  mutate(`time period` = str_remove(predictor, "d") %>% as.double()) %>% 
+  select(`time period`, predictor, Estimate) %>% 
+  mutate(`fitted odds`   = exp(Estimate),
+         `fitted hazard` = inv_logit_scaled(Estimate)) %>% 
   mutate_if(is.double, round, digits = 4) %>% 
-  knitr::kable()
+  flextable::flextable() %>% 
+  flextable::width(width = 1)
 ```
 
 ### Dichotomous substantive predictors.
@@ -916,15 +918,14 @@ fixef(fit11.8)["pt", 1] %>% exp()
 
 To get a better sense of the conversion, here it is in a plot.
 
-```{r, fig.width = 6, fig.height = 2.5}
+```{r, fig.width = 6, fig.height = 2.5, warning = F, message = F}
 library(tidybayes)
 
 posterior_samples(fit11.8) %>% 
   transmute(`log-odds`     = b_pt,
             `hazard ratio` = exp(b_pt)) %>% 
   pivot_longer(everything()) %>% 
-  mutate(name = factor(name,
-                       levels = c("log-odds", "hazard ratio"))) %>% 
+  mutate(name = factor(name, levels = c("log-odds", "hazard ratio"))) %>% 
   
   ggplot(aes(x = value, y = 0)) +
   stat_halfeyeh(.width = c(.5, .95),
@@ -932,7 +933,7 @@ posterior_samples(fit11.8) %>%
   scale_y_continuous(NULL, breaks = NULL) +
   xlab("marginal posterior for pt") +
   theme(panel.grid = element_blank()) +
-  facet_wrap(~name, scales = "free")
+  facet_wrap(~ name, scales = "free")
 ```
 
 > This tells us that, in every grade, the estimated odds of first intercourse are nearly two and one half times higher for boys who experienced a parenting transition in comparison to boys raised with both biological parents. In substantive terms, an odds ratio of this magnitude represents a substantial, and potentially important, effect. (p. 398)
@@ -966,16 +967,14 @@ posterior_samples(fit11.9) %>%
   transmute(`log-odds`     = b_pas,
             `hazard ratio` = exp(b_pas)) %>% 
   pivot_longer(everything()) %>% 
-  mutate(name = factor(name,
-                       levels = c("log-odds", "hazard ratio"))) %>% 
+  mutate(name = factor(name, levels = c("log-odds", "hazard ratio"))) %>% 
   
   ggplot(aes(x = value, y = 0)) +
-  stat_halfeyeh(.width = c(.5, .95),
-                normalize = "panels") +
+  stat_halfeye(.width = c(.5, .95), normalize = "panels") +
   scale_y_continuous(NULL, breaks = NULL) +
   xlab("marginal posterior for pas") +
   theme(panel.grid = element_blank()) +
-  facet_wrap(~name, scales = "free")
+  facet_wrap(~ name, scales = "free")
 ```
 
 Here's how to compute the hazard ratio for a 2-unit difference in `pas`.
@@ -996,19 +995,18 @@ posterior_samples(fit11.9) %>%
                        levels = c("log-odds", "hazard ratio", "hr for a 2-unit difference"))) %>%
   
   ggplot(aes(x = value, y = 0)) +
-  stat_halfeyeh(.width = c(.5, .95),
-                normalize = "panels") +
+  stat_halfeye(.width = c(.5, .95), normalize = "panels") +
   scale_y_continuous(NULL, breaks = NULL) +
   xlab("marginal posterior for pas") +
   theme(panel.grid = element_blank()) +
-  facet_wrap(~name, scales = "free")
+  facet_wrap(~ name, scales = "free")
 ```
 
 ### Polytomous substantive predictors.
 
-Unfortunately, neither the `sex` nor the `sex_pp` data sets contain the polytomous version of `pt` as Singer described in this section. However, we can simulate a similar set of dummy variables which will allow us to trace the basic steps in Singer and Willett's workflow. 
+Unfortunately, neither the `sex` nor the `sex_pp` data sets contain the polytomous version of `pt` as Singer described in this section. However, we can simulate a similar set of dummy variables which will allow us to trace the basic steps in Singer and Willett's workflow.
 
-Since we've been working with the `sex_pp` data for the past few models, we'll continue using it here. However, this creates a minor challenge. What we want to do is use the `sample()` function to randomly assign cases with values of 1, 2, or 3 conditional on whether `pt == 0`. The catch is, we need to make sure that random value is constant for each case. Our solution will be to first nest the data such that each case only has one row. Here’s what that looks like.
+Since we've been working with the `sex_pp` data for the past few models, we'll continue using it here. However, this creates a minor challenge. What we want to do is use the `sample()` function to randomly assign cases with values of 1, 2, or 3 conditional on whether `pt == 0`. The catch is, we need to make sure that random value is constant for each case. Our solution will be to first nest the data such that each case only has one row. Here's what that looks like.
 
 ```{r}
 set.seed(11)
@@ -1018,9 +1016,9 @@ sex_pp <-
   nest(data = c(period, event, d7, d8, d9, d10, d11, d12, pas)) %>% 
   mutate(random = sample(1:3, size = n(), replace = T)) %>% 
   mutate(pt_cat = ifelse(pt == 0, pt, random)) %>% 
-  mutate(pt1    = ifelse(pt_cat == 1, 1, 0),
-         pt2    = ifelse(pt_cat == 2, 1, 0),
-         pt3    = ifelse(pt_cat == 3, 1, 0)) %>% 
+  mutate(pt1 = ifelse(pt_cat == 1, 1, 0),
+         pt2 = ifelse(pt_cat == 2, 1, 0),
+         pt3 = ifelse(pt_cat == 3, 1, 0)) %>% 
   select(id, pt, random, pt_cat:pt3, data)
 
 sex_pp %>% 
@@ -1042,7 +1040,7 @@ sex_pp <-
   unnest(data)
 ```
 
-Before we fit the model with the `pt*` dummies, let's backup and talk about priors, again. When we fit the last four models, our discussion about priors for $p$ focused on the posterior implications for those parameters in the log-odds space. Things get odd when we consider the implications in the probability space. To demonstrate, let’s simulate from $\operatorname{Normal} (0, 4)$ and see what it looks like when we transform the draws back into the probability metric.
+Before we fit the model with the `pt*` dummies, let's backup and talk about priors, again. When we fit the last four models, our discussion about priors for $p$ focused on the posterior implications for those parameters in the log-odds space. Things get odd when we consider the implications in the probability space. To demonstrate, let’s simulate from $\operatorname{Normal}(0, 4)$ and see what it looks like when we transform the draws back into the probability metric.
 
 ```{r, fig.width = 4, fig.height = 2.5}
 set.seed(11)
@@ -1055,7 +1053,7 @@ tibble(log_odds = rnorm(1e6, mean = 0, sd = 4)) %>%
   theme(panel.grid = element_blank())
 ```
 
-Perhaps unexpectedly, our log-odds $\operatorname{Normal} (0, 4)$ prior ended up bunching up the prior mass at the boundaries. Depending on what we want, this may or may not make sense. If we want to regularize the coefficients toward zero in the probability space, something closer to $\operatorname{Normal} (0, 1)$ would be a better idea. Here's a look at what happens when we compare three simulations in that range. 
+Perhaps unexpectedly, our log-odds $\operatorname{Normal}(0, 4)$ prior ended up bunching up the prior mass at the boundaries. Depending on what we want, this may or may not make sense. If we want to regularize the coefficients toward zero in the probability space, something closer to $\operatorname{Normal}(0, 1)$ would be a better idea. Here's a look at what happens when we compare three simulations in that range.
 
 ```{r, fig.width = 8, fig.height = 2.5}
 set.seed(11)
@@ -1073,9 +1071,9 @@ tibble(sd = c(2, 1.5, 1)) %>%
   facet_wrap(~sd)
 ```
 
-It looks like the log-odds $\operatorname{Normal} (0, 1)$ gently regularizes $p$ toward .5, but still allows for stronger values. This might be a good prior to use for our substantive covariates, what Singer and Willett referred to as the $\beta$ parameters. But I don't know that this makes sense for our $\alpha$ parameters. If you've been following along with the model output, the life tables, and so on, you'll have noticed those tend to drift toward the lower end of the probability range. Regularizing toward $p = .5$ might not be a good idea. In the absence of good substantive or statistical theory, perhaps it's best to use a flat prior. The log-odds $\operatorname{Normal} (0, 1.5)$ prior is nearly flat on the probability space, but it does still push the mass away from the boundaries. 
+It looks like the log-odds $\operatorname{Normal}(0, 1)$ gently regularizes $p$ toward .5, but still allows for stronger values. This might be a good prior to use for our substantive covariates, what Singer and Willett referred to as the $\beta$ parameters. But I don't know that this makes sense for our $\alpha$ parameters. If you've been following along with the model output, the life tables, and so on, you'll have noticed those tend to drift toward the lower end of the probability range. Regularizing toward $p = .5$ might not be a good idea. In the absence of good substantive or statistical theory, perhaps it's best to use a flat prior. The log-odds $\operatorname{Normal} (0, 1.5)$ prior is nearly flat on the probability space, but it does still push the mass away from the boundaries.
 
-Maybe we can come up with something better. What if we simulated a large number of draws from the $\operatorname{Uniform} (0, 1)$ distribution, converted those draws to the log-odds metric, and fit a simple Student's $t$ model? If we wanted to stay within the Student-$t$ family of priors, of which the normal is a special case, that would give us a sense of the what prior values would approximate a uniform distribution on the probability scale.
+Maybe we can come up with something better. What if we simulated a large number of draws from the $\operatorname{Uniform}(0, 1)$ distribution, converted those draws to the log-odds metric, and fit a simple Student's $t$ model? If we wanted to stay within the Student-$t$ family of priors, of which the normal is a special case, that would give us a sense of the what prior values would approximate a uniform distribution on the probability scale.
 
 ```{r fit11.11}
 set.seed(11)
@@ -1111,7 +1109,7 @@ tibble(g = rt(1e6, df = 7.61) * 1.57) %>%
   theme(panel.grid = element_blank())
 ```
 
-Now here's what it might look like if fit the next model with the $\operatorname{Normal} (0, 1)$ prior for the $\beta$ parameters and $\text{Student-} t (7.61, 0, 1.57)$ prior for the $\alpha$ parameters.
+Now here's what it might look like if fit the next model with the $\operatorname{Normal}(0, 1)$ prior for the $\beta$ parameters and $\text{Student-} t (7.61, 0, 1.57)$ prior for the $\alpha$ parameters.
 
 ```{r fit11.12}
 fit11.12 <-
@@ -1136,11 +1134,11 @@ print(fit11.12)
 We can use the `tidy()` function and a few lines of wrangling code to make a version of the table in the middle of page 391.
 
 ```{r}
-tidy(fit11.12) %>% 
-  filter(str_detect(term, "b_pt")) %>% 
-  mutate(predictor    = str_remove(term, "b_"),
-         `odds ratio` = exp(estimate)) %>% 
-  select(predictor, estimate, `odds ratio`) %>% 
+fixef(fit11.12)[7:9, ] %>% 
+  data.frame() %>% 
+  rownames_to_column("predictor") %>% 
+  mutate(`odds ratio` = exp(Estimate)) %>% 
+  select(predictor, Estimate, `odds ratio`) %>% 
   mutate_if(is.double, round, digits = 3)
 ```
 
@@ -1431,7 +1429,7 @@ The log-likelihood, LL, is
 
 > a summary statistic routinely output (in some form) by any program that provides ML estimates. As discussed in section 4.6, its relative magnitude across a series of models fit to the same set of data can be informative (although its absolute magnitude is not). The larger the LL statistic, the better the fit. (pp. 397--398)
 
-Note that *in some form* part. Frequentist software typically returns the LL for a given model as a sigle value. As we learned way back in Section 4.6, we can use the `log_lik()` function to get the LL information from our **brms** fits. However, form the **brms** [reference manual](https://cran.r-project.org/web/packages/brms/brms.pdf) we discover `log_lik()` returns an "S x N matrix containing the pointwise log-likelihood samples, where S is the number of samples and N is the number of observations in the data" (p. 112). Using `fit11.7` as a test case, here's what that looks like.
+Note that *in some form* part. Frequentist software typically returns the LL for a given model as a single value. As we learned way back in Section 4.6, we can use the `log_lik()` function to get the LL information from our **brms** fits. However, form the [**brms** reference manual](https://CRAN.R-project.org/package=brms/brms.pdf) we discover `log_lik()` returns an "S x N matrix containing the pointwise log-likelihood samples, where S is the number of samples and N is the number of observations in the data" (p. 112). Using `fit11.7` as a test case, here's what that looks like.
 
 ```{r}
 log_lik(fit11.7) %>% 
@@ -1460,7 +1458,7 @@ ll %>%
   mutate(name = factor(name, levels = c("ll", "deviance"))) %>% 
   
   ggplot(aes(x = value, y = 0)) +
-  geom_halfeyeh(point_interval = median_qi, .width = .95, normalize = "panels") +
+  stat_halfeye(point_interval = median_qi, .width = .95, normalize = "panels") +
   scale_y_continuous(NULL, breaks = NULL) +
   xlab(NULL) +
   theme(panel.grid = element_blank()) +
@@ -1492,7 +1490,7 @@ ll %>%
   mutate(statistic = factor(statistic, levels = c("ll", "deviance"))) %>% 
   
   ggplot(aes(x = value, y = model)) +
-  geom_halfeyeh(point_interval = median_qi, .width = .95, normalize = "panels") +
+  stat_halfeye(point_interval = median_qi, .width = .95, normalize = "panels") +
   labs(x = NULL,
        y = NULL) +
   theme(panel.grid = element_blank()) +
@@ -1516,7 +1514,7 @@ ll %>%
   pivot_longer(contains("-")) %>% 
   
   ggplot(aes(x = value, y = name)) +
-  geom_halfeyeh(point_interval = median_qi, .width = .95, normalize = "panels") +
+  stat_halfeye(point_interval = median_qi, .width = .95, normalize = "panels") +
   labs(x = "deviance difference distribution",
        y = NULL) +
   theme(panel.grid = element_blank())
@@ -1553,9 +1551,9 @@ loo_compare(fit11.7, fit11.8, fit11.9, fit11.10, criterion = "loo") %>% print(si
 loo_compare(fit11.7, fit11.8, fit11.9, fit11.10, criterion = "waic") %>% print(simplify = F)
 ```
 
-Model D (i.e., `fit11.10`, the full model) has the best (i.e., lowest) WAIC and LOO estimates. However, the standard errors for its difference scores with the other models is on the large side, particularly for Models B and C. So sure, adding either `pt` or `sas` to the model helps a bit and adding them both helps a little more, but neither predictor is a huge winner when you take that model complexity penalty into account. 
+Model D (i.e., `fit11.10`, the full model) has the best (i.e., lowest) WAIC and LOO estimates. However, the standard errors for its difference scores with the other models is on the large side, particularly for Models B and C. So sure, adding either `pt` or `sas` to the model helps a bit and adding them both helps a little more, but neither predictor is a huge winner when you take that model complexity penalty into account.
 
-As discussed earlier, we can also compare the models using weights. Here we’ll use the WAIC, LOO, and stacking weights to compare all four models.
+As discussed earlier, we can also compare the models using weights. Here we'll use the WAIC, LOO, and stacking weights to compare all four models.
 
 ```{r mw_fit11.7, cache = T}
 model_weights(fit11.7, fit11.8, fit11.9, fit11.10, weights = "loo") %>% round(digits = 3)
@@ -1567,7 +1565,7 @@ Model D has the best showing across the three weighting schemes.
 
 ## Statistical inference using [uncertainty in the Bayesian posterior]
 
-I generally take a model-based approach to Bayesian statistics and I prefer to scrutinize marginal posteriors, consider effect sizes, and use graphical depictions of my models (e.g., posterior predictive checks) over hypothesis testing. Further extending that approach, here, puts us at further odds with the content in the test. In addition, the authors spent some time discussing the asymptotic properties of ML standard errors. Our Bayesian approach is not based on asymptotic theory and we just don’t need to concern ourselves with whether our marginal posteriors are Gaussian. They often are, which is nice. But we summarize our posteriors with percentile-based 95% intervals, we are not presuming they are symmetric or Gaussian. 
+I generally take a model-based approach to Bayesian statistics and I prefer to scrutinize marginal posteriors, consider effect sizes, and use graphical depictions of my models (e.g., posterior predictive checks) over hypothesis testing. Further extending that approach, here, puts us at further odds with the content in the test. In addition, the authors spent some time discussing the asymptotic properties of ML standard errors. Our Bayesian approach is not based on asymptotic theory and we just don't need to concern ourselves with whether our marginal posteriors are Gaussian. They often are, which is nice. But we summarize our posteriors with percentile-based 95% intervals, we are not presuming they are symmetric or Gaussian.
 
 ### The ~~Wald chi-square statistic~~.
 
@@ -1586,7 +1584,7 @@ post %>%
   pivot_longer(b_pt:b_pas) %>% 
   
   ggplot(aes(x = value, y = name, fill = stat(x > 0))) +
-  stat_slabh() +
+  stat_slab() +
   scale_fill_manual(values = c("blue3", "red3")) +
   labs(x = "marginal posterior",
        y = NULL) +
@@ -1609,7 +1607,7 @@ Less that 1% of the draws were zero or below for each.
 
 ### [Asymmetric credible intervals] for parameters and odds ratios.
 
-Whether we use percentile-based credible intervals, as we typically do, or use highest posterior density intervals, neither depends on asymptotic theory nor do they depend on the posterior standard deviation. That is, our Bayesian intervals do not presume the marginal posteriors are Gaussian. Let’s look back at the summary output for `fit11.10`, this time using the `fixef()` function.
+Whether we use percentile-based credible intervals, as we typically do, or use highest posterior density intervals, neither depends on asymptotic theory nor do they depend on the posterior standard deviation. That is, our Bayesian intervals do not presume the marginal posteriors are Gaussian. Let's look back at the summary output for `fit11.10`, this time using the `fixef()` function.
 
 ```{r}
 fixef(fit11.10)
@@ -1627,7 +1625,7 @@ post %>%
 We can exponentiate our measures of central tendency (e.g., posterior means) and posterior intervals to transform them out of the log-odds metric an into the odds-ratio metric. Here are the results working directly with `fixef()`.
 
 ```{r}
-fixef(fit11.10)[c("pt", "pas"), c(1, 3:4)] %>% exp()
+fixef(fit11.10)[c("pt", "pas"), -2] %>% exp()
 ```
 
 Keep in mind that fixating on just the 95% intervals is a little NHST-centric. Since we have entire posterior distributions to summarize, we might consider other intervals. Here we use another graphical approach by using `tidybayes_statintervalh()` to mark off the 10, 30, 50, 70, and 90% intervals for both substantive predictors. Both are in the odds-ratio metric.
@@ -1638,7 +1636,7 @@ post %>%
   mutate(`odds ratio` = exp(value)) %>% 
   
   ggplot(aes(x = `odds ratio`, y = name)) +
-  stat_intervalh(size = 5, .width = seq(from = .1, to = .9, by = .2)) +
+  stat_interval(size = 5, .width = seq(from = .1, to = .9, by = .2)) +
   scale_color_grey("CI level:", start = .8, end = .2) +
   scale_x_continuous(breaks = 1:3) +
   ylab(NULL) +
@@ -1648,10 +1646,6 @@ post %>%
 ```
 
 The frequentist 95% confidence intervals are asymmetric when expressed in the odds-ratio metric and so are our various Bayesian intervals. However, the asymmetry in our Bayesian intervals is less noteworthy because there was no explicit assumption of symmetry when they were in the log-odds metric.
-
-## Reference {-}
-
-[Singer, J. D., & Willett, J. B. (2003). *Applied longitudinal data analysis: Modeling change and event occurrence*. New York, NY, US: Oxford University Press.](https://www.oxfordscholarship.com/view/10.1093/acprof:oso/9780195152968.001.0001/acprof-9780195152968)
 
 ## Session info {-}
 
