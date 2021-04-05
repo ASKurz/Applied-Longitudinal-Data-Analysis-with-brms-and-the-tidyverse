@@ -1,10 +1,3 @@
----
-title: "Chapter 1. A Framework for Investigating Change over Time"
-author: "A Solomon Kurz"
-date: "`r format(Sys.Date())`"
-output:
-  github_document
----
 
 # A Framework for Investigating Change over Time
 
