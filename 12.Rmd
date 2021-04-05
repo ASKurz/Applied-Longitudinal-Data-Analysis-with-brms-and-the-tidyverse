@@ -14,7 +14,7 @@ options(width = 110)
 
 # Extending the Discrete-Time Hazard Model
 
-> Like all statistical models, the basic discrete-time hazard model invokes assumptions about the population that may, or may not, hold in practice. Because no model should be adopted without scrutiny, we devote this chapter to examining its assumptions, demonstrating how to evaluate their tenability and relax their constraints when appropriate. In doing so, we illustrate practical principles of data analysis and offer theoretical insights into the model’s behavior and interpretation. (p. 407)
+> Like all statistical models, the basic discrete-time hazard model invokes assumptions about the population that may, or may not, hold in practice. Because no model should be adopted without scrutiny, we devote this chapter to examining its assumptions, demonstrating how to evaluate their tenability and relax their constraints when appropriate. In doing so, we illustrate practical principles of data analysis and offer theoretical insights into the model’s behavior and interpretation. [@singerAppliedLongitudinalData2003, p. 407]
 
 ## Alternative specification for the "main effect" of *TIME*
 
@@ -30,7 +30,7 @@ In the subsections to follow, we will explore each in turn.
 
 ### An ordered series of polynomial specifications for *TIME*.
 
-Load the Gamse and Conger's (1997) `tenure_pp.csv` data.
+Load the Gamse and Conger's [-@gamseEvaluationSpencerPostdoctoral1997] `tenure_pp.csv` data.
 
 ```{r, warning = F, message = F}
 library(tidyverse)
@@ -378,7 +378,7 @@ Instead of the two-row layout in the text, it seemed simpler to arrange the pane
 
 > The decline in the deviance statistic across models indicates that fit improves with increasing complexity of the temporal specification. To evaluate the magnitude of this decline, we must also account for the increased number of parameters in the model. You should not adopt a more complex specification if it fits no better than a simpler one. But if an alternative specification is (nearly) as good as the most general one, it may be "good enough." At the same time, we would not want an alternative that performs measurably worse than we know we can do. (p. 415)
 
-We won't be comparing deviances with $\chi^2$ tests, here. As to information criteria, we got ahead of the authors a bit and presented those comparisons in the last section. Although our use of the WAIC and the LOO is similar to Singer and Willett’s use of the AIC and BIC in that they yield no formal hypothesis test in the form of a $p$-value, their estimates and difference scores do come with standard errors.
+We won't be comparing deviances with $\chi^2$ tests, here. As to information criteria, we got ahead of the authors a bit and presented those comparisons in the last section. Although our use of the WAIC and the LOO is similar to Singer and Willett's use of the AIC and BIC in that they yield no formal hypothesis test in the form of a $p$-value, their estimates and difference scores do come with standard errors.
 
 In the middle of page 416, the authors focused on comparing the constant and linear models, the linear and quadratic models, and the quadratic and general models. The LOO and WAIC estimates for each were near identical. For the sake of simplicity, here are those three focused comparisons using the LOO.
 
@@ -399,7 +399,7 @@ l3 %>% print(simplify = F)
 
 If we presume the LOO differences follow a normal distribution, we can use their point estimates and standard errors to plot those distributions using simulated data from good old `rnorm()`.
 
-```{r, fig.width = 8, fig.height = 2.5}
+```{r, fig.width = 8, fig.height = 2.5, warning = F, message = F}
 library(tidybayes)
 
 n <- 1e6
@@ -415,7 +415,7 @@ tibble(loo_difference = c(rnorm(n, mean = l1[2, 1] * -2, sd = l1[2, 2] * 2),
   
   # plot!
   ggplot(aes(x = loo_difference, y = 0)) +
-  stat_halfeyeh(.width = c(.5, .95), normalize = "panels") +
+  stat_halfeye(.width = c(.5, .95), normalize = "panels") +
   scale_y_continuous(NULL, breaks = NULL) +
   labs(title = "LOO-difference simulations based on 1,000,000 draws",
        x = "difference distribution") +
@@ -464,6 +464,7 @@ pp <-
 ```
 
 The `pp_average()` function works much like `fitted()` or `predict()`. If you input models and perhaps `newdata`, it will return estimates that are the weighted averages of the specified models. With the `weights = "loo"` argument, we indicated our desired weights were those from the LOO, just as we computed earlier with the `model_weights()` function. With the `method = "pp_expect"` argument, we indicated we wanted fitted values like we would get from `fitted()`.
+
 Here we plot the results in terms of hazard and survival.
 
 ```{r, fig.width = 6, fig.height = 3.75}
@@ -532,9 +533,9 @@ Check the model summary.
 print(fit12.9)
 ```
 
-Focusing just on the posterior means, this yields the following formula for the quadratic discrete-time hazard model: $\operatorname{logit} \hat h (t_j) =\;$ `r fixef(fit12.9)[1, 1] %>% round(4) %>% format(nsmall = 4)` $\text{one } +$ `r fixef(fit12.9)[2, 1] %>% round(4) %>% format(nsmall = 4)`$(\text{time}_j - 5)$ `r fixef(fit12.9)[3, 1] %>% round(4) %>% format(nsmall = 4)`$(\text{time}_j - 5)^2$.
+Focusing just on the posterior means, this yields the following formula for the quadratic discrete-time hazard model: $\operatorname{logit} \hat h (t_j) = \;$ `r fixef(fit12.9)[1, 1] %>% round(4) %>% format(nsmall = 4)` $\text{one } +$ `r fixef(fit12.9)[2, 1] %>% round(4) %>% format(nsmall = 4)`$(\text{time}_j - 5)$ `r fixef(fit12.9)[3, 1] %>% round(4) %>% format(nsmall = 4)`$(\text{time}_j - 5)^2$.
 
-Singer and Willett used the term "flipover point" for the point at which the quadratic function reaches its peak or trough. If we let $c$ be the centering constant for time variable, $\alpha_1$ be the linear coefficient for time, and $\alpha_2$ be the quadratic coefficient for time, we define the flipover point as 
+Singer and Willett used the term "flipover point" for the point at which the quadratic function reaches its peak or trough. If we let $c$ be the centering constant for time variable, $\alpha_1$ be the linear coefficient for time, and $\alpha_2$ be the quadratic coefficient for time, we define the flipover point as
 
 $$\text{flipover point} = [c - 1/2 (\alpha_1 / \alpha_2)].$$
 
@@ -548,7 +549,7 @@ posterior_samples(fit12.9) %>%
   mutate(`flipover point` = c - 0.5 * (a1 / a2)) %>% 
   
   ggplot(aes(x = `flipover point`, y = 0)) +
-  stat_halfeyeh(.width = c(.5, .95)) +
+  stat_halfeye(.width = c(.5, .95)) +
   scale_x_continuous(breaks = 7:12) +
   scale_y_continuous(NULL, breaks = NULL) +
   theme(panel.grid = element_blank())
@@ -615,7 +616,7 @@ Focusing again on just the posterior means, this yields the following formula fo
 
 $$\text{flipover points} = c + \frac{-\alpha_2 \pm \sqrt{\alpha_2^2 - 3 \alpha_1 \alpha_3}}{3 \alpha_3}.$$
 
-Do you see that $\pm$ sign in the numerator? That’s what gives us the two points. Now apply the formula to `fit12.10` and plot.
+Do you see that $\pm$ sign in the numerator? That's what gives us the two points. Now apply the formula to `fit12.10` and plot.
 
 ```{r, fig.width = 8, fig.height = 2.5, warning = F}
 # extract the posterior draws
@@ -745,7 +746,7 @@ tibble(p = seq(from = .00001, to = .99999, length.out = 1e4)) %>%
         panel.grid = element_blank())
 ```
 
-Both transformations extend to the full $-\infty$ to $\infty$ parameter space. But whereas the logit is symmetric around zero and has a memorable point corresponding to $p = .5$ (i.e., 0), the clog-log is asymmetric and has a less-intuitive point corresponding to $p = .5$ (i.e., `r round(log(-log(1 - .5)), 7)`). Though somewhat odd, the advantage of the clog-log is 
+Both transformations extend to the full $-\infty$ to $\infty$ parameter space. But whereas the logit is symmetric around zero and has a memorable point corresponding to $p = .5$ (i.e., 0), the clog-log is asymmetric and has a less-intuitive point corresponding to $p = .5$ (i.e., `r round(log(-log(1 - .5)), 7)`). Though somewhat odd, the advantage of the clog-log is
 
 > it provides a discrete-time statistical model for hazard that has a built-in *proportional hazards* assumption, and not a *proportional odds* assumption (as in the case of the logit link). This would be completely unremarkable except for one thing: it provides a conceptual parallelism between the clog-log discrete-time hazard model and the models that we will ultimately describe for continuous-time survival analysis. (p. 421, *emphasis* in the original)
 
@@ -940,7 +941,7 @@ $$p = \frac{1}{1 + e^{- \text{logit}}}.$$
 
 The relevant inverse transformation for the clog-log link is
 
-$$p = 1 - e^{\Big (- e^{( \text{clog-log})} \Big)}.$$
+$$p = 1 - e^{\left (- e^{( \text{clog-log})} \right)}.$$
 
 Now use those formulas to convert our `Estimate` values into the hazard metric, as shown in the last two columns of Table 12.3.
 
@@ -968,25 +969,42 @@ Now focus on the `pt` parameter for both models.
 
 Here's that in a plot.
 
+```{r}
+posterior_samples(fit11.8) %>% 
+  ggplot(aes(x = b_pt %>% exp(), y = 0)) +
+  stat_halfeye(.width = c(.5, .95), na.rm = T) +
+  scale_x_continuous("b_pt (exponentiated)") +
+  scale_y_continuous(NULL, breaks = NULL) +
+  labs(title = "fit11.8 (logit link)",
+       subtitle = "Exponentiating this parameter yields an odds ratio.") +
+  coord_cartesian(xlim = c(1, 5)) +
+  theme(panel.grid = element_blank())
+```
+
+
 ```{r, fig.width = 8, fig.height = 2.75}
 p1 <-
   posterior_samples(fit11.8) %>% 
   ggplot(aes(x = b_pt %>% exp(), y = 0)) +
-  geom_halfeyeh(.width = c(.5, .95)) +
+  stat_halfeye(.width = c(.5, .95), na.rm = T) +
+  scale_x_continuous("b_pt (exponentiated)") +
+  scale_y_continuous(NULL, breaks = NULL) +
   labs(title = "fit11.8 (logit link)",
-       subtitle = "Exponentiating this parameter yields an odds ratio.")
+       subtitle = "Exponentiating this parameter yields an odds ratio.") +
+  coord_cartesian(xlim = c(1, 5)) +
+  theme(panel.grid = element_blank())
 
 p2 <-
   posterior_samples(fit12.15) %>% 
   ggplot(aes(x = b_pt %>% exp(), y = 0)) +
-  geom_halfeyeh(.width = c(.5, .95)) +
+  stat_halfeye(.width = c(.5, .95)) +
+  scale_x_continuous("b_pt (exponentiated)", limits = c(1, 5)) +
+  scale_y_continuous(NULL, breaks = NULL) +
   labs(title = "fit12.15 (clog-log link)",
-       subtitle = "Exponentiating this parameter yields a hazard ratio.")
-
-(p1 | p2) &
-  scale_x_continuous("b_pt (exponentiated)", limits = c(1, 5)) &
-  scale_y_continuous(NULL, breaks = NULL) &
+       subtitle = "Exponentiating this parameter yields a hazard ratio.") +
   theme(panel.grid = element_blank())
+
+p1 | p2
 ```
 
 For the clog-log model, then, 
@@ -997,7 +1015,7 @@ For the clog-log model, then,
 
 > The primary advantage of the clog-log link is that in invoking a proportional hazards assumption it yields a direct analog to the continuous time hazard model.... If you believe that the underlying metric for time is truly continuous and that the only reason you observe discretized values is due to measurement difficulties, a model specified with a clog-log link has much to recommend it....
 >
-> [Yet,] if data are collected in truly discrete time, the clog-log specification has no particular advantage. As [Beck (1999)](https://www.oxfordscholarship.com/view/10.1093/0198292376.001.0001/acprof-9780198292371); [Beck, Katz, and Tucker (1998)](http://www-personal.umich.edu/~franzese/BeckKatzTucker.TakingTimeSeriously.AJPS1998.pdf); and [Sueyoshi (1995)](http://halweb.uc3m.es/esp/Personal/personas/mhveiga/eng/docencia_Master_archivos/2285055.pdf) argue, the proportional hazards assumption is no more sacred than the proportional odds assumption, and while consistency across models is noble, so, too, is simplicity (which decreases the chances of mistake). (p. 426)
+> [Yet,] if data are collected in truly discrete time, the clog-log specification has no particular advantage. As @beckModellingSpaceTime1999; Beck, Katz, and Tucker [-@beck1998taking]; and @sueyoshi1995class argue, the proportional hazards assumption is no more sacred than the proportional odds assumption, and while consistency across models is noble, so, too, is simplicity (which decreases the chances of mistake). (p. 426)
 
 ## Time-varying predictors
 
@@ -1005,7 +1023,7 @@ For the clog-log model, then,
 
 ### Assumptions underlying a model with time-varying predictors.
 
-Load the depression data from [Wheaton, Rozell, and Hall (1997)](https://www.cambridge.org/core/books/stress-and-adversity-over-the-life-course/8CD7EE190B912C5C7DD0B3831C95348F).
+Load the depression data from Wheaton, Rozell, and Hall [-@wheaton1997impact].
 
 ```{r, warning = F, message = F}
 depression_pp <- 
@@ -1022,7 +1040,7 @@ Here is the participant `age` range.
 range(depression_pp$age)
 ```
 
-We might count how many participants experienced a parantal divorce, `pd`, like this.
+We might count how many participants experienced a parental divorce, `pd`, like this.
 
 ```{r}
 depression_pp %>% 
@@ -1036,6 +1054,7 @@ depression_pp %>%
 Here we fit the discrete hazard model based on a quadratic treatment of $\text{age} - 18$ with and the time-varying predictor `pd` and without/with the time-invariant predictor `female`.
 
 ```{r fit12.16}
+# each took about 45 minutes to fit
 fit12.16 <-
   brm(data = depression_pp,
       family = binomial,
@@ -1074,8 +1093,7 @@ depression_aggregated <-
   complete(age_18, event, pd) %>% 
   pivot_wider(names_from = event,
               values_from = n) %>% 
-  mutate(pd    = factor(str_c("pd = ", pd),
-                        levels = str_c("pd = ", 1:0)),
+  mutate(pd    = factor(str_c("pd = ", pd), levels = str_c("pd = ", 1:0)),
          age   = age_18 + 18,
          total = event + no_event) %>% 
   mutate(proportion = event / total) %>% 
@@ -1162,8 +1180,8 @@ fixef(fit12.17)[, 1] %>% round(digits = 4)
 The values are pretty close. Though we won't compare `fit12.16` and `fit12.17` using deviances, we will use information criteria. Before you execute this code on your end, heads up! In my experience, large data sets like this often result in long computation times for Bayesian information criteria. Between the two, the LOO often takes longer. So here we’ll go with the WAIC. Even so, it took just under four hours to execute both `add_criterion()` lines. **Proceed with causion**.
 
 ```{r, message = F}
-fit12.16 <- add_criterion(fit12.16, "waic")  # 1.833328 hours
-fit12.17 <- add_criterion(fit12.17, "waic")  # 1.901613 hours
+fit12.16 <- add_criterion(fit12.16, "waic")
+fit12.17 <- add_criterion(fit12.17, "waic")
 
 loo_compare(fit12.16, fit12.17, criterion = "waic") %>% print(simplify = F)
 model_weights(fit12.16, fit12.17, weights = "waic") %>% round(digits = 3)
@@ -1177,7 +1195,7 @@ posterior_samples(fit12.17) %>%
   mutate(`odds ratio` = exp(value)) %>% 
   
   ggplot(aes(x = `odds ratio`, y = name)) +
-  geom_halfeyeh(.width = c(.5, .95), normalize = "xy") +
+  stat_halfeye(.width = c(.5, .95), normalize = "xy") +
   ylab(NULL) +
   coord_cartesian(ylim = c(1.4, 2.4)) +
   theme(panel.grid = element_blank())
@@ -1258,7 +1276,7 @@ Note how with this many `age` levels, our discrete-time models are beginning to 
 >
 > With this in mind, we now demonstrate how to (1) explore your data for the possibility of statistical interactions; and (2) include the additional appropriate terms when necessary. (p. 444, *emphasis* in the original)
 
-Load the  data from Keiley and Martin (2002)[^2].
+Load the  data from Keiley and Martin [-@keileyChildAbuseNeglect2002][^2].
 
 ```{r, warning = F, message = F}
 firstarrest_pp <- 
@@ -1333,7 +1351,6 @@ firstarrest_pp %>%
   theme(panel.grid = element_blank()) +
   facet_wrap(~race)
 ```
-
 
 For kicks and giggles, it might informative to fit a series of subset Bayesian models to make similar versions of those sample hazard functions. Before we fit the models, let's make our lives easier and make a factor version of our time variable, `period`.
 
@@ -1439,8 +1456,8 @@ fit12.23 <-
 Let's compare the models with information criteria. Not unlike with `fit12.16` and `fit12.17`, these are big models for a big data set and it took about an hour on my 2012-era laptop to return the WAIC. The LOO would likely have taken longer. Proceed with caution.
 
 ```{r, message = F}
-fit12.22 <- add_criterion(fit12.22, "waic")  # 48.72123 mins
-fit12.23 <- add_criterion(fit12.23, "waic")  # 13.57897 mins
+fit12.22 <- add_criterion(fit12.22, "waic")
+fit12.23 <- add_criterion(fit12.23, "waic")
 
 loo_compare(fit12.22, fit12.23, criterion = "waic") %>% print(simplify = F)
 model_weights(fit12.22, fit12.23, weights = "waic") %>% round(digits = 3)
@@ -1461,7 +1478,7 @@ posterior_samples(fit12.23) %>%
          black        = str_c("black = ", black)) %>% 
   
   ggplot(aes(x = `odds ratio`, y = 0)) +
-  geom_halfeyeh(.width = .95, normalize = "panels") +
+  stat_halfeye(.width = .95, normalize = "panels") +
   scale_y_continuous(NULL, breaks = NULL) +
   theme(panel.grid = element_blank()) +
   facet_grid(abused~black)
@@ -1476,9 +1493,7 @@ nd <-
   distinct(abused, black, d8, d9, d10, d11, d12, d13, d14, d15, d16, d17, d18, period)
 
 # use `fitted()` and wrangle
-make_fitted(fit12.23,
-            scale = "linear") %>% 
-  bind_cols(nd) %>% 
+make_fitted(fit12.23, scale = "linear") %>% 
   mutate(abused = ifelse(abused == 1, "abused", "not abused") %>% factor(),
          sex    = factor(ifelse(black == 1, "Black", "White"),
                          levels = c("White", "Black"))) %>% 
@@ -1514,7 +1529,7 @@ Our three models will be cubic with respect to our time variable, `age_18`. The 
 
 ```{r}
 # model a (linear)  
-# 3.409222 hours
+# 1.286668 hours
 fit12.24 <-
   brm(data = depression_pp,
       family = binomial,
@@ -1578,7 +1593,7 @@ Now fit our version of Model B, in which we replace the original linear predicto
 
 ```{r fit12.25}
 # model b (nonlinear)  
-# about 5 hours
+# 2.253822 hours
 fit12.25 <-
   brm(data = depression_pp,
       family = binomial,
@@ -1603,7 +1618,7 @@ posterior_samples(fit12.25) %>%
   mutate(name = str_remove(name, "b_")) %>% 
   
   ggplot(aes(x = value, y = name)) +
-  stat_intervalh(size = 5, .width = c(.1, .5, .9)) +
+  stat_interval(size = 5, .width = c(.1, .5, .9)) +
   scale_color_grey("CI level:", start = .8, end = .2) +
   labs(x = "sibs coeficients",
        y = NULL) +
@@ -1627,7 +1642,7 @@ Now fit our version of Model C, the dichotomized `bigfamily` model.
 
 ```{r fit12.26}
 # model c (dichotomized)  
-# 3.736503 hours
+# 1.434827 hours
 fit12.26 <-
   brm(data = depression_pp,
       family = binomial,
@@ -1655,7 +1670,7 @@ labels <- c(exp(fixef(fit12.26)["bigfamily", c(1, 3:4)]), 1) %>% round(digits = 
 posterior_samples(fit12.26) %>% 
   ggplot(aes(x = exp(b_bigfamily), y = 0)) +
   geom_vline(xintercept = 1, color = "white") +
-  geom_halfeyeh(.width = c(.5, .95)) +
+  stat_halfeye(.width = c(.5, .95)) +
   scale_x_continuous("bigfamily odds ratio", breaks = breaks, labels = labels) +
   scale_y_continuous(NULL, breaks = NULL) +
   theme(panel.grid = element_blank())
@@ -1677,7 +1692,7 @@ Our WAIC estimates are very similar to the AIC estimates presented in Table 12.4
 
 ## The proportionality assumption: Uncovering violations and simple solutions
 
-> All the discrete hazard models postulated so far invoke another common, but restrictive assumption: that each predictor has an identical effect in every time period under study. This constraint, known as the *proportionality assumption*, stipulates that a predictor's effect does not depend on the respondent's duration in the initial state….
+> All the discrete hazard models postulated so far invoke another common, but restrictive assumption: that each predictor has an identical effect in every time period under study. This constraint, known as the *proportionality assumption*, stipulates that a predictor's effect does not depend on the respondent's duration in the initial state....
 >
 > Yet is it not possible, even likely, that the effects of some predictors will *vary* over time? (p. 451, *emphasis* in the original)
 
@@ -1739,7 +1754,7 @@ In case is wasn’t clear, I just winged it on the equations for the `y` values 
 
 ### Investigating the proportionality assumption in practice.
 
-Load the data from [Graham's (1997) dissertation](https://scholar.google.com/scholar?cluster=10047024316925658696&hl=en&oi=scholarr).
+Load the data from Graham's [-@graham1997exodus] dissertation.
 
 ```{r, warning = F, message = F}
 mathdropout_pp <- 
@@ -1750,7 +1765,7 @@ mathdropout_pp <-
 glimpse(mathdropout_pp)
 ```
 
-The data are composed of $n = 3790$ high school students.
+The data are composed of $n = 3{,}790$ high school students.
 
 ```{r}
 mathdropout_pp %>% 
@@ -1824,13 +1839,13 @@ The results are similar to those in Table 12.5. Based on `fit12.27` (Model A), h
 ```{r, fig.width = 4, fig.height = 2.5}
 posterior_samples(fit12.27) %>% 
   ggplot(aes(x = exp(b_female), y = 0)) +
-  geom_halfeyeh(.width = c(.5, .95)) +
+  stat_halfeye(.width = c(.5, .95)) +
   scale_y_continuous(NULL, breaks = NULL) +
   xlab("odds ratio for female") +
   theme(panel.grid = element_blank())
 ```
 
-With regard to the interaction terms for `fit12.28` (Model B), Singer and Willett remarked: "Notice how the estimates rise over time" (p. 457). It might be easiest to observe that in a plot. 
+With regard to the interaction terms for `fit12.28` (Model B), Singer and Willett remarked: "Notice how the estimates rise over time" (p. 457). It might be easiest to observe that in a plot.
 
 ```{r, fig.width = 6, fig.height = 1.75}
 posterior_samples(fit12.28) %>% 
@@ -1839,7 +1854,7 @@ posterior_samples(fit12.28) %>%
                        levels = c(str_c("fhs", 11:12), str_c("fcoll", 1:3)))) %>%
   
   ggplot(aes(x = value, y = name)) +
-  stat_intervalh(size = 5, .width = c(.1, .5, .9)) +
+  stat_interval(size = 5, .width = c(.1, .5, .9)) +
   scale_color_grey("CI level:", start = .8, end = .2) +
   labs(x = "interaction terms",
        y = NULL) +
@@ -1948,9 +1963,9 @@ Now combine the subplots, augment them in bulk, and return our version of Figure
 Compute the information criteria for the three models. Since these were much faster to compute than for some of the earlier models in this chapter, we'll go ahead and compute both the LOO and the WAIC.
 
 ```{r, message = F}
-fit12.27 <- add_criterion(fit12.27, c("loo", "waic"))  # 2.016566 mins
-fit12.28 <- add_criterion(fit12.28, c("loo", "waic"))  # 1.755284 mins
-fit12.29 <- add_criterion(fit12.29, c("loo", "waic"))  # 2.884658 mins
+fit12.27 <- add_criterion(fit12.27, c("loo", "waic"))
+fit12.28 <- add_criterion(fit12.28, c("loo", "waic"))
+fit12.29 <- add_criterion(fit12.29, c("loo", "waic"))
 ```
 
 Now compare the models with information criteria differences and weights.
@@ -1963,7 +1978,7 @@ model_weights(fit12.27, fit12.28, fit12.29, weights = "loo") %>% round(digits = 
 model_weights(fit12.27, fit12.28, fit12.29, weights = "waic") %>% round(digits = 3)
 ```
 
-You’ll note both the LOO and WAIC estimates are very close to those displayed in Table 12.5. When we take their standard errors into account, `fit12.29` (Model C) is marginally better than the other two models. `fit12.29` also took most of the LOO and WAIC weights.
+You'll note both the LOO and WAIC estimates are very close to those displayed in Table 12.5. When we take their standard errors into account, `fit12.29` (Model C) is marginally better than the other two models. `fit12.29` also took most of the LOO and WAIC weights.
 
 > How do we interpret the gender differential implied by Model C? Because we have centered *TIME* at 1, the coefficient for *FEMALE* (0.2275) estimates the differential in time period 1, which here is 11th grade. Antilogging yields 1.26, which leads us to estimate that in 11th grade, the odds of ending one's mathematics course-taking career are 26% higher for females. (p. 460, *emphasis* in the original)
 
@@ -1976,7 +1991,7 @@ posterior_samples(fit12.29) %>%
   pivot_longer(contains("odds")) %>% 
   
   ggplot(aes(x = value, y = 0)) +
-  geom_halfeyeh(.width = c(.5, .95), normalize = "panels") +
+  stat_halfeye(.width = c(.5, .95), normalize = "panels") +
   scale_y_continuous(NULL, breaks = NULL) +
   xlab("the effects of female in two metrics") +
   theme(panel.grid = element_blank()) +
@@ -1993,7 +2008,7 @@ posterior_samples(fit12.29) %>%
   pivot_longer(contains(" ")) %>% 
   
   ggplot(aes(x = value, y = 0)) +
-  geom_halfeyeh(.width = c(.5, .95), normalize = "panels") +
+  stat_halfeye(.width = c(.5, .95), normalize = "panels") +
   scale_y_continuous(NULL, breaks = NULL) +
   labs(title = "The interaction effect in different periods",
        x = "odds ratio") +
@@ -2007,9 +2022,9 @@ posterior_samples(fit12.29) %>%
 >
 > Many data sets will not conform to this assumption. As in the multilevel model for change (and regular regression for that matter), pairs of individuals who share predictor profiles are very likely to have different outcomes....
 >
-> Unobserved heterogeneity can have serious consequences. In their classic [1985 paper](http://pure.iiasa.ac.at/id/eprint/2602/1/RR-86-03.pdf), Vaupel and Yaskin elegantly demonstrate what they call "heterogeneity's ruses"--that ability of unobserved heterogeneity to create the misimpression that a hazard function follows a particular form, when in fact it may not....
+> Unobserved heterogeneity can have serious consequences. In their classic [-@vaupel1985heterogeneity] paper, Vaupel and Yaskin elegantly demonstrate what they call "heterogeneity's ruses"--that ability of unobserved heterogeneity to create the misimpression that a hazard function follows a particular form, when in fact it may not....
 >
-> Is it possible to fit a hazard model that accounts for unobserved heterogeneity? As you might expect, doing so requires that we have either additional data (for example, data on repeated events within individuals) or that we invoke other--perhaps less tenable--assumptions about the distribution of event time errors ([Aalen, 1988](https://onlinelibrary.wiley.com/doi/abs/10.1002/sim.4780071105); [Heckman and Singer, 1984](https://www.cambridge.org/core/books/longitudinal-analysis-of-labor-market-data/0D46228F1D5803E54310FA89FD8118C0); [Vaupel, Manton, & Stallard, 1979](http://www.ressources-actuarielles.net/EXT/ISFA/1226.nsf/769998e0a65ea348c1257052003eb94f/2d6493f9f0d93b50c125774b0045c00b/$FILE/Vaupel-Demography-16-1979-3.pdf); [Scheike & Jensen, 1997](https://www.ncbi.nlm.nih.gov/pubmed/9147597); [Mare, 1994](https://www.semanticscholar.org/paper/DISCRETE-TIME-BIVARIATE-HAZARDS-WITH-UNOBSERVED-A-Mare/c13ff07817b0b0a28774806db29c2491e0ec6a3d)). As a result, most empirical researchers--and we--proceed ahead, if not ignoring the problem, at least not addressing it. In the remainder of this book, we assume that all heterogeneity is observed and attributable to the predictors included in our models.
+> Is it possible to fit a hazard model that accounts for unobserved heterogeneity? As you might expect, doing so requires that we have either additional data (for example, data on repeated events within individuals) or that we invoke other--perhaps less tenable--assumptions about the distribution of event time errors [@aalen1988heterogeneity; @heckman1984longitudinal; @vaupel1979impact; @scheike1997discrete; @mare1994discrete]. As a result, most empirical researchers--and we--proceed ahead, if not ignoring the problem, at least not addressing it. In the remainder of this book, we assume that all heterogeneity is observed and attributable to the predictors included in our models.
 
 ## Residual analysis
 
@@ -2067,7 +2082,7 @@ residuals(fit11.10) %>%
   facet_wrap(~period, nrow = 1)
 ```
 
-As is often the case in coefficient plots, the dots are the posterior means and the intersecting lines are the percentile-based 95% intervals. In the `sex_pp` data, the `event` variable encodes when participants experience the event within a given time range. Hopefully the color coding highlights how with hazard models, the residuals are always positive when the criterion variable is a 1 and always negative when the criterion is 0. 
+As is often the case in coefficient plots, the dots are the posterior means and the intersecting lines are the percentile-based 95% intervals. In the `sex_pp` data, the `event` variable encodes when participants experience the event within a given time range. Hopefully the color coding highlights how with hazard models, the residuals are always positive when the criterion variable is a 1 and always negative when the criterion is 0.
 
 Now we have a bit of a handle on the output from `residuals()`, let's plot in bulk.
 
@@ -2086,13 +2101,13 @@ residuals(fit11.10) %>%
         panel.grid = element_blank()) 
 ```
 
-This plot is our analogue to the top portion of Singer and Willette's Figure 12.9. But whereas we plotted our residual summaries, they plotted the expected values of their *deviance residuals*. In contrast with the material on page 464, I am not going to discuss deviance residuals or the sums of the squared deviance residuals. Our **brms** workflow offers an alternative. Before we offer our alternative, we might focus on deviance residuals for just a moment:
+This plot is our analogue to the top portion of Singer and Willett's Figure 12.9. But whereas we plotted our residual summaries, they plotted the expected values of their *deviance residuals*. In contrast with the material on page 464, I am not going to discuss deviance residuals or the sums of the squared deviance residuals. Our **brms** workflow offers an alternative. Before we offer our alternative, we might focus on deviance residuals for just a moment:
 
 > Deviance residuals are so named because, when squared, they represent an individual's contribution to the deviance statistic for that time period. The sum of the squared deviance residuals across all the records in a person-period data set yields the deviance statistic for the specified model....
 >
 > The absolute value of a deviance residual indicates how well the model fits that person's data for that period. Large absolute values identify person-period records whose outcomes are poorly predicted. (p. 464)
 
-Back in Chapter 11, we computed the LOO for ` fit11.10`. Let's take a look at that.
+Back in Chapter 11, we computed the LOO for `fit11.10`. Let's take a look at that.
 
 ```{r}
 loo(fit11.10)
@@ -2106,7 +2121,7 @@ loo(fit11.10)$diagnostics %>%
   glimpse()
 ```
 
-We formatted the output for convenience. Notice there are 822 rows—one for each case in the data. Almost like a computational byproduct, **brms** returned `pareto_k` and `n_eff` values when we computed the LOO estimates for the model. Our focus will be on the `pareto_k` column. Here are those `pareto_k` values in a plot.
+We formatted the output for convenience. Notice there are 822 rows--one for each case in the data. Almost like a computational byproduct, **brms** returned `pareto_k` and `n_eff` values when we computed the LOO estimates for the model. Our focus will be on the `pareto_k` column. Here are those `pareto_k` values in a plot.
 
 ```{r, fig.width = 7, fig.height = 4.5}
 loo(fit11.10)$diagnostics %>% 
@@ -2122,13 +2137,9 @@ loo(fit11.10)$diagnostics %>%
   theme(panel.grid = element_blank())
 ```
 
-To learn the technical details about `pareto_k`, check out Vehtari, Gelman, and Gabry's [*Practical Bayesian model evaluation using leave-one-out cross-validation and WAIC*](https://arxiv.org/abs/1507.04544) or Vehtari, Simpson, Gelman, Yao, and Gabry's [*Pareto smoothed importance sampling*](https://arxiv.org/abs/1507.02646). In short, we can use `pareto_k` values to flag cases that were overly-influential on the model in a way that's a little like Singer and Willett's deviance residuals. As pointed out in the [reference manual](https://cran.r-project.org/web/packages/loo/loo.pdf) for the **loo** package, which **brms** used to compute all this, the makers of the **loo** package warn against `pareto_k` values when they get much larger than $0.5$. We should be a little worried by values that exceed the $0.7$ threshold and it's very likely a problem when they get larger than $1$. In this case, they're all below $0.4$ and all is good.
+To learn the technical details about `pareto_k`, check out Vehtari, Gelman, and Gabry's [-@vehtariPracticalBayesianModel2017] [*Practical Bayesian model evaluation using leave-one-out cross-validation and WAIC*](https://arxiv.org/abs/1507.04544) or Vehtari, Simpson, Gelman, Yao, and Gabry's [-@vehtari2021pareto] [*Pareto smoothed importance sampling*](https://arxiv.org/abs/1507.02646). In short, we can use `pareto_k` values to flag cases that were overly-influential on the model in a way that's a little like Singer and Willett's deviance residuals. As pointed out in the [**loo** reference manual](https://CRAN.R-project.org/package=loo/loo.pdf) [@loo2020RM], the makers of the **loo** package warn against `pareto_k` values when they get much larger than $0.5$. We should be a little worried by values that exceed the $0.7$ threshold and it's very likely a problem when they get larger than $1$. In this case, they're all below $0.4$ and all is good.
 
-To learn more about `pareto_k` values and what the **loo** package can do for you, check out Vehtari and Gabry's vignette, [*Using the loo package*](https://cran.r-project.org/web/packages/loo/vignettes/loo2-example.html).
-
-## Reference {-}
-
-[Singer, J. D., & Willett, J. B. (2003). *Applied longitudinal data analysis: Modeling change and event occurrence*. New York, NY, US: Oxford University Press.](https://www.oxfordscholarship.com/view/10.1093/acprof:oso/9780195152968.001.0001/acprof-9780195152968)
+To learn more about `pareto_k` values and what the **loo** package can do for you, check out Vehtari and Gabry's [-@vehtariUsingLooPackage2020] vignette, [*Using the loo package*](https://CRAN.R-project.org/package=loo/vignettes/loo2-example.html).
 
 ## Session info {-}
 
