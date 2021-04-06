@@ -1836,7 +1836,7 @@ crossing(pi0 = c(1.5, 15, 150),
   facet_wrap(~pi0_f, labeller = label_parsed) 
 ```
 
-Though $\pi_{0i}$ has clear implications for the intercept, it's not quite the same thing as the intercept. Similarly, though $\pi_{1i}$ has an influence on how rapidly the trajectories approach the upper asymptote, it's not he same thing as the slope. Once you go nonlinear, it can become tricky to interpret the parameters directly.
+Though $\pi_{0i}$ has clear implications for the intercept, it's not quite the same thing as the intercept. Similarly, though $\pi_{1i}$ has an influence on how rapidly the trajectories approach the upper asymptote, it's not the same thing as the slope. Once you go nonlinear, it can become tricky to interpret the parameters directly.
 
 Since we'll be fitting this model as Bayesians, let's talk about priors. Based on the plots in Figure 6.9, it seems like we should center the $\gamma_{00}$ prior on a relatively large value. If you compare the three panels of the plot, it seems like there's a diminishing returns effect as the value for $\pi_0$ went from 1.5 to 15 to 150. I propose something like $\operatorname N(15, 3)$.
 
@@ -2394,7 +2394,7 @@ Yep, the logistic model captured the patterns in these data better than Thurston
 
 ## Bonus: The logistic growth model
 
-In the social sciences, binary data are a widely-collected data type which are often best analyzed with a nonlinear model. In this section, we'll practice fitting a multilevel growth model on binary data using logistic regression. This will differ from the logistic curve models, above, in that we will not be presuming normally distributed errors ($\epsilon_{ij} \sim \operatorname N(0, \sigma_\epsilon)$). Rather, we'll be using a different likelihood altogether.
+In the social sciences, binary data are a widely-collected data type which are often best analyzed with a nonlinear model. In this section, we'll practice fitting a multilevel growth model on binary data using logistic regression. This will differ from the logistic curve models, above, in that we will not be presuming normally distributed errors, $\epsilon_{ij} \sim \operatorname N(0, \sigma_\epsilon)$. Rather, we'll be using a different likelihood altogether.
 
 ### We need data.
 
@@ -2543,7 +2543,7 @@ y_i & \sim \operatorname{Bernoulli}(p_i)\\
 \end{align*}
 $$
 
-where, since we don't have a predictor variable, the intercept $b_0$ is the log-odds probability. *Why 'log-odds'?* you say. Well, the problem of fitting regression models for probabilities ($p_i$) is that probabilities are logically bounded between 0 and 1. Yet there's nothing inherent in the machinery of the conventional linear regression model to prevent predictions outside of those bound. Happily, our friends the statisticians can help us get around that with the aid of link functions. If we model the logit of $p$ ($\operatorname{logit}(p_i)$) instead of modeling $p$ directly, we end up with an inherently nonlinear model that will always produce estimates within the bounds of 0 and 1. Another way of expressing this model is by nesting the right-hand part of the equation within the inverse logit function,
+where, since we don't have a predictor variable, the intercept $b_0$ is the log-odds probability. *Why 'log-odds'?* you say. Well, the problem of fitting regression models for probabilities ($p_i$) is that probabilities are logically bounded between 0 and 1. Yet there's nothing inherent in the machinery of the conventional linear regression model to prevent predictions outside of those bound. Happily, our friends the statisticians can help us get around that with the aid of link functions. If we model the logit of $p$, $\operatorname{logit}(p_i)$, instead of modeling $p$ directly, we end up with an inherently nonlinear model that will always produce estimates within the bounds of 0 and 1. Another way of expressing this model is by nesting the right-hand part of the equation within the inverse logit function,
 
 $$
 \begin{align*}
@@ -2556,7 +2556,7 @@ where $\operatorname{logit}^{-1}$ is called the inverse logit. This use of the l
 
 $$\operatorname{logit}(x) = \log \left ( \frac{x}{1 - x} \right ).$$
 
-You may recall that the odds of a probability is defined as $ \left ( \frac{p}{1 - p}\right )$. Therefore, we can describe $\operatorname{logit}(p)$ as the log odds of the probability, or $p$ in a log-odds metric. Anyway, the inverse of the logistic function is
+You may recall that the odds of a probability is defined as $\left ( \frac{p}{1 - p}\right )$. Therefore, we can describe $\operatorname{logit}(p)$ as the log odds of the probability, or $p$ in a log-odds metric. Anyway, the inverse of the logistic function is
 
 $$\operatorname{logit}^{-1}(x) = \frac{e^x}{1 + e^x}.$$
 
@@ -2587,7 +2587,6 @@ Hopefully this is all just review. Now let's consider the longitudinal multileve
 
 If we have $j$ Bernoulli trials nested within $i$ participants over time, we can express the generic logistic multilevel growth model as
 
-$$
 \begin{align*}
 y_{ij} & \sim \operatorname{Bernoulli}(p_{ij}) \\
 \operatorname{logit}(p_{ij}) & = \pi_{0i} + \pi_{1i} \text{time}_{ij} \\
@@ -2602,7 +2601,6 @@ y_{ij} & \sim \operatorname{Bernoulli}(p_{ij}) \\
 \mathbf\Omega & = \begin{bmatrix} 1 & \rho_{01} \\ 
  \rho_{10} & 1 \end{bmatrix},   
 \end{align*}
-$$
 
 where we make the usual multivariate-normal assumptions about $\zeta_{0i}$ and $\zeta_{1i}$. Yet because we are modeling the $y_{ij}$ with the Bernoulli likelihood, we end up setting the linear model to $\operatorname{logit}(p_{ij})$. And also, because the Bernoulli distribution doesn't itself have a $\sigma$ parameter, we have no $\sigma_\epsilon$ term. That is, though the $\zeta$ parameters get a multivariate normal distribution, the $y_{ij}$ data is considered Bernoulli. We have multiple distributional assumptions within a single model and this is totally okay.
 
@@ -2660,7 +2658,7 @@ tibble(iter = 1:n,
   theme(panel.grid = element_blank())
 ```
 
-To my eye, this is about what we want. Our $\gamma_{00} \sim \operatorname N(-2, 1)$ prior concentrated the probability values close to zero at the start, but it was permissive enough to allow for the possibility that the success probability could be nearly as high as .5, or so. Also, our $\gamma_{10} \sim \operatorname N(0.25, 0.25)$ prior was largely consistent with moderate growth across trials, but it was not so heavy-hanged that it prevented the possibility of no growth or even getting worse, over time.`
+To my eye, this is about what we want. Our $\gamma_{00} \sim \operatorname N(-2, 1)$ prior concentrated the probability values close to zero at the start, but it was permissive enough to allow for the possibility that the success probability could be nearly as high as .5, or so. Also, our $\gamma_{10} \sim \operatorname N(0.25, 0.25)$ prior was largely consistent with moderate growth across trials, but it was not so heavy-handed that it prevented the possibility of no growth or even getting worse, over time.`
 
 Especially if you're new to this, see what happens if you fool with the priors, a little.
 
