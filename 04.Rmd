@@ -663,7 +663,7 @@ tibble(occasion = 1:3) %>%
 
 ### Quantifying the proportion of outcome variation "explained."
 
-Because of the way the multilevel model partitions off variance into different sources (e.g., $\sigma_0^2$, $\sigma_1^2$, and $\sigma_\epsilon^2$ in the unconditional growth model), the conventional $R^2$ is not applicable for evaluating models in the traditional OLS sense of percent of variance explained. Several pseudo $R^2$ statistics are frequently used instead. Be warned, "statisticians have yet to agree on appropriate summaries [@kreftIntroducingMultilevelModeling1998; @snijdersModeledVarianceTwolevel1994]" (p. 102). See also @jaegerR2StatisticFixed2017, @rightsEffectSizeMeasures2018, and @rightsNewRecommendationsUse2019. To my eye, none of the solutions presented in this section are magic bullets.
+Because of the way the multilevel model partitions off variance into different sources (e.g., $\sigma_0^2$, $\sigma_1^2$, and $\sigma_\epsilon^2$ in the unconditional growth model), the conventional $R^2$ is not applicable for evaluating models in the traditional OLS sense of percent of variance explained. Several pseudo $R^2$ statistics are frequently used instead. Be warned, "statisticians have yet to agree on appropriate summaries [@kreftIntroducingMultilevelModeling1998; @snijdersModeledVarianceTwolevel1994]" (p. 102). See also @jaegerR2StatisticFixed2017, @rightsEffectSizeMeasures2018, and @rights2020NewRecommendations. To my eye, none of the solutions presented in this section are magic bullets.
 
 #### An overall summary of total outcome variability explained.
 
