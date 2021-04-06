@@ -1269,7 +1269,7 @@ Note how with this many `age` levels, our discrete-time models are beginning to 
 >
 > With this in mind, we now demonstrate how to (1) explore your data for the possibility of statistical interactions; and (2) include the additional appropriate terms when necessary. (p. 444, *emphasis* in the original)
 
-Load the  data from Keiley and Martin [-@keileyChildAbuseNeglect2002][^2].
+Load the  data from Keiley and Martin [-@keileyChildAbuseNeglect2002][^3].
 
 ```{r, warning = F, message = F}
 firstarrest_pp <- 
@@ -2149,5 +2149,5 @@ pacman::p_unload(pacman::p_loaded(), character.only = TRUE)
 
 ## Footnote {-}
 
-[^2]: In their reference section, Singer and Willett indicated this was a manuscript submitted for publication. To my knowledge, it was never published.
+[^3]: In their reference section, Singer and Willett indicated this was a manuscript submitted for publication. To my knowledge, it was never published.
 

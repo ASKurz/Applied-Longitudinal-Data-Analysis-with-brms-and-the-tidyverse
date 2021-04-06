@@ -259,7 +259,7 @@ Log-odds is a minor extension; you simply take the log of the odds, which we can
 
 $$\text{log-odds} = \log \left (\frac{p}{1 - p} \right ).$$
 
-To make the conversions easy, we'll define[^1] a couple convenience functions: `odds()` and `log_odds()`.
+To make the conversions easy, we'll define[^2] a couple convenience functions: `odds()` and `log_odds()`.
 
 ```{r}
 odds <- function(p) {
@@ -921,8 +921,7 @@ posterior_samples(fit11.8) %>%
   mutate(name = factor(name, levels = c("log-odds", "hazard ratio"))) %>% 
   
   ggplot(aes(x = value, y = 0)) +
-  stat_halfeyeh(.width = c(.5, .95),
-                normalize = "panels") +
+  stat_halfeye(.width = c(.5, .95), normalize = "panels") +
   scale_y_continuous(NULL, breaks = NULL) +
   xlab("marginal posterior for pt") +
   theme(panel.grid = element_blank()) +
@@ -1079,7 +1078,8 @@ fit11.11 <-
   brm(data = dat,
       family = student,
       g ~ 1,
-      chains = 4, cores = 4)
+      chains = 4, cores = 4,
+      file = "fits/fit11.11")
 ```
 
 Check the summary.
@@ -1655,5 +1655,5 @@ pacman::p_unload(pacman::p_loaded(), character.only = TRUE)
 
 ## Footnote {-}
 
-[^1]: **R** already has a built-in function to convert probabilities to the log-odds scale. Somewhat confusingly, it's called `qlogis()`. You can learn more by executing `?qlogis` or by browsing through [this great blog post](https://ro-che.info/articles/2018-08-11-logit-logistic-r) by Roman Cheplyaka. It’s generally a good idea to stick to the functions in base **R** rather than make your own, like we did earlier in this chapter (see [this twitter thread](https://twitter.com/tjmahr/status/1248228130256453632)). Since the name of `qlogis()` isn’t the easiest to remember, you can always execute something like `log_odds <- qlogis` or `logit <- qlogis` at the beginning of your scripts and then use one of those as a thin wrapper for `qlogis()`.
+[^2]: **R** already has a built-in function to convert probabilities to the log-odds scale. Somewhat confusingly, it's called `qlogis()`. You can learn more by executing `?qlogis` or by browsing through [this great blog post](https://ro-che.info/articles/2018-08-11-logit-logistic-r) by Roman Cheplyaka. It’s generally a good idea to stick to the functions in base **R** rather than make your own, like we did earlier in this chapter (see [this twitter thread](https://twitter.com/tjmahr/status/1248228130256453632)). Since the name of `qlogis()` isn’t the easiest to remember, you can always execute something like `log_odds <- qlogis` or `logit <- qlogis` at the beginning of your scripts and then use one of those as a thin wrapper for `qlogis()`.
 
