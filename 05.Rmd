@@ -1298,7 +1298,7 @@ rm(fit5.3, fit5.4, fit5.5)
 
 ### Distinguishing among different types of missingness.
 
-> Missingness, in and of itself, is not necessarily problematic. It all depends upon what statisticians call the type of missingness. In seminal work on this topic, @littleModelingDropOutMechanism1995, refining earlier work with Rubin [@rubin1987statistical], distinguished among three types of missingness: (1) *missing completely at random* (MCAR); (2) covariate-dependent dropout (CDD); and (3) *missing at random* (MAR) [see also @schafer1997analysis].
+> Missingness, in and of itself, is not necessarily problematic. It all depends upon what statisticians call the type of missingness. In seminal work on this topic, @little1995ModelingDropoutMechanism, refining earlier work with Rubin [@rubin1987statistical], distinguished among three types of missingness: (1) *missing completely at random* (MCAR); (2) covariate-dependent dropout (CDD); and (3) *missing at random* (MAR) [see also @schafer1997analysis].
 >
 > When we say that data are MCAR, we argue that the observed values are a random sample of all the values that could have been observed (according ot plan), had there been no missing data.
 >
@@ -1306,7 +1306,7 @@ rm(fit5.3, fit5.4, fit5.5)
 >
 > ...When data are MAR, the probability of missingness can depend upon *any* observed data, for either the predictors or any outcome values. It cannot, however, depend upon an *un*observed value of either any predictor or the outcome. (pp. 157--158, *emphasis* in the original)
 
-For some more current introductions to missing data methods, I recommend Enders' [-@enders2010applied] [*Applied missing data analysis*](http://www.appliedmissingdata.com), for which you can find a free sample chapter [here](http://www.appliedmissingdata.com/sample-chapter.pdf), and Little and Rubin's [-@little2019statistical] [*Statistical analysis with missing data, 3rd Edition*](https://www.wiley.com/en-us/Statistical+Analysis+with+Missing+Data%2C+3rd+Edition-p-9780470526798). You might also check out van Burren's great [-@vanbuurenFlexibleImputationMissing2018] online text [*Flexible imputation of missing data. Second edition*](https://stefvanbuuren.name/fimd/). If you're a fan of the podcast medium, you might listen to episode 16 from the first season of the [Quantitude podcast](https://quantitudethepodcast.org/), *IF EPISODE=16 THEN EPISODE=-999;*, in which Patrick Curran and Greg Hancock do a fine job introducing the basics of missing data. And very happily, **brms** has several ways to handle missing data, about which you can learn more from Bürkner's [-@Bürkner2020HandleMissingValues] vignette, [*Handle missing values with brms*](https://CRAN.R-project.org/package=brms/vignettes/brms_missings.html).
+For some more current introductions to missing data methods, I recommend Enders' [-@enders2010applied] [*Applied missing data analysis*](http://www.appliedmissingdata.com), for which you can find a free sample chapter [here](http://www.appliedmissingdata.com/sample-chapter.pdf), and Little and Rubin's [-@little2019statistical] [*Statistical analysis with missing data, 3rd Edition*](https://www.wiley.com/en-us/Statistical+Analysis+with+Missing+Data%2C+3rd+Edition-p-9780470526798). You might also check out van Burren's great [-@vanbuurenFlexibleImputationMissing2018] online text [*Flexible imputation of missing data. Second edition*](https://stefvanbuuren.name/fimd/). If you're a fan of the podcast medium, you might listen to episode 16 from the first season of the [Quantitude podcast](https://quantitudethepodcast.org/), *IF EPISODE=16 THEN EPISODE=-999;*, in which Patrick Curran and Greg Hancock do a fine job introducing the basics of missing data. And very happily, **brms** has several ways to handle missing data, about which you can learn more from Bürkner's [-@Bürkner2021HandleMissingValues] vignette, [*Handle missing values with brms*](https://CRAN.R-project.org/package=brms/vignettes/brms_missings.html).
 
 ## Time-varying predictors
 
@@ -1387,7 +1387,7 @@ We can confirm that "41 were still unemployed at the second interview but workin
 
 Before we configure our unconditional growth model, we might familiarize ourselves with our criterion variable, `cesd`. Singer and Willett informed us:
 
-> Each time participants completed the Center for Epidemiologic Studies' Depression (CES-D) scale [@radloffCESDScaleSelfReport1977], which asks them to rate, on a four-point scale, the frequency with which they experience each of the 20 depressive symptoms. The CES-D scores can vary from a low or 0 for someone with no symptoms to a high of 80 for someone in serious distress. (p. 161)
+> Each time participants completed the Center for Epidemiologic Studies' Depression (CES-D) scale [@radloffCESDScaleSelfreport1977], which asks them to rate, on a four-point scale, the frequency with which they experience each of the 20 depressive symptoms. The CES-D scores can vary from a low or 0 for someone with no symptoms to a high of 80 for someone in serious distress. (p. 161)
 
 In addition to Radloff's original article, you can get a copy of the CES-D [here](http://www.chcr.brown.edu/pcoc/cesdscale.pdf).
 
@@ -2646,28 +2646,3 @@ theme_set(theme_grey())
 pacman::p_unload(pacman::p_loaded(), character.only = TRUE)
 ```
 
-
-```{r}
-tibble(name = str_c("fit5.", c(19, 23))) %>% 
-  mutate(fixef = map(name, ~get(.) %>% 
-                       fixef() %>% 
-                       data.frame() %>% 
-                       rownames_to_column("parameter"))) %>% 
-  unnest(fixef) %>% 
-  mutate(parse = case_when(
-    parameter == "Intercept" ~ "gamma[0][0]",
-    parameter == "time" ~ "gamma[1][0]",
-    parameter == "treat" ~ "gamma[0][1]",
-    parameter == "time:treat" ~ "gamma[1][1]",
-    parameter == "sigma_Intercept" ~ "eta[0][0]"
-  )) %>% 
-  
-  ggplot(aes(x = Estimate, xmin = Q2.5, xmax = Q97.5, y = name)) +
-  geom_pointrange() +
-  labs(x = "marginal posterior",
-       y = NULL) +
-  theme(axis.ticks.y = element_blank(),
-        panel.grid = element_blank(),
-        strip.text = element_text(size = 11)) +
-  facet_wrap(~parse, scales = "free_x", labeller = label_parsed, ncol = 5)
-```
