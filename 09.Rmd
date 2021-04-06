@@ -80,7 +80,7 @@ Survival analyses share three common characteristics.
 
 ### How does censoring affect statistical analysis?
 
-Here we load the `teachers.csv` data @singerAreSpecialEducators2016.
+Here we load the `teachers.csv` data @singerAreSpecialEducators1992.
 
 ```{r, warning = F, message = F}
 library(tidyverse)
