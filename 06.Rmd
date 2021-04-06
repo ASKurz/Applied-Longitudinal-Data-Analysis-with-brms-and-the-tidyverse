@@ -108,7 +108,7 @@ wages_pp %>%
 
 One might wonder: "How might GED receipt affect individual $i$'s wage trajectory?" (p. 193). Here we reproduce Figure 6.1, which entertains four possibilities.
 
-```{r, fig.width = 5, fig.height = 3}
+```{r, fig.width = 4, fig.height = 3.5}
 tibble(exper = c(0, 3, 3, 10),
        ged   = rep(0:1, each = 2)) %>% 
   expand(model = letters[1:4],
@@ -836,7 +836,7 @@ loo_compare(fit6.8, fit6.5, criterion = "waic") %>% print(simplify = F)
 
 We might also just look at all of the WAIC estimates, plus and minus their standard errors, in a coefficient plot.
 
-```{r, fig.width = 6, fig.height = 1.5}
+```{r, fig.width = 6, fig.height = 1.75}
 loo_compare(fit5.16, fit6.1, fit6.2, fit6.3, fit6.4, fit6.5, fit6.6, fit6.7, fit6.8, fit6.9, criterion = "waic") %>% 
   data.frame() %>% 
   rownames_to_column("fit") %>% 
@@ -876,7 +876,7 @@ r <-
 glimpse(r)
 ```
 
-We'll be plotting with help from the **GGally** package, which does a nice job displaying a grid of bivariate plots via the `ggpairs()`. We're going to get fancy with our `ggpairs()` plot by using a handful of custom settings. Here we save them as two functions.
+We'll be plotting with help from the [**GGally** package](https://CRAN.R-project.org/package=GGally) [@R-GGally], which does a nice job displaying a grid of bivariate plots via the `ggpairs()`. We're going to get fancy with our `ggpairs()` plot by using a handful of custom settings. Here we save them as two functions.
 
 ```{r}
 my_diag <- function(data, mapping, ...) {
@@ -908,7 +908,7 @@ r %>%
 
 Now we're ready to make our version of Figure 6.3. Since we will be expressing the uncertainty of our counterfactual trajectories with 95% interval bands, we'll be faceting the plot by the two levels of `hgc_9`. Otherwise, the overplotting would become too much.
 
-```{r, fig.width = 6, fig.height = 3}
+```{r, fig.width = 6, fig.height = 3.5}
 # define the new data
 nd <-
   crossing(black = 0:1,
@@ -1037,7 +1037,7 @@ glimpse(berkeley_pp)
 
 Here's how we might make Figure 6.6.
 
-```{r, fig.height = 3.75, fig.width = 7}  
+```{r, fig.height = 3.75, fig.width = 8}  
 # left
 p1 <- 
   berkeley_pp %>% 
@@ -1202,7 +1202,7 @@ p4 <-
 
 Now we're finally ready to combine all the elements to make Table 6.4.
 
-```{r, fig.width = 7, fig.height = 9, warning = F}
+```{r, fig.width = 7, fig.height = 8.5, warning = F}
 (p1 | p2 | p3 | p4) +
   plot_annotation(title = "A taxonomy of polynomial individual change trajectories") +
   plot_layout(widths = c(1, 3, 2, 4))
@@ -1300,7 +1300,7 @@ Since the order of the polynomials in Figure 6.7 is tailored to each case, we'll
 # a and e
 p1 <-
   external_pp_subset %>% 
-  filter(case %in% c("A", "E")) %>% 
+  filter(case %in% c("A")) %>% 
   
   ggplot(aes(x = grade, y = external)) +
   geom_point() +
@@ -1308,11 +1308,29 @@ p1 <-
               se = F, size = 1/4, linetype = 2) +       # quartic
   stat_smooth(method = "lm", formula = y ~ x + I(x^2),  # quadratic
               se = F, size = 1/2) +
-  scale_x_continuous(breaks = 0:7, limits = c(0, 7), expand = c(0, 0)) +
-  facet_wrap(~ case, nrow = 2)
+  scale_x_continuous(NULL, breaks = NULL, 
+                     limits = c(0, 7), expand = c(0, 0)) +
+  scale_y_continuous(NULL, breaks = NULL) +
+  facet_wrap(~ case)
+
+# e
+p2 <-
+  external_pp_subset %>% 
+  filter(case %in% c("E")) %>% 
+  
+  ggplot(aes(x = grade, y = external)) +
+  geom_point() +
+  stat_smooth(method = "lm", formula = y ~ x + I(x^2) + I(x^3) + I(x^4), 
+              se = F, size = 1/4, linetype = 2) +                # quartic
+  stat_smooth(method = "lm", formula = y ~ x + I(x^2) + I(x^3),  # cubic
+              se = F, size = 1/2) +
+  scale_x_continuous(NULL, breaks = NULL, 
+                     limits = c(0, 7), expand = c(0, 0)) +
+  scale_y_continuous(NULL, breaks = NULL) +
+  facet_wrap(~ case)
 
 # b
-p2 <-
+p3 <-
   external_pp_subset %>% 
   filter(case %in% c("B")) %>% 
   
@@ -1328,7 +1346,7 @@ p2 <-
   facet_wrap(~ case)
 
 # f
-p3 <-
+p4 <-
   external_pp_subset %>% 
   filter(case %in% c("F")) %>% 
   
@@ -1341,7 +1359,7 @@ p3 <-
   facet_wrap(~ case)
 
 # c
-p4 <-
+p5 <-
   external_pp_subset %>% 
   filter(case %in% c("C")) %>% 
   
@@ -1357,7 +1375,7 @@ p4 <-
   facet_wrap(~ case)
 
 # g
-p5 <-
+p6 <-
   external_pp_subset %>% 
   filter(case %in% c("G")) %>% 
   
@@ -1372,7 +1390,7 @@ p5 <-
   facet_wrap(~ case)
 
 # d
-p6 <-
+p7 <-
   external_pp_subset %>% 
   filter(case %in% c("D")) %>% 
   
@@ -1388,7 +1406,7 @@ p6 <-
   facet_wrap(~ case)
 
 # h
-p7 <-
+p8 <-
   external_pp_subset %>% 
   filter(case %in% c("H")) %>% 
   
@@ -1404,7 +1422,7 @@ p7 <-
 Now combine the subplots to make the full Figure 6.7.
 
 ```{r, fig.width = 8, fig.height = 6}
-(p1 | (p2 / p3) | (p4 / p5) | (p6 / p7)) &
+((p1 / p2) | (p3 / p4) | (p5 / p6) | (p7 / p8)) &
   coord_cartesian(ylim = c(0, 60)) &
   theme(panel.grid = element_blank())
 ```
@@ -1761,7 +1779,7 @@ foxngeese_pp %>%
 
 We can get a sense of the child-level data with our version of Figure 6.8.
 
-```{r, fig.width = 6, fig.height = 4}
+```{r, fig.width = 7, fig.height = 5}
 subset <- c("1", "4", "6", "7", "8", "11", "12", "15")
 
 foxngeese_pp %>% 
@@ -1993,7 +2011,7 @@ posterior_samples(fit6.16) %>%
 
 The posterior is wide and the point estimate in the text fits comfortably within our inner 80% interval. Okay, let's explore this model further by making the rest of Figure 6.10.
 
-```{r, fig.width = 5, fig.height = 3.5}
+```{r, fig.width = 5.5, fig.height = 3.75}
 nd <- 
   crossing(game   = seq(from = 0, to = 30, by = 0.1),
            read_c = c(-1.58, 1.58))
@@ -2034,7 +2052,7 @@ loo_compare(fit6.15, fit6.16, criterion = "waic") %>% print(simplify = F)
 
 They're nearly the same, suggesting `fit6.16` was overfit. However, now that we have it, we might use our overfit model `fit6.16` to an updated version of Figure 6.8.
 
-```{r, fig.width = 6.5, fig.height = 4}
+```{r, fig.width = 7.5, fig.height = 5}
 # define the new data
 nd <-
   foxngeese_pp %>% 
@@ -2335,7 +2353,7 @@ print(fit6.17)
 
 We might use our Thurstone model to an updated version of Figure 6.8.
 
-```{r, fig.width = 6.5, fig.height = 4}
+```{r, fig.width = 7, fig.height = 5}
 # define the new data
 nd <-
   foxngeese_pp %>% 
@@ -2406,7 +2424,7 @@ head(dogs)
 
 As Gelman and Hill described (p. 515), these data were taken from a behavioral experiment in the 1950's. Thirty dogs learned a new trick. Each of the 30 dogs was given 25 trials to learn the trick. In these data, *time* is captured by the `tial` column, which ranges from `0` (the first trial) to `24` (the final 25^th^ trial). The criterion variable is `y`, which is coded `0` = fail, `1` = success. To give a sense of the data, here's a descriptive plot of a randomly-chosen subset of eight of the dogs.
 
-```{r, fig.width = 6.5, fig.height = 4}
+```{r, fig.width = 7, fig.height = 5}
 # define the dog subset
 set.seed(6)
 
@@ -2760,7 +2778,7 @@ The plot is a little cumbersome, but hopefully it clarifies the idea.
 
 Next, we might want to better understand our model at the level of the dogs. As a first step, we might make a plot of the 30 dog-level $\pi$ parameters.
 
-```{r, fig.width = 3.5, fig.height = 3.25}
+```{r, fig.width = 4, fig.height = 3.75}
 # wrangle
 pi <-
   bind_rows(
@@ -2785,7 +2803,7 @@ pi %>%
   ggplot(aes(x = p0, y = p1, group = name)) +
   stat_ellipse(geom = "polygon", level = 0.1, alpha = 1/2) +
   labs(title = "Dog-level intercepts and slopes",
-       subtitle = "Each ellipse marks off the inner 10% posterior interval.",
+       subtitle = "Each ellipse marks off the 10% posterior interval.",
        x = expression(pi[0][italic(i)]~(log~odds)),
        y = expression(pi[1][italic(i)]~(log~odds))) +
   theme(panel.grid = element_blank())
@@ -2799,7 +2817,7 @@ posterior_summary(fit6.18)[3:4, 1:2]
 
 All this is still quite abstract. It might be helpful if we plotted a handful of the dog-specific trajectories.
 
-```{r, fig.width = 6.5, fig.height = 4}
+```{r, fig.width = 7, fig.height = 5}
 nd <- 
   crossing(dog   = subset,
            trial = seq(from = 0, to = 25, length.out = 100))
@@ -2840,7 +2858,7 @@ pi %>%
 
 The dog-specific thresholds range from $5 \pm 2$ to $12 \pm 3.5$. Here's what it looks like if we adjust our trajectory plots to include the threshold information.
 
-```{r, fig.width = 6.5, fig.height = 4}
+```{r, fig.width = 7, fig.height = 5}
 # compute the dog-level thresholds
 threshold <-
   pi %>% 
@@ -2902,6 +2920,8 @@ rm()
 theme_set(theme_grey())
 pacman::p_unload(pacman::p_loaded(), character.only = TRUE)
 ```
+
+## Footnote {-}
 
 [^1]: You might also use our `sw_logistic()` to investigate the claims on what happens when $\text{game}_{ij} \rightarrow \infty$ or $\text{game}_{ij} \rightarrow -\infty$.
 
