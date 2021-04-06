@@ -199,7 +199,7 @@ get_prior(data = alcohol1_pp,
 
 For this model, all three priors are based on Student's $t$-distribution. In case you're rusty, the normal distribution is just a special case of Student's $t$-distribution. Whereas the normal is defined by two parameters ($\mu$ and $\sigma$), the $t$ distribution is defined by $\nu$, $\mu$, and $\sigma$. In frequentist circles, $\nu$ is often called the degrees of freedom. More generally, it's also referred to as a normality parameter. We'll examine the prior more closely in a bit.
 
-For now, let's practice setting our priors by manually specifying them within `brm()`. You do with the `prior` argument. There are actually several ways to do this. To explore all the options, check out the `set_prior` section of the [**brms** reference manual](https://CRAN.R-project.org/package=brms/brms.pdf). I typically define my individual priors with the `prior()` function. When there are more than one priors to define, I typically bind them together within `c(...)`.
+For now, let's practice setting our priors by manually specifying them within `brm()`. You do with the `prior` argument. There are actually several ways to do this. To explore all the options, check out the `set_prior` section of the [**brms** reference manual](https://CRAN.R-project.org/package=brms/brms.pdf) [@brms2021RM]. I typically define my individual priors with the `prior()` function. When there are more than one priors to define, I typically bind them together within `c(...)`.
 
 Other than the addition of our fancy `prior` statement, the rest of the settings within `brm()` are much like those in prior chapters. Let's fit the model.
 
