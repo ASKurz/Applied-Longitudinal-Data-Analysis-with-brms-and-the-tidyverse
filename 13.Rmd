@@ -271,7 +271,7 @@ bind_cols(
 
 You'll note that our posterior summary values in `S(t)` differ a little from those in the text. Remember, the likelihood was weak and we used a regularizing prior. If we had more cases spread across fewer discretized time periods, the likelihood would have done a better job updating the prior.
 
-Now let's take a look at the posterior of our survivor function, $\hat S(t_j) $, in our version of the upper left panel of Figure 13.1.
+Now let's take a look at the posterior of our survivor function, $\hat S(t_j)$, in our version of the upper left panel of Figure 13.1.
 
 ```{r, fig.width = 4, fig.height = 4}
 s %>% 
