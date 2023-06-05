@@ -522,10 +522,10 @@ We'll plot the `id`-level trajectories with those values and `geom_line()`. To g
 ```{r, fig.width = 2.5, fig.height = 3.25}
 tol_fitted %>% 
   ggplot(aes(x = age, y = tolerance, group = id)) +
-  geom_line(color = "blue", size = 1/4) +
+  geom_line(color = "blue", linewidth = 1/4) +
   geom_abline(intercept = fixef(fit2.3)[1, 1] + fixef(fit2.3)[2, 1] * -11,
               slope     = fixef(fit2.3)[2, 1],
-              color = "blue", size = 2) +
+              color = "blue", linewidth = 2) +
   coord_cartesian(ylim = c(0, 4)) +
   theme(panel.grid = element_blank()) 
 ```
@@ -597,7 +597,7 @@ tol_fitted_male
 
 Now we're ready to make our Bayesian version of the top panels of Figure 2.7.
 
-```{r, fig.width = 5, fig.height = 3.25}
+```{r, fig.width = 5, fig.height = 3.25, warning = F}
 tol_fitted %>% 
   # we need to add `male` values to `tol_fitted`
   left_join(tolerance_pp %>% select(id, male),
@@ -605,9 +605,9 @@ tol_fitted %>%
   
   ggplot(aes(x = age, y = tolerance, color = factor(male))) +
   geom_line(aes(group = id),
-            size = 1/4) +
+            linewidth = 1/4) +
   geom_line(data = tol_fitted_male,
-            size = 2) +
+            linewidth = 2) +
   scale_color_viridis_d(end = .75) +
   coord_cartesian(ylim = c(0, 4)) +
   theme(legend.position = "none",
@@ -658,7 +658,7 @@ tol_fitted_exposure
 
 Did you notice in the last lines in the second `mutate()` how we made a version of `exposure` that is a factor? That will come in handy for labeling and ordering the subplots. Now make our Bayesian version of the bottom panels of Figure 2.7.
 
-```{r, fig.width = 5, fig.height = 3.25}
+```{r, fig.width = 5, fig.height = 3.25, warning = F}
 tol_fitted %>% 
   # we need to add `exposure_01` values to `tol_fitted`
   left_join(tolerance_pp %>% select(id, exposure_01),
@@ -668,9 +668,9 @@ tol_fitted %>%
   
   ggplot(aes(x = age, y = tolerance, color = exposure)) +
   geom_line(aes(group = id),
-            size = 1/4) +
+            linewidth = 1/4) +
   geom_line(data = tol_fitted_exposure,
-            size = 2) +
+            linewidth = 2) +
   scale_color_viridis_d(option = "A", end = .75) +
   coord_cartesian(ylim = c(0, 4)) +
   theme(legend.position = "none",
@@ -682,7 +682,7 @@ tol_fitted %>%
 
 "To investigate whether fitted trajectories vary systematically with predictors, we can treat the estimated intercepts and slopes as outcomes and explore the relationship between them and predictors" (p. 39). Here are the left panels of Figure 2.8.
 
-```{r, fig.width = 2.5, fig.height = 5}
+```{r, fig.width = 2.5, fig.height = 5, warning = F}
 p1 <-
   mean_structure %>% 
   pivot_longer(ends_with("est")) %>% 
@@ -705,7 +705,7 @@ p1
 
 Here are the right panels.
 
-```{r, fig.width = 2.5, fig.height = 5}
+```{r, fig.width = 2.5, fig.height = 5, warning = F}
 p2 <-
   mean_structure %>% 
   pivot_longer(ends_with("est")) %>% 
