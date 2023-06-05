@@ -413,10 +413,10 @@ Talking about the various software options, Singer and Willett wrote:
 But importantly, in the next paragraph the authors clarified their text focused on "one particular method of estimation--*maximum likelihood*" (p. 64, *emphasis* in the original). This is quite important because, whereas we might expect various maximum-likelihood-based packages to yield the same or similar results, this will not necessarily hold when working with Bayesian software which, in addition to point estimates and expressions of uncertainty, yields an entire posterior distribution as a consequence of Bayes' theorem,
 
 $$
-p(\theta | d) = \frac{p(d | \theta)\ p(\theta)}{p(d)},
+p(\theta | d) = \frac{p(d \mid \theta)\ p(\theta)}{p(d)},
 $$
 
-where $p(\theta | d)$ is the posterior distribution, $p(d | \theta)$ is the likelihood (i.e., the star of maximum likelihood), $p(\theta)$ are the priors, and $p(d)$ is the normalizing constant, the probability of the data which transforms the numerator to a probability metric.
+where $p(\theta \mid d)$ is the posterior distribution, $p(d \mid \theta)$ is the likelihood (i.e., the star of maximum likelihood), $p(\theta)$ are the priors, and $p(d)$ is the normalizing constant, the probability of the data which transforms the numerator to a probability metric.
 
 Given that multilevel models are a fairly advanced topic, it is not my goal in this project to offer a tutorial on the foundations of applied Bayesian statistics. I'm taking it for granted you are familiar with the basics. But if you're very ambitious and this is new or if you're just rusty, I recommend you back up and lean the ropes with [Richard McElreath](https://twitter.com/rlmcelreath)'s excellent introductory text, [*Statistical Rethinking*](http://xcelab.net/rm/statistical-rethinking/). He has great [freely-available lectures](https://www.youtube.com/channel/UCNJK6_DZvcMqNSzQdEkzvzA/playlists) that augment the text and I also have ebooks ([here](https://bookdown.org/content/3890/) and [here](https://bookdown.org/content/4857/)) translating both editions of his text into **brms** and **tidyverse**-style code.
 
@@ -448,7 +448,7 @@ fit3.2 <-
       family = gaussian,
       formula = cog ~ 0 + Intercept + age_c + program + age_c:program + (1 + age_c | id),
       iter = 2000, warmup = 1000, chains = 4, cores = 4,
-      control = list(adapt_delta = 0.95),
+      control = list(adapt_delta = .99),
       seed = 3,
       file = "fits/fit03.02")
 ```
@@ -545,38 +545,38 @@ crossing(age_c   = 0:1,
 
 You can do this with **brms** with the `hypothesis()` function. I'm not a fan of this method and am not going to showcase it in this ebook If you insist on the NHST paradigm, you'll have to go that alone.
 
-Within the Bayesian paradigm, we have an entire posterior distribution. So let's just look at that. Recall that in the `print()` and `fixef()` outputs, we get the parameter estimates for our $\gamma$'s summarized in terms of the posterior mean (i.e., 'Estimate'), the posterior standard deviation (i.e., 'Est.error'), and the percentile-based 95% credible intervals (i.e., 'Q2.5' and 'Q97.5'). But we can get much richer output with the `posterior_samples()` function.
+Within the Bayesian paradigm, we have an entire posterior distribution. So let's just look at that. Recall that in the `print()` and `fixef()` outputs, we get the parameter estimates for our $\gamma$'s summarized in terms of the posterior mean (i.e., 'Estimate'), the posterior standard deviation (i.e., 'Est.error'), and the percentile-based 95% credible intervals (i.e., 'Q2.5' and 'Q97.5'). But we can get much richer output with the `as_draws_df()` function.
 
 ```{r}
-post <- posterior_samples(fit3.2)
+draws <- as_draws_df(fit3.2)
 ```
 
 Here's a look at the first 10 columns.
 
 ```{r}
-post[, 1:10] %>%
+draws[, 1:10] %>%
   glimpse()
 ```
 
-Here are the dimensions.
+Note the warning message. The `as_draws_df()` function returns a special kind of data frame, which includes 3 metadata columns, which are typically hidden from view. Sometimes we want those metadata columns, sometimes we don't. You'll see. Anyway, here are the dimensions of our `draws` data frame.
 
 ```{r}
-post %>% 
+draws %>% 
   dim()
 ```
 
-We saved our results as `post`, which is a data frame with 4,000 rows (i.e., 1,000 post-warmup iterations times 4 chains) and 215 columns, each depicting one of the model parameters. With **brms**, the $\gamma$ parameters (i.e., the fixed effects or population parameters) get `b_` prefixes in the `posterior_samples()` output. So we can isolate them like so.
+We saved our results as `draws`, which is a data frame with 4,000 rows (i.e., 1,000 post-warmup posterior draws times 4 chains) and columns depicting the model parameters, as well as the metadata values. With **brms**, the $\gamma$ parameters (i.e., the fixed effects or population parameters) get `b_` prefixes in the `as_draws_df()` output. So we can isolate them like so.
 
-```{r}
-post %>% 
+```{r, warning = F}
+draws %>% 
   select(starts_with("b_")) %>% 
   head()
 ```
 
-Just a little more data wrangling will put `post` in a format suitable for plotting.
+Just a little more data wrangling will put `draws` in a format suitable for plotting.
 
-```{r, fig.width = 7, fig.height = 4}
-post %>% 
+```{r, fig.width = 7, fig.height = 4, warning = F}
+draws %>% 
   pivot_longer(starts_with("b_")) %>% 
   
   ggplot(aes(x = value)) +
@@ -586,7 +586,7 @@ post %>%
   facet_wrap(~name, scales = "free")
 ```
 
-Sure, you could fixate on zero if you wanted to. But of more interest is the overall shape of each parameter's posterior distribution. Look at each's central tendency and spread. Look at where each is in the parameter space. To my mind, that story is so much richer than fixating on zero.
+Sure, you could fixate on zero if you wanted to. But of more interest is the overall shape of each parameter's posterior distribution. Look at the central tendency and spread for each. Look at where each is in the parameter space. To my mind, that story is so much richer than fixating on zero.
 
 We'll have more to say along these lines in subsequent chapters.
 
@@ -630,10 +630,10 @@ And perhaps of great interest, here's how to get their variance/covariance matri
 VarCorr(fit3.2)[[1]][[3]]
 ```
 
-You can also use the appropriate algebraic operations to transform some of the columns in the `posterior_samples()` output into the variance metric used in the text. Here we'll do so for the elements in the variance/covariance matrix and $\sigma_\epsilon^2$, too.
+You can also use the appropriate algebraic operations to transform some of the columns in the `as_draws_df()` output into the variance metric used in the text. Here we'll do so for the elements in the variance/covariance matrix and $\sigma_\epsilon^2$, too.
 
-```{r}
-posterior_samples(fit3.2) %>% 
+```{r, warning = F}
+as_draws_df(fit3.2) %>% 
   mutate(`sigma[0]^2`       = sd_id__Intercept^2,
          `sigma[1]^2`       = sd_id__age_c^2,
          `sigma[0][1]`      = sd_id__Intercept * cor_id__Intercept__age_c * sd_id__age_c,
@@ -771,7 +771,7 @@ sessionInfo()
 
 ```{r, echo = F, message = F}
 # here we'll remove our objects
-rm(early_int, early_int_sim, d, fit3.1, f, path, text, arrow, by_id, n, nd, p, math, fit3.2, post, sigma, mu, z, g)
+rm(early_int, early_int_sim, d, fit3.1, f, path, text, arrow, by_id, n, nd, p, math, fit3.2, draws, sigma, mu, z, g)
 
 theme_set(theme_grey())
 pacman::p_unload(pacman::p_loaded(), character.only = TRUE)
