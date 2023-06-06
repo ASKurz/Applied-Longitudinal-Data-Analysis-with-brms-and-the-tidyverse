@@ -62,13 +62,13 @@ reading_pp %>%
   # plot
   ggplot(aes(x = value, y = piat, color = name)) +
   geom_point(alpha = 2/3) +
-  stat_smooth(method = "lm", se = F, size = 1/2) +
+  stat_smooth(method = "lm", se = F, linewidth = 1/2) +
   scale_color_viridis_d(NULL, option = "B", end = .5, direction = -1) +
   xlab("measure of age") +
   coord_cartesian(xlim = c(5, 12),
                   ylim = c(0, 80)) +
   theme(panel.grid = element_blank()) +
-  facet_wrap(~id)
+  facet_wrap(~ id)
 ```
 
 Since it wasn't clear which `id` values the authors used in the text, we just randomized. Change the seed to view different samples.
@@ -77,6 +77,7 @@ Since it wasn't clear which `id` values the authors used in the text, we just ra
 
 The composite formula for our first model is
 
+$$
 \begin{align*}
 \text{piat}_{ij} & = \gamma_{00} + \gamma_{10} (\text{agegrp}_{ij} - 6.5) + \zeta_{0i} + \zeta_{1i} (\text{agegrp}_{ij} - 6.5) + \epsilon_{ij} \\
 
@@ -97,6 +98,7 @@ The composite formula for our first model is
 \mathbf \Omega  & = \begin{bmatrix} 1 & \rho_{01} \\ \rho_{01} & 1 \end{bmatrix}
 
 \end{align*}
+$$
 
 It's the same for the twin model using `age` rather than `agegrp`. Notice how we've switched from Singer and Willett's $\sigma^2$ parameterization to the $\sigma$ parameterization typical of **brms**.
 
@@ -127,13 +129,13 @@ set.seed(5)
 
 lkj <-
   tibble(eta = c(1, 4)) %>% 
-  mutate(draws = purrr::map(eta, ~rlkjcorr(n, K = 2, eta = .)[, 2, 1])) %>% 
+  mutate(draws = purrr::map(eta, ~ rlkjcorr(n, K = 2, eta = .)[, 2, 1])) %>% 
   unnest(draws)
 
 glimpse(lkj)
 ```
 
-Now plot that lkj.
+Now plot that `lkj`.
 
 ```{r, fig.width = 4, fig.height = 2.5}
 lkj %>% 
@@ -225,8 +227,8 @@ From a quick glance, you can see they are about the square of the $\sigma_\epsil
 Let's go ahead and compute the LOO and WAIC.
 
 ```{r, warning = F, message = F}
-fit5.1 <- add_criterion(fit5.1, c("loo", "waic"))
-fit5.2 <- add_criterion(fit5.2, c("loo", "waic"))
+fit5.1 <- add_criterion(fit5.1, criterion = c("loo", "waic"))
+fit5.2 <- add_criterion(fit5.2, criterion = c("loo", "waic"))
 ```
 
 Compare the models with a WAIC difference.
@@ -264,7 +266,7 @@ model_weights(fit5.1, fit5.2, weights = "waic") %>% round(digits = 3)
 model_weights(fit5.1, fit5.2, weights = "loo") %>% round(digits = 3)
 ```
 
-Both put the lion’s share of the weight on the `age_c` model. Back to McElreath @mcelreathStatisticalRethinkingBayesian2015:
+Both put the lion's share of the weight on the `age_c` model. Back to McElreath @mcelreathStatisticalRethinkingBayesian2015:
 
 > But what do these weights mean? There actually isn't a consensus about that. But here's Akaike’s interpretation, which is [common](https://www.springer.com/us/book/9780387953649). 
 >
@@ -335,6 +337,7 @@ Uneven for dayz.
 
 Here's the **brms** version of the composite formula for Model A, the unconditional growth model for `lnw`.
 
+$$
 \begin{align*}
 \text{lnw}_{ij} & = \gamma_{00} + \gamma_{10} \text{exper}_{ij} + \zeta_{0i} + \zeta_{1i} \text{exper}_{ij} + \epsilon_{ij} \\
 \epsilon_{ij} & \sim \operatorname{Normal}(0, \sigma_\epsilon) \\
@@ -353,6 +356,7 @@ Here's the **brms** version of the composite formula for Model A, the unconditio
 
 \mathbf\Omega & = \begin{bmatrix} 1 & \rho_{01} \\ \rho_{01} & 1 \end{bmatrix}
 \end{align*}
+$$
 
 To attempt setting priors for this, we need to review what `lnw` is. From the text: "To adjust for inflation, each hourly wage is expressed in constant 1990 dollars. To address the skewness commonly found in wage data and to linearize the individual wage trajectories, we analyze the natural logarithm of wages, *LNW*" (p. 147). So it's the log of participant wages in 1990 dollars. From the official [US Social Secutiry website](https://www.ssa.gov/oact/cola/central.html), we learn the average yearly wage in 1990 was $20,172.11. Here's that natural log for that.
 
@@ -386,6 +390,7 @@ So then what about our variance parameters? Given these are all entry-level work
 
 So then here's how we might formally specify our model priors:
 
+$$
 \begin{align*}
 \gamma_{00}     & \sim \operatorname{Normal}(1.335, 1) \\
 \gamma_{10}     & \sim \operatorname{Normal}(0, 0.5) \\
@@ -394,6 +399,7 @@ So then here's how we might formally specify our model priors:
 \sigma_1        & \sim \operatorname{Student-t}(3, 0, 1) \\
 \rho_{01}       & \sim \operatorname{LKJ} (4)
 \end{align*}
+$$
 
 For a point of comparison, here are the `brms::brm()` default priors.
 
@@ -430,12 +436,12 @@ print(fit5.3, digits = 3)
 
 Since the criterion `lnw` is on the log scale, Singer and Willett pointed out our estimate for $\gamma_{10}$ indicates a nonlinear growth rate on the natural dollar scale. They further explicated that "if an outcome in a linear relationship, $Y$, is expressed as a natural logarithm and $\hat \gamma_{01}$ is the regression coefficient for a predictor $X$, then $100(e^{\hat{\gamma}_{01}} - 1)$ is the *percentage change* in $Y$ per unit difference in $X$" (p. 148, *emphasis* in the original). Here's how to do that conversion with our **brms** output.
 
-```{r}
-post <-
-  posterior_samples(fit5.3) %>% 
+```{r, warning = F}
+draws <-
+  as_draws_df(fit5.3) %>%
   transmute(percent_change = 100 * (exp(b_exper) - 1))
 
-head(post)
+head(draws)
 ```
 
 For our plot, let's break out [Matthew Kay](https://twitter.com/mjskay)'s handy [**tidybayes** package](mjskay.github.io/tidybayes/) [@R-tidybayes]. With the `tidybayes::stat_halfeye()` function, it's easy to put horizontal point intervals beneath out parameter densities. Here we'll use 95% intervals.
@@ -443,7 +449,7 @@ For our plot, let's break out [Matthew Kay](https://twitter.com/mjskay)'s handy 
 ```{r, fig.width = 3.5, fig.height = 2.5, warning = F, message = F}
 library(tidybayes)
 
-post %>% 
+draws %>% 
   ggplot(aes(x = percent_change, y = 0)) +
   stat_halfeye(.width = .95) +
   scale_y_continuous(NULL, breaks = NULL) +
@@ -455,11 +461,11 @@ post %>%
 The **tidybayes** package also has a group of functions that make it easy to summarize posterior parameters with measures of central tendency (i.e., mean, median, mode) and intervals (i.e., percentile based, highest posterior density intervals). Here we’ll use `median_qi()` to get the posterior median and percentile-based 95% intervals.
 
 ```{r}
-post %>% 
+draws %>% 
   median_qi(percent_change)
 ```
 
-For our next model, Model B in Table 5.4, we add two time-invariant covariates. In the data, these are listed as `black` and `hgc.9`. Before we proceed, let’s rename `hgc.9` to be more consistent with [**tidyverse** style](https://style.tidyverse.org/syntax.html#object-names).
+For our next model, Model B in Table 5.4, we add two time-invariant covariates. In the data, these are listed as `black` and `hgc.9`. Before we proceed, let's rename `hgc.9` to be more consistent with [**tidyverse** style](https://style.tidyverse.org/syntax.html#object-names).
 
 ```{r}
 wages_pp <-
@@ -476,7 +482,7 @@ wages_pp %>%
   ggplot(aes(x = value)) +
   geom_bar() +
   theme(panel.grid = element_blank()) +
-  facet_wrap(~name, scales = "free")
+  facet_wrap(~ name, scales = "free")
 ```
 
 We see `black` is a dummy variable coded "Black" = 1, "Non-black" = 0. `hgc_9` is a somewhat Gaussian ordinal centered around zero. For context, it might also help to check its standard deviation.
@@ -487,6 +493,7 @@ sd(wages_pp$hgc_9)
 
 With a mean near 0 and an $SD$ near 1, `hgc_9` is almost in a standardized metric. If we wanted to keep with our weakly-regularizing approach, `normal(0, 1)` or even `normal(0, 0.5)` would be pretty permissive for both these variables. Recall that we're predicting wage on the log scale. A $\gamma$ value of 1 or even 0.5 would be humongous for the social sciences. Since we already have the $\gamma$ for `exper` set to `normal(0, 0.5)`, let's just keep with that. Here's how we might describe our model in statistical terms:
 
+$$
 \begin{align*}
 \text{lnw}_{ij} & = \gamma_{00} + \gamma_{01} (\text{hgc}_{i} - 9) + \gamma_{02} \text{black}_{i} \\
 & \;\;\; + \gamma_{10} \text{exper}_{ij} + \gamma_{11} \text{exper}_{ij} \times (\text{hgc}_{i} - 9) + \gamma_{12} \text{exper}_{ij} \times \text{black}_{i} \\
@@ -505,10 +512,11 @@ With a mean near 0 and an $SD$ near 1, `hgc_9` is almost in a standardized metri
 \mathbf\Omega & = \begin{bmatrix} 1 & \rho_{01} \\ \rho_{01} & 1 \end{bmatrix} \\
 
 \gamma_{00}                                      & \sim \operatorname{Normal}(1.335, 1) \\
-\gamma_{01},..., \gamma_{12}                     & \sim \operatorname{Normal}(0, 0.5) \\
+\gamma_{01}, \dots, \gamma_{12}                     & \sim \operatorname{Normal}(0, 0.5) \\
 \sigma_\epsilon, \sigma_0, \text{ and } \sigma_1 & \sim \operatorname{Student-t} (3, 0, 1) \\
 \rho_{01}                                        & \sim \operatorname{LKJ} (4).
 \end{align*}
+$$
 
 The top portion up through the $\mathbf\Omega$ line is the likelihood. Starting with $\gamma_{00} \sim \text{Normal}(1.335, 1)$ on down, we've listed our priors. Here's how to fit the model with **brms**.
 
@@ -535,10 +543,10 @@ print(fit5.4, digits = 3)
 
 The $\gamma$'s are on par with those in the text. When we convert the $\sigma$ parameters to the $\sigma^2$ metric, here's what they look like.
 
-```{r, fig.width = 8, fig.height = 2.25}
-post <- posterior_samples(fit5.4) 
+```{r, fig.width = 8, fig.height = 2.25, warning = F}
+draws <- as_draws_df(fit5.4) 
 
-post %>% 
+draws %>% 
   transmute(`sigma[0]^2` = sd_id__Intercept^2,
             `sigma[1]^2` = sd_id__exper^2,
             `sigma[epsilon]^2` = sigma^2) %>% 
@@ -554,8 +562,8 @@ post %>%
 
 We might plot our $\gamma$'s, too. Here we'll use `tidybayes::stat_pointinterval()` to just focus on the points and intervals.
 
-```{r, fig.width = 8, fig.height = 2}
-post %>% 
+```{r, fig.width = 8, fig.height = 2, warning = F}
+draws %>% 
   select(b_Intercept:`b_black:exper`) %>% 
   set_names(str_c("gamma", c("[0][0]", "[0][1]", "[0][2]", "[1][0]", "[1][1]", "[1][2]"))) %>% 
   pivot_longer(everything()) %>% 
@@ -619,8 +627,7 @@ When we use weights, almost all goes to `fit5.4` and `fit5.5`. Focusing on the t
 nd <-
   crossing(black = 0:1,
            hgc_9 = c(0, 3)) %>% 
-  expand(nesting(black, hgc_9),
-         exper = seq(from = 0, to = 11, length.out = 30))
+  expand_grid(exper = seq(from = 0, to = 11, length.out = 30))
 
 f <-
   fitted(fit5.5, 
@@ -651,7 +658,7 @@ f %>%
   ylab("lnw") +
   coord_cartesian(ylim = c(1.6, 2.4)) +
   theme(panel.grid = element_blank()) +
-  facet_wrap(~hgc_9)
+  facet_wrap(~ hgc_9)
 ```
 
 This leads in nicely to a brief discussion of posterior predictive checks (PPC). The basic idea is that good models should be able to retrodict the data used to produce them. Table 5.3 in the text introduced the data set by highlighting three participants and we went ahead and looked at their data in a plot. One way to do a PPC might be to plot their original data atop their model estimates. The `fitted()` function will help us with the preparatory work.
@@ -684,7 +691,7 @@ f %>%
   labs(subtitle = "The black dots are the original data. The colored points and vertical lines are the participant-specific posterior\nmeans and 95% intervals.") +
   theme(legend.position = "none",
         panel.grid = element_blank()) +
-  facet_wrap(~id)
+  facet_wrap(~ id)
 ```
 
 Although each participant got their own intercept and slope, the estimates all fall in straight lines. Since we're only working with time-invariant covariates, that's about the best we can do. Though our models can express gross trends over time, they're unable to speak to variation from occasion to occasion. Just a little later on in this chapter and we'll learn how to do better.
@@ -750,15 +757,15 @@ fit5.6 <-
 print(fit5.6)
 ```
 
-Let's walk through this slow. 
+Let's walk through this slow.
 
-You may have noticed that warning message about divergent transitions. We'll get to that in a bit. First focus on the parameter estimates for `sd(exper)`. Unlike in the text, our posterior mean is not 0.000. But do remember that our posterior is parameterized in the $\sigma$ metric. Let's do a little converting and look at it in a plot.
+You may have noticed that warning message about *divergent transitions*. We'll get to that in a bit. First focus on the parameter estimates for `sd(exper)`. Unlike in the text, our posterior mean is not 0.000. But do remember that our posterior is parameterized in the $\sigma$ metric. Let's do a little converting and look at it in a plot.
 
-```{r}
-post <- posterior_samples(fit5.6)
+```{r, warning = F}
+draws <- as_draws_df(fit5.6)
 
 v <-
-  post %>%
+  draws %>%
   transmute(sigma_1 = sd_id__exper) %>% 
   mutate(sigma_2_1 = sigma_1^2) %>% 
   set_names("sigma[1]", "sigma[1]^2") %>% 
@@ -853,7 +860,7 @@ print(fit5.8)
 
 No warning messages and our effective samples for $\sigma_0$ improved a bit. Compute the WAIC for both models.
 
-```{r, warning = F, message = F}
+```{r}
 fit5.7 <- add_criterion(fit5.7, criterion = "waic")
 fit5.8 <- add_criterion(fit5.8, criterion = "waic")
 ```
@@ -894,21 +901,33 @@ In their paper, they covered both penalized maximum likelihood and full Bayesian
 
 In the upper left panel of Figure 3, Chung and colleagues gave an example of what they mean by $\lambda \rightarrow 0$: $\lambda = 0.1$. Here's an example of what $\operatorname{Gamma}(2, 0.1)$ looks like across the parameter space of 0 to 100.
 
-```{r, fig.width = 4, fig.height = 1.75}
-tibble(x = c(0, 100)) %>% 
-  ggplot(aes(x = x)) +
-  stat_function(fun = dgamma, n = 1e2, args = list(shape = 2, rate = 0.1)) +
-  scale_y_continuous(NULL, breaks = NULL) +
+```{r, fig.width = 4, fig.height = 2.25, message = F}
+library(ggdist)
+
+prior(gamma(2, 0.1)) %>% 
+  parse_dist() %>% 
+  
+  ggplot(aes(xdist = .dist_obj, y = prior)) + 
+  stat_halfeye(.width = .95, p_limits = c(.0001, .9999)) +
+  scale_y_discrete(NULL, breaks = NULL, expand = expansion(add = 0.1)) +
+  labs(title = "Gamma(2, 0.1)",
+       x = "parameter space") +
+  coord_cartesian(xlim = c(0, 100)) +
   theme(panel.grid = element_blank())
 ```
 
 Given we're working with data on the log scale, that's a massively permissive prior. Let's zoom in and see what it means for the parameter space of possible values for our data.
 
-```{r, fig.width = 4, fig.height = 1.75}
-tibble(x = c(0, 2)) %>% 
-  ggplot(aes(x = x)) +
-  stat_function(fun = dgamma, n = 1e2, args = list(shape = 2, rate = .1)) +
-  scale_y_continuous(NULL, breaks = NULL) +
+```{r, fig.width = 4, fig.height = 2.25, message = F}
+prior(gamma(2, 0.1)) %>% 
+  parse_dist() %>% 
+  
+  ggplot(aes(xdist = .dist_obj, y = prior)) + 
+  stat_halfeye(.width = .95, p_limits = c(.000001, .99)) +
+  scale_y_discrete(NULL, breaks = NULL, expand = expansion(add = 0.1)) +
+  labs(title = "Gamma(2, 0.1)",
+       x = "parameter space (zoomed in)") +
+  coord_cartesian(xlim = c(0, 2)) +
   theme(panel.grid = element_blank())
 ```
 
@@ -931,10 +950,11 @@ fit5.9 <-
                 prior(lkj(4), class = cor)),
       iter = 2000, warmup = 1000, chains = 4, cores = 4,
       seed = 5,
+      control = list(adapt_delta = .85),
       file = "fits/fit05.09")
 ```
 
-Notice that we didn't bother fooling around with `adapt_delta` and the model fit just fine. Here are the results.
+Notice how we had to increase `adapt_delta` a bit. Here are the results.
 
 ```{r}
 print(fit5.9, digits = 3)
@@ -942,8 +962,8 @@ print(fit5.9, digits = 3)
 
 Our `sd(exper)` is still quite close to zero. But notice how not the lower level of the 95% interval is higher than zero. Here's what it looks like in both $\sigma$ and $\sigma^2$ metrics.
 
-```{r, fig.width = 8, fig.height = 2.5}
-posterior_samples(fit5.9) %>%
+```{r, fig.width = 8, fig.height = 2.5, warning = F}
+as_draws_df(fit5.9) %>%
   transmute(sigma_1 = sd_id__exper) %>% 
   mutate(sigma_2_1 = sigma_1^2) %>% 
   set_names("sigma[1]", "sigma[1]^2") %>% 
@@ -958,8 +978,8 @@ posterior_samples(fit5.9) %>%
 
 Let's zoom in on the leftmost part of the plot.
   
-```{r, fig.width = 8, fig.height = 2.5}
-posterior_samples(fit5.9) %>%
+```{r, fig.width = 8, fig.height = 2.5, warning = F}
+as_draws_df(fit5.9) %>%
   transmute(sigma_1 = sd_id__exper) %>% 
   mutate(sigma_2_1 = sigma_1^2) %>% 
   set_names("sigma[1]", "sigma[1]^2") %>% 
@@ -976,7 +996,7 @@ posterior_samples(fit5.9) %>%
 Although we are still brushing up on the boundary with $\sigma_1^2$, the mode is no longer at zero. In the discussion, Chung and colleagues pointed out "sometimes weak prior information is available about a variance parameter. When $\alpha = 2$, the gamma density has its mode at $1 / \lambda$, and so one can use the $\operatorname{gamma}(\alpha, \lambda)$ prior with $1 / \lambda$ set to the prior estimate of $\sigma_\theta$" (p. 703). Let's say we only had our `wages_small_pp`, but the results of something like the `wages_pp` data were published by some earlier group of researchers. In this case, we do have good prior data; we have the point estimate from the model of the `wages_pp` data! Here's what that was in terms of the median.
 
 ```{r, fig.width = 8, fig.height = 2.5}
-posterior_samples(fit5.3) %>%
+as_draws_df(fit5.3) %>%
   median_qi(sd_id__exper)
 ```
 
@@ -988,11 +1008,16 @@ And here's what that value is when set as the divisor of 1.
 
 What does that distribution look like?
 
-```{r, fig.width = 4, fig.height = 1.75}
-tibble(x = c(0, 1)) %>% 
-  ggplot(aes(x = x)) +
-  stat_function(fun = dgamma, n = 1e3, args = list(shape = 2, rate = 24.0716)) +
-  scale_y_continuous(NULL, breaks = NULL) +
+```{r, fig.width = 4, fig.height = 2.25, message = F}
+prior(gamma(2, 24.0716)) %>% 
+  parse_dist() %>% 
+  
+  ggplot(aes(xdist = .dist_obj, y = prior)) + 
+  stat_halfeye(.width = .95, p_limits = c(.0001, .9999)) +
+  scale_y_discrete(NULL, breaks = NULL, expand = expansion(add = 0.1)) +
+  labs(title = "Gamma(2, 24.0716)",
+       x = "parameter space") +
+  coord_cartesian(xlim = c(0, 1)) +
   theme(panel.grid = element_blank())
 ```
 
@@ -1020,7 +1045,7 @@ Check out the results.
 print(fit5.10, digits = 3)
 ```
 
-Here we compare the three ways to specify the $\sigma_1$ prior with the posterior from the original model fit with the full data set. For simplicity, we’ll just look at the results in the **brms**-like $\sigma$ metric. Hopefully by now you’ll know how to do the conversions to get the values into the $\sigma^2$ metric.
+Here we compare the three ways to specify the $\sigma_1$ prior with the posterior from the original model fit with the full data set. For simplicity, we'll just look at the results in the **brms**-like $\sigma$ metric. Hopefully by now you’ll know how to do the conversions to get the values into the $\sigma^2$ metric.
 
 ```{r, fit.width = 8, fig.height = 4.5}
 tibble(`full data, student_t(3, 0, 1) prior`  = VarCorr(fit5.3, summary = F)[[1]][[1]][1:4000, 2],
@@ -1041,7 +1066,7 @@ tibble(`full data, student_t(3, 0, 1) prior`  = VarCorr(fit5.3, summary = F)[[1]
   scale_fill_manual(values = c("grey75", "darkgoldenrod2")) +
   theme(legend.position = "none",
         panel.grid = element_blank()) +
-  facet_wrap(~name, ncol = 1)
+  facet_wrap(~ name, ncol = 1)
 ```
 
 One thing to notice is that when you're working with full Bayesian estimation with even a rather vague prior with a boundary on zero, the measure of central tendency in the posterior is away from zero. Things get more compact when you're working in the $\sigma^2$ metric. But remember that when we're fitting our models with **brms**, we're in the $\sigma$ metric, anyway. And with either of these three options, you don't have a compelling reason to set the $\sigma_\theta$ parameter to zero the way you would with ML. Even a rather vague prior will add enough information to the model that we can feel confident about keeping our theoretically-derived $\sigma_1$ parameter.
@@ -1078,22 +1103,22 @@ If you'd like more control over your trace plot visuals, you might check out the
 library(bayesplot)
 ```
 
-Our main function will be `mcmc_trace()`. Unlike with the `brms::plot()` method, `bayesplog::mcmc_trace()` takes the posterior draws themselves as input. So we'll have to use `posterior_samples()` first. By default, `posterior_samples()` does not extract information about which chain a given draw is from. So we'll have to add the `add_chain = T` argument.
+Our main function will be `mcmc_trace()`. Unlike with the `brms::plot()` method, `bayesplog::mcmc_trace()` takes the posterior draws themselves as input. So we'll have to use `as_draws_df()` first.
 
 ```{r}
-post <- posterior_samples(fit5.4, add_chain = T)
+draws <- as_draws_df(fit5.4)
 ```
 
 We can use the `pars` argument to focus on particular parameters.
 
 ```{r, fig.width = 4, fig.height = 1.5}
-mcmc_trace(post, pars = "sigma")
+mcmc_trace(draws, pars = "sigma")
 ```
 
 If we use the `pars = vars(...)` format, we can use function helpers from **dplyr** to select subsets of parameters. For example, here's how we might single out the $\gamma$'s.
 
 ```{r, fig.width = 6, fig.height = 4}
-mcmc_trace(post,
+mcmc_trace(draws,
            pars = vars(starts_with("b_")),
            facet_args = list(ncol = 2))
 ```
@@ -1101,7 +1126,7 @@ mcmc_trace(post,
 Notice how we used the `facet_args` argument to adjust the number of columns in the output. We can also use familiar **ggplot2** functions to customize the plots further.
 
 ```{r, fig.width = 8, fig.height = 2.25, message = F, warning = F}
-post %>% 
+draws %>% 
   mutate(`sigma[0]`       = sd_id__Intercept,
          `sigma[1]`       = sd_id__exper,
          `sigma[epsilon]` = sigma) %>%
@@ -1112,7 +1137,7 @@ mcmc_trace(pars = vars(starts_with("sigma[")),
   scale_x_continuous(NULL, breaks = NULL) +
   ggtitle("I can't wait to show these traceplots to my mom.") +
   theme_grey() +
-  theme(legend.position = "bottom",,
+  theme(legend.position = "bottom",
         panel.grid = element_blank(),
         panel.grid.major.y = element_line(color = "white", size = 1/4),
         strip.text = element_text(size = 12))
@@ -1122,14 +1147,14 @@ Trace plots are connected to other important concepts, like autocorrelation and 
 
 ##### Autocorrelation.
 
-When using Markov chain Monte Carlo methods, of which HMC is a special case, the notions of autocorrelation and effective sample size are closely connected. Both have to do with the question, How many post-warmup draws from the posterior do I need to take? If you take too few, you won't have a good sense of the shape of the posterior. If you take more than necessary, you're just wasting time and computer memory. Here’s how McElreath introduced the topic in his [-@mcelreathStatisticalRethinkingBayesian2015] text:
+When using Markov chain Monte Carlo methods, of which HMC is a special case, the notions of autocorrelation and effective sample size are closely connected. Both have to do with the question, How many post-warmup draws from the posterior do I need to take? If you take too few, you won't have a good sense of the shape of the posterior. If you take more than necessary, you're just wasting time and computer memory. Here's how McElreath introduced the topic in his [-@mcelreathStatisticalRethinkingBayesian2015] text:
 
 > So how many samples do we need for accurate inference about the posterior distribution? It depends. First, what really matters is the *effective* number of samples, not the raw number. The effective number of samples is an estimate of the number of independent samples from the posterior distribution. Markov chains are typically *autocorrelated*, so that sequential samples are not entirely independent. Stan chains tend to be less autocorrelated than those produced by other engines [e.g., the Gibbs sampler], but there is always some autocorrelation. (p. 255, *emphasis* in the original)
 
 I'm not aware of a way to query the autocorrelations from a `brm()` fit using **brms** convenience functions. However, we can get those diagnostics from the `bayesplot::mcmc_acf()` function.
 
-```{r, fig.width = 8, fig.height = 4}
-mcmc_acf(post, pars = vars(starts_with("b_")), lags = 10)  +
+```{r, fig.width = 8, fig.height = 4, warning = F}
+mcmc_acf(draws, pars = vars(starts_with("b_")), lags = 10)  +
   theme_grey() +
   theme(panel.grid = element_blank())
 ```
@@ -1137,7 +1162,7 @@ mcmc_acf(post, pars = vars(starts_with("b_")), lags = 10)  +
 The `mcmc_acf()` function gives a wealth of granular output. The columns among the plots are the specified parameters. The rows are the chains, one for each. In this particular case, the autocorrelations were quite low for all our $\gamma$ parameters by the second or third lag. That's really quite good and not uncommon for HMC. Do note, however, that this won’t always be the case. For example, here are the plots for our variance parameters and $\rho_{01}$.
 
 ```{r, fig.width = 6, fig.height = 4}
-mcmc_acf(post, pars = vars(starts_with("sd_"), "sigma", starts_with("cor")), lags = 10)  +
+mcmc_acf(draws, pars = vars(starts_with("sd_"), "sigma", starts_with("cor")), lags = 10)  +
   theme_grey() +
   theme(panel.grid = element_blank(),
         strip.text = element_text(size = 7))
@@ -1165,47 +1190,36 @@ You may wonder, how many effective samples do I need? Back to McElreath:
 
 > If all you want are posterior means, it doesn't take many samples at all to get very good estimates. Even a couple hundred samples will do. But if you care about the exact shape in the extreme tails of the posterior, the 99th percentile or so, then you'll need many many more. So there is no universally useful number of samples to aim for. In most typical regression applications, you can get a very good estimate of the posterior mean with as few as 200 effective samples. And if the posterior is approximately Gaussian, then all you need in addition is a good estimate of the variance, which can be had with one order of magnitude more, in most cases. For highly skewed posteriors, you'll have to think more about which region of the distribution interests you. (p. 255)
 
-At the moment, **brms** does not offer a convenience function that allows users to collect the `Bulk_ESS` and `Tail_ESS` values in a data frame. However you can do so with help from the [**posterior** package](https://github.com/stan-dev/posterior) [@R-posterior], which has not made its way to CRAN, yet, but can be downloaded directly from GitHub.
-
-```{r, eval = F}
-# install the beta release with this
-install.packages("posterior", repos = c("https://mc-stan.org/r-packages/", getOption("repos")))
-
-# install the latest development version with this instead
-install.packages("remotes")
-remotes::install_github("stan-dev/posterior")
-```
-
-For our purposes, the function of interest is `summarise_draws()`, which will take the output from `posterior_samples()` as input. We'll save the results as `post_sum`.
+At the moment, **brms** does not offer a convenience function that allows users to collect the `Bulk_ESS` and `Tail_ESS` values in a data frame. However you can do so with help from the [**posterior** package](https://github.com/stan-dev/posterior) [@R-posterior]. For our purposes, the function of interest is `summarise_draws()`, which will take the output from `as_draws_df()` as input. We'll save the results as `draws_sum`.
 
 ```{r, warning = F, message = F}
 library(posterior)
 
-post_sum <-
-  posterior_samples(fit5.4) %>% 
+draws_sum <-
+  as_draws_df(fit5.4) %>% 
   summarise_draws()
 
-post_sum %>% 
+draws_sum %>% 
   head(n = 10)
 ```
 
 Note how the last two columns are the `ess_bulk` and the `ess_tail`. Here we summarize them with histograms.
 
 ```{r, fig.width = 5, fig.height = 2.75, warning = F}
-post_sum %>% 
+draws_sum %>% 
   pivot_longer(starts_with("ess")) %>% 
   
   ggplot(aes(x = value)) +
   geom_histogram(binwidth = 100) +
   xlim(0, NA) +
   theme(panel.grid = element_blank()) +
-  facet_wrap(~name)
+  facet_wrap(~ name)
 ```
 
 If you wanted a focused plot of the effective sample sizes for our primary summary parameters, you would just wrangle the output a little. Since it's fun, we'll switch to a lollipop plot.
 
-```{r, fig.width = 6, fig.height = 1.5, warning = F}
-post_sum %>% 
+```{r, fig.width = 6, fig.height = 1.75, warning = F}
+draws_sum %>% 
   slice(1:10) %>% 
   pivot_longer(contains("ess")) %>% 
   mutate(ess = str_remove(name, "ess_")) %>% 
@@ -1219,13 +1233,13 @@ post_sum %>%
   theme(panel.grid  = element_blank(),
         axis.text.y = element_text(hjust = 0),
         axis.ticks.y = element_blank()) +
-  facet_wrap(~ess)
+  facet_wrap(~ ess)
 ```
 
 You may have noticed from the ESS histogram that many of the parameters seemed to have bulk ESS values well above the total number of posterior draws (4,500). What's that about? As is turns out, the sampling in Stan is so good that sometimes the HMC chains for a parameter can be negatively autocorrelated. When this is the case, your effective sample size can be larger than your actual sample size. Madness, I know. This was the case for many of our random effects. Here's a look at the parameters with ten largest values.
 
 ```{r}
-post_sum %>% 
+draws_sum %>% 
   arrange(desc(ess_bulk)) %>% 
   select(variable, ess_bulk) %>% 
   slice(1:10)
@@ -1234,11 +1248,12 @@ post_sum %>%
 Let's take the first 4 and check their autocorrelation plots.
 
 ```{r, fig.width = 6, fig.height = 4}
-mcmc_acf(post, pars = vars(`r_id[12335,exper]`, `r_id[5968,Intercept]`, `r_id[10476,Intercept]`, `r_id[7117,Intercept]`), lags = 5)  +
+mcmc_acf(draws, pars = vars(`r_id[12335,exper]`, `r_id[5968,Intercept]`, `r_id[10476,Intercept]`, `r_id[7117,Intercept]`), lags = 5)  +
   theme_grey() +
   theme(panel.grid = element_blank(),
         strip.text = element_text(size = 10))
 ```
+
 See those dips below zero for the first lag in each? That's what a negative autocorrelation looks like. Beautiful. For more on negative autocorrelations within chains and how it influences the number of effective samples, check out [this thread on the Stan forums](https://discourse.mc-stan.org/t/n-eff-bda3-vs-stan/2608) where many members of the Stan team chimed in.
 
 ##### $\widehat R$.
@@ -1262,10 +1277,10 @@ For our `fit5.4`, the `brms::rhat()` function returned a named numeric vector, w
 brms::rhat(fit5.4)[1:10]
 ```
 
-Note also that our `post_sum` object from above has an `rhat` column, too.
+Note also that our `draws_sum` object from above has an `rhat` column, too.
 
 ```{r}
-post_sum %>% 
+draws_sum %>% 
   select(variable, rhat) %>% 
   slice(1:4)
 ```
@@ -1273,7 +1288,7 @@ post_sum %>%
 For a more global perspective, just plot.
 
 ```{r, fig.width = 4, fig.height = 2.5}
-post_sum %>% 
+draws_sum %>% 
   ggplot(aes(x = rhat)) +
   geom_vline(xintercept = 1, color = "white") +
   geom_histogram(binwidth = .0001) +
@@ -1289,7 +1304,7 @@ mcmc_rhat(brms::rhat(fit5.4)[1:20]) +
 
 By default, `mcmc_rhat()` does not return text on the $y$-axis. But you can retrieve that text with the `yaxis_text()` function. For more on the $\widehat R$, you might check out the *Rhat: potential scale reduction statistic* subsection of Gabry and Modrák's [-@gabryVisualMCMC2020] vignette, [*Visual MCMC diagnostics using the bayesplot package*](https://cran.r-project.org/web/packages/bayesplot/vignettes/visual-mcmc-diagnostics.html#rhat-potential-scale-reduction-statistic).
 
-We should also point out that the Stan team has found some deficiencies with the $\widehat R$. They've made recommendations that will be implemented in the Stan ecosystem sometime soon. In the meantime, you can read all about it in their preprint [@vehtariRanknormalizationFoldingLocalization2019] and in Dan Simpson's blog post, [*Maybe it's time to let the old ways die; or We broke R-hat so now we have to fix it*](https://statmodeling.stat.columbia.edu/2019/03/19/maybe-its-time-to-let-the-old-ways-die-or-we-broke-r-hat-so-now-we-have-to-fix-it/). If you learn best by sassy twitter banter, [click through this interchange](https://twitter.com/betanalpha/status/1108185746870030336) among some of our Stan team all-stars.
+We should also point out that the Stan team has found some deficiencies with the $\widehat R$. They've made recommendations that will be implemented in the Stan ecosystem sometime soon. In the meantime, you can read all about it in their preprint [@vehtariRanknormalizationFoldingLocalization2019] and in Dan Simpson's blog post, [*Maybe it's time to let the old ways die; or We broke R-hat so now we have to fix it*](https://statmodeling.stat.columbia.edu/2019/03/19/maybe-its-time-to-let-the-old-ways-die-or-we-broke-r-hat-so-now-we-have-to-fix-it/).
 
 ```{r, echo = F}
 # let's free up some memory
@@ -1398,6 +1413,7 @@ To help us pick our priors, [Brown and Gary [-@brownPredictorsDepressiveSymptoms
 
 Based the variables in the data set and the descriptions of it in the text, we don't have a good sense of the demographic backgrounds of the participants. But with the information we have in hand, a reasonable empirically-based but nonetheless noncommittal prior for baseline CES-D might be something like `normal(14.5, 20)`. A weakly-regularizing prior on change over 1 month might be `normal(0, 10)`. It'd be fair if you wanted to argue about these priors. Try your own! But if you are willing to go along with me, we might write the statistical formula for the unconditional growth model as
 
+$$
 \begin{align*}
 \text{cesd}_{ij} & = \gamma_{00} + \gamma_{10} \text{months}_{ij} + \zeta_{0i} + \zeta_{1i} \text{months}_{ij} + \epsilon_{ij} \\
 \epsilon_{ij}    & \sim \operatorname{Normal} (0, \sigma_\epsilon) \\
@@ -1419,6 +1435,7 @@ Based the variables in the data set and the descriptions of it in the text, we d
 \sigma_\epsilon, \sigma_0, \text{ and } \sigma_1 & \sim \operatorname{Student-t}(3, 0, 11.9) \\
 \rho_{01}                                        & \sim \operatorname{LKJ} (4).
 \end{align*}
+$$
 
 Those $\operatorname{Student-t}(3, 0, 11.9)$ priors for the $\sigma$'s are the defaults, which you can confirm with `get_prior()`. The $\operatorname{LKJ} (4)$ for $\rho_{01}$ will weakly regularize the correlation towards zero.
 
@@ -1448,8 +1465,8 @@ print(fit5.11, digits = 3)
 
 Here are the posteriors for the CES-D at the first day of job loss (i.e., $\gamma_{00}$) and the expected rate of change over one month (i.e., $\gamma_{10}$).
 
-```{r, fig.width = 6, fig.height = 2.25}
-posterior_samples(fit5.11) %>% 
+```{r, fig.width = 6, fig.height = 2.25, warning = F}
+as_draws_df(fit5.11) %>% 
   transmute(`first day of job loss` = b_Intercept,
             `linear decline by month` = b_months) %>% 
   pivot_longer(everything()) %>% 
@@ -1459,7 +1476,7 @@ posterior_samples(fit5.11) %>%
   scale_y_continuous(NULL, breaks = NULL) +
   xlab("CES-D composite score") +
   theme(panel.grid = element_blank()) +
-  facet_wrap(~name, scales = "free")
+  facet_wrap(~ name, scales = "free")
 ```
 
 We might use `conditional_effects()` to get a quick view on what that might looks like.
@@ -1478,6 +1495,7 @@ For reference, the dashed gray line is the value we centered our prior for initi
 
 We might specify Model B, our first model with a time-varying covariate, like this:
 
+$$
 \begin{align*}
 \text{cesd}_{ij} & = \big [ \gamma_{00} + \gamma_{10} \text{months}_{ij} + \gamma_{20} \text{unemp}_{ij} \big ] + \big [  \zeta_{0i} + \zeta_{1i} \text{months}_{ij} + \epsilon_{ij} \big ]\\
 \epsilon_{ij}    & \sim \operatorname{Normal}(0, \sigma_\epsilon) \\
@@ -1499,6 +1517,7 @@ We might specify Model B, our first model with a time-varying covariate, like th
 \sigma_\epsilon, \sigma_0, \text{ and } \sigma_1 & \sim \operatorname{Student-t}(3, 0, 11.9) \\
 \rho_{01}                                        & \sim \operatorname{LKJ}(4).
 \end{align*}
+$$
 
 Note a few things about the priors. First, we haven't changed any of the priors from the previous model. All we did was add $\gamma_{20} \sim \text{Normal}(0, 10)$ for our new parameter. Given how weakly-informative our other priors have been for these data, this isn't an unreasonable approach. However, the meaning for our intercept, $\gamma_{01}$, has changed. Now it's the initial status for someone who is *employed* at baseline. But remember that for Model A, we set that prior with unemployed people in mind. A careful researcher might want to dive back into the literature to see if some lower value than 14.5 would be more reasonable to set for the mean of that prior. However, since the standard deviations for our intercepts priors and the covariate priors are all rather wide and permissive, this just won't be much of a problem, for us. Buy anyway, second, note that we've centered our prior for $\gamma_{20}$ on zero. This is a weakly-regularizing prior, slightly favoring smaller effects over larger ones. And like before, one could easily argue for different priors.
 
@@ -1516,7 +1535,7 @@ fit5.12 <-
                 prior(lkj(4), class = cor)),
       iter = 2000, warmup = 1000, chains = 4, cores = 4,
       seed = 5,
-      control = list(adapt_delta = .99),
+      control = list(adapt_delta = .9),
       file = "fits/fit05.12")
 ```
 
@@ -1536,14 +1555,14 @@ fixef(fit5.12)["months", ]
 You might be wondering why the quote from Singer and Willett used positive numbers while our parameter estimates have negative ones. No, there's no mistake, there. Negative parameter estimates for monthly trajectories are then same thing as expressing a rate of *decline* with a positive number. But anyways, you see our estimates are on par with theirs. With our Bayesian paradigm, it's also easy to get a formal difference distribution.
 
 ```{r}
-tibble(fit5.11 = posterior_samples(fit5.11) %>% pull("b_months"),
-       fit5.12 = posterior_samples(fit5.12) %>% pull("b_months"))
+tibble(fit5.11 = as_draws_df(fit5.11) %>% pull("b_months"),
+       fit5.12 = as_draws_df(fit5.12) %>% pull("b_months"))
 ```
 
 
 ```{r, fig.width = 3, fig.height = 2.25}
-tibble(fit5.11 = posterior_samples(fit5.11) %>% pull("b_months"),
-       fit5.12 = posterior_samples(fit5.12) %>% pull("b_months")) %>% 
+tibble(fit5.11 = as_draws_df(fit5.11) %>% pull("b_months"),
+       fit5.12 = as_draws_df(fit5.12) %>% pull("b_months")) %>% 
   mutate(dif = fit5.12 - fit5.11) %>%
   
   ggplot(aes(x = dif, y = 0)) +
@@ -1556,7 +1575,7 @@ tibble(fit5.11 = posterior_samples(fit5.11) %>% pull("b_months"),
 Here's our posterior for $\gamma_{20}$, `b_unemp`.
 
 ```{r, fig.width = 3, fig.height = 2.25}
-posterior_samples(fit5.12) %>% 
+as_draws_df(fit5.12) %>% 
   ggplot(aes(x = b_unemp, y = 0)) +
   stat_halfeye(.width = .95) +
   scale_y_continuous(NULL, breaks = NULL) +
@@ -1565,7 +1584,7 @@ posterior_samples(fit5.12) %>%
 
 Let's compute our WAIC estimates for `fit5.11` and `fit5.12`.
 
-```{r, message = F}
+```{r}
 fit5.11 <- add_criterion(fit5.11, criterion = "waic")
 fit5.12 <- add_criterion(fit5.12, criterion = "waic")
 ```
@@ -1808,11 +1827,13 @@ $$
 
 Here's the corresponding level-2 model:
 
+$$
 \begin{align*}
 \pi_{0i} & = \gamma_{00} + \zeta_{0i} \\
 \pi_{1i} & = \gamma_{10} + \zeta_{1i} \\
 \pi_{2i} & = \gamma_{20}.
 \end{align*}
+$$
 
 If we wanted the effects of the time-varying covariate `unemp` to vary across individuals, then we'd expand the definition of $\pi_{2i}$ to be
 
@@ -1828,6 +1849,7 @@ $$
 
 it does change the model for the $\zeta$s. Within our Stan/**brms** paradigm, that would now be
 
+$$
 \begin{align*}
 \begin{bmatrix} 
 \zeta_{0i} \\ \zeta_{1i} \\ \zeta_{2i}
@@ -1842,15 +1864,18 @@ it does change the model for the $\zeta$s. Within our Stan/**brms** paradigm, th
 \mathbf \Omega & = \begin{bmatrix} 1 & \rho_{01} & \rho_{02} \\ \rho_{01} & 1 & \rho_{12} \\ \rho_{02} & \rho_{12} & 1 \end{bmatrix}.
 
 \end{align*}
+$$
 
 Reworded slightly from the text (p. 169), by adding one residual parameter, $\zeta_{2i}$, we got an additional corresponding standard deviation parameter, $\sigma_2$, and two more correlation parameters, $\rho_{02}$ and $\rho_{12}$. Staying with our weakly-regularizing prior approach, the priors for the updated model might look like
 
+$$
 \begin{align*}
 \gamma_{00}                          & \sim \operatorname{Normal}(14.5, 20) \\
-\gamma_{10} \text{ and } \gamma_{20} & \sim \operatorname{Normal}(0, 10) \\
-\sigma_\epsilon,..., \sigma_2        & \sim \operatorname{Student-t}(3, 0, 11.9) \\
+\gamma_{10}, \gamma_{20} & \sim \operatorname{Normal}(0, 10) \\
+\sigma_\epsilon, \dots, \sigma_2        & \sim \operatorname{Student-t}(3, 0, 11.9) \\
 \Omega                               & \sim \operatorname{LKJ} (4).
 \end{align*}
+$$
 
 Singer and Willett then cautioned readers about hastily adding $\zeta$ parameters to their models, particularly in cases where you're likely to run into estimation issues, such as boundary constraints. Within our Stan/**brms** paradigm, we still have to be aware of these difficulties. However, with skillfully-chosen priors, I think you'll find we can fit more ambitious models than would typically be possible with frequentist estimators. But do beware that as you stretch your data further and further, your choices in likelihoods and priors more heavily influence the results. For more on the topic, check out [Michael Frank](https://twitter.com/mcxfrank?lang=en)'s blog post, [*Mixed effects models: Is it time to go Bayesian by default?*](http://babieslearninglanguage.blogspot.com/2018/02/mixed-effects-models-is-it-time-to-go.html), and make sure not to miss the action in the comments section.
 
@@ -1877,7 +1902,7 @@ v %>%
   scale_y_continuous(NULL, breaks = NULL) +
   xlab(expression(sigma[epsilon]^2)) +
   theme(panel.grid = element_blank()) +
-  facet_wrap(~name, scales = "free")
+  facet_wrap(~ name, scales = "free")
 ```
 
 Using the full posterior for both models, here is the percent variance in CES-D explained by `unemp`.
@@ -1895,6 +1920,7 @@ When you go beyond point estimates and factor in full posterior uncertainty, it 
 
 "Might unemployment status also affect the trajectory's slope" (p. 171)? Here's the statistical model:
 
+$$
 \begin{align*}
 \text{cesd}_{ij} & = \big [ \gamma_{00} + \gamma_{10} \text{months}_{ij} + \gamma_{20} \text{unemp}_{ij} + \gamma_{30} \text{months}_{ij} \times \text{unemp}_{ij} \big ] \\
 & \;\;\; + \big [  \zeta_{0i} + \zeta_{1i} \text{months}_{ij} + \epsilon_{ij} \big ] \\
@@ -1913,10 +1939,11 @@ When you go beyond point estimates and factor in full posterior uncertainty, it 
 \mathbf \Omega & = \begin{bmatrix} 1 & \rho_{01} \\ \rho_{01} & 1 \end{bmatrix} \\
 
 \gamma_{00}                                        & \sim \operatorname{Normal}(14.5, 20) \\
-\gamma_{10}, \gamma_{20}, \text{ and } \gamma_{30} & \sim \operatorname{Normal}(0, 10) \\
-\sigma_\epsilon, \sigma_0, \text{ and } \sigma_1   & \sim \operatorname{Student-t}(3, 0, 11.9) \\
+\gamma_{10}, \gamma_{20}, \gamma_{30} & \sim \operatorname{Normal}(0, 10) \\
+\sigma_\epsilon, \sigma_0, \sigma_1   & \sim \operatorname{Student-t}(3, 0, 11.9) \\
 \rho_{01}                                          & \sim \operatorname{LKJ}(4).
 \end{align*}
+$$
 
 Since $\gamma_{30}$ is an interaction term, it might make sense to give it an ever tighter prior, something like $\text{Normal}(0, 5)$. Here we'll just stay wide and loose.
 
@@ -1979,7 +2006,7 @@ f %>%
 Here's the posterior for $\gamma_{10}$.
 
 ```{r, fig.width = 3, fig.height = 2.25}
-posterior_samples(fit5.13) %>% 
+as_draws_df(fit5.13) %>% 
   ggplot(aes(x = b_months, y = 0)) +
   stat_halfeye(.width = .95) +
   scale_y_continuous(NULL, breaks = NULL) +
@@ -1991,6 +2018,7 @@ It's quite uncertain and almost symmetrically straddles the parameter space betw
 
 The next model follows the form
 
+$$
 \begin{align*}
 \text{cesd}_{ij} & = \big [ \gamma_{00} + \gamma_{20} \text{unemp}_{ij} + \gamma_{30} \text{unemp}_{ij} \times \text{months}_{ij} \big ] \\
 & \;\;\; + \big [  \zeta_{0i} + \zeta_{3i} \text{unemp}_{ij} \times \text{months}_{ij} + \epsilon_{ij} \big ] \\
@@ -2010,11 +2038,12 @@ The next model follows the form
 \mathbf\Omega & = \begin{bmatrix} 1 & \rho_{03} \\ \rho_{03} & 1 \end{bmatrix} \\
 
 \gamma_{00}                                      & \sim \operatorname{Normal}(14.5, 20) \\
-\gamma_{20} \text{ and } \gamma_{30}             & \sim \operatorname{Normal}(0, 10) \\
-\sigma_\epsilon, \sigma_0, \text{ and } \sigma_3 & \sim \operatorname{Student-t}(3, 0, 11.9) \\
+\gamma_{20}, \gamma_{30}             & \sim \operatorname{Normal}(0, 10) \\
+\sigma_\epsilon, \sigma_0, \sigma_3 & \sim \operatorname{Student-t}(3, 0, 11.9) \\
 \rho_{03}                                        & \sim \operatorname{LKJ}(4).
 
 \end{align*}
+$$
 
 Here's how to fit it with `brms::brm()`.
 
@@ -2030,7 +2059,7 @@ fit5.14 <-
                 prior(lkj(4), class = cor)),
       iter = 2000, warmup = 1000, chains = 4, cores = 4,
       seed = 5,
-      control = list(adapt_delta = .99),
+      control = list(adapt_delta = .95),
       file = "fits/fit05.14")
 ```
 
@@ -2042,9 +2071,9 @@ print(fit5.14)
 
 We've already computed the WAIC for `fit5.11` and `fit5.12`. Here we do so for `fit5.13` and `fit5.14`.
 
-```{r, message = F}
-fit5.13 <- add_criterion(fit5.13, "waic")
-fit5.14 <- add_criterion(fit5.14, "waic")
+```{r}
+fit5.13 <- add_criterion(fit5.13, criterion = "waic")
+fit5.14 <- add_criterion(fit5.14, criterion = "waic")
 ```
 
 ```{r}
@@ -2057,6 +2086,7 @@ model_weights(fit5.11, fit5.12, fit5.13, fit5.14, weights = "waic") %>%
 
 Yep, it appears `fit5.14` is not an improvement on `fit5.13` (i.e., our analogue to Model C in the text). Here's our version of Model D:
 
+$$
 \begin{align*}
 \text{cesd}_{ij} & = \big [ \gamma_{00} + \gamma_{20} \text{unemp}_{ij} + \gamma_{30} \text{unemp}_{ij} \times \text{months}_{ij} \big ] \\
 & \;\;\; + \big [  \zeta_{0i} + \zeta_{3i} \text{unemp}_{ij} \times \text{months}_{ij} + \epsilon_{ij} \big ] \\
@@ -2076,10 +2106,11 @@ Yep, it appears `fit5.14` is not an improvement on `fit5.13` (i.e., our analogue
 \mathbf\Omega & = \begin{bmatrix} 1 & \rho_{02} & \rho_{03} \\ \rho_{02} & 1 & \rho_{23} \\ \rho_{03} & \rho_{23} & 1 \end{bmatrix} \\
 
 \gamma_{00}                          & \sim \operatorname{Normal}(14.5, 20) \\
-\gamma_{20} \text{ and } \gamma_{30} & \sim \operatorname{Normal}(0, 10) \\
-\sigma_\epsilon,..., \sigma_3        & \sim \operatorname{Student-t}(3, 0, 11.9) \\
+\gamma_{20}, \gamma_{30} & \sim \operatorname{Normal}(0, 10) \\
+\sigma_\epsilon, \dots , \sigma_3        & \sim \operatorname{Student-t}(3, 0, 11.9) \\
 \mathbf\Omega                        & \sim \operatorname{LKJ}(4).
 \end{align*}
+$$
 
 We'll call it `fit5.15`. Here's the `brm()` code.
 
@@ -2095,7 +2126,6 @@ fit5.15 <-
                 prior(lkj(4), class = cor)),
       iter = 2000, warmup = 1000, chains = 4, cores = 4,
       seed = 5,
-      control = list(adapt_delta = .95),
       file = "fits/fit05.15")
 ```
 
@@ -2172,8 +2202,8 @@ fitted(fit5.15,
 
 There's more posterior uncertainty, there, that you might expect from simply using the point estimates. *Always beware the posterior uncertainty*. We may as well finish off with a little WAIC.
 
-```{r, message = F}
-fit5.15 <- add_criterion(fit5.15, "waic")
+```{r}
+fit5.15 <- add_criterion(fit5.15, criterion = "waic")
 
 loo_compare(fit5.11, fit5.12, fit5.13, fit5.14, fit5.15, criterion = "waic") %>% 
   print(simplify = F)
@@ -2193,10 +2223,12 @@ rm(fit5.11, fit5.12, fit5.13, fit5.14, fit5.15)
 
 Back to the `wages_pp` data! Here's the generic statistical model we'll be fooling with:
 
+$$
 \begin{align*}
 \text{lnw}_{ij} & = \gamma_{00} + \gamma_{10} \text{exper}_{ij} + \gamma_{01} (\text{hgc}_i - 9) + \gamma_{12} \text{black}_i \times \text{exper}_{ij} \\
                 & \;\;\; + \zeta_{0i} + \zeta_{1i} \text{exper}_{ij} + \epsilon_{ij}.
 \end{align*}
+$$
 
 We will fit the model with three versions of `uerate`. If you execute `head(wages_pp)`, you'll discover they're already in the data. But it might be worth walking out how to compute those variables. First, centering `uerate` at 7 is easy enough. Just subtract.
 
@@ -2227,6 +2259,7 @@ fit5.16 <-
 print(fit5.16, digits = 3)
 ```
 
+For the next model, we add a couple variables to the `wages_pp` data.
 
 ```{r}
 wages_pp <-
@@ -2289,10 +2322,10 @@ print(fit5.18, digits = 3)
 
 Here are the WAIC comparisons.
 
-```{r, message = F}
-fit5.16 <- add_criterion(fit5.16, "waic")
-fit5.17 <- add_criterion(fit5.17, "waic")
-fit5.18 <- add_criterion(fit5.18, "waic")
+```{r}
+fit5.16 <- add_criterion(fit5.16, criterion = "waic")
+fit5.17 <- add_criterion(fit5.17, criterion = "waic")
+fit5.18 <- add_criterion(fit5.18, criterion = "waic")
 
 loo_compare(fit5.16, fit5.17, fit5.18, criterion = "waic") %>% 
   print(simplify = F)
@@ -2359,11 +2392,13 @@ medication_pp %>%
 
 For this section, our basic model will be
 
+$$
 \begin{align*}
 \text{pos}_{ij} & = \pi_{0i} + \pi_{1i} (\text{time}_{ij} - c) + \epsilon_{ij} \\
 \pi_{0i}        & = \gamma_{00} + \gamma_{01} \text{treat}_i + \zeta_{0i} \\
 \pi_{1i}        & = \gamma_{10} + \gamma_{11} \text{treat}_i + \zeta_{1i},
 \end{align*}
+$$
 
 where $c$ is a generic constant. For our three variants of $\text{time}_{ij}$, $c$ will be
 
@@ -2373,10 +2408,10 @@ where $c$ is a generic constant. For our three variants of $\text{time}_{ij}$, $
 
 Our criterion variable is `pos`, positive mood rating. The text told us these were from "a package of mood diaries (which use a five-point scale to assess positive and negative moods)" (p. 182). However, we don't know what numerals were assigned to the points on the scale, we don't know how many items were used, and we don't even know whether the items were taken from an existing questionnaire. And unfortunately, the citation Singer and Willett gave for the study is from a conference presentation, making it a pain to track down background information on the internet. In such a situation, it's difficult to figure out how to set our priors. Though suboptimal, we might first get a sense of the `pos` data with a histogram.
 
-```{r, fig.width = 4, fig.height = 2.5, warning = F, message = F}
+```{r, fig.width = 4, fig.height = 2.5}
 medication_pp %>% 
   ggplot(aes(x = pos)) +
-  geom_histogram() +
+  geom_histogram(binwidth = 10) +
   theme(panel.grid = element_blank())
 ```
 
@@ -2429,11 +2464,11 @@ Given the size of our posterior standard deviations, our $\gamma$ posteriors are
 print(fit5.19)
 ```
 
-Given the scales we're working with, it's difficult to compare our $\sigma$ summaries with the $\sigma^2$ summaries in Table 5.10 of the text. Here we convert and resummarize.
+Given the scales we're working with, it's difficult to compare our $\sigma$ summaries with the $\sigma^2$ summaries in Table 5.10 of the text. Here we convert and re-summarize.
 
-```{r}
+```{r, warning = F}
 v <-
-  posterior_samples(fit5.19) %>%
+  as_draws_df(fit5.19) %>%
   transmute(sigma_2_0 = sd_id__Intercept^2,
             sigma_2_1 = sd_id__time^2,
             sigma_2_epsilon = sigma^2)
@@ -2458,7 +2493,7 @@ v %>%
   xlab("posterior") +
   theme(panel.grid = element_blank(),
         strip.text = element_text(size = 11)) +
-  facet_wrap(~name, scales = "free", labeller = label_parsed)
+  facet_wrap(~ name, scales = "free", labeller = label_parsed)
 ```
 
 Here's our version of Figure 5.5.
@@ -2508,7 +2543,7 @@ It might be easier to compare the $\gamma$ summaries across models with a well-d
 
 ```{r, fig.width = 8, fig.height = 1.5}
 tibble(name = str_c("fit5.", 19:21)) %>% 
-  mutate(fixef = map(name, ~get(.) %>% 
+  mutate(fixef = map(name, ~ get(.) %>% 
                        fixef() %>% 
                        data.frame() %>% 
                        rownames_to_column("parameter"))) %>% 
@@ -2522,7 +2557,7 @@ tibble(name = str_c("fit5.", 19:21)) %>%
   theme(axis.ticks.y = element_blank(),
         panel.grid = element_blank(),
         strip.text = element_text(size = 11)) +
-  facet_wrap(~gamma, scales = "free_x", labeller = label_parsed, ncol = 4)
+  facet_wrap(~ gamma, scales = "free_x", labeller = label_parsed, ncol = 4)
 ```
 
 Since we're juggling less information, we might compare the posteriors for $\sigma_1^2$ across the three models with good old `tidybayes::geom_halfeyeh()`.
@@ -2530,7 +2565,7 @@ Since we're juggling less information, we might compare the posteriors for $\sig
 ```{r, fig.width = 6, fig.height = 2}
 tibble(name = str_c("fit5.", 19:21)) %>% 
   mutate(fit = map(name, get)) %>% 
-  mutate(sigma_2_1 = map(fit, ~VarCorr(., summary = F)[[1]][[1]][, 1]^2 %>% 
+  mutate(sigma_2_1 = map(fit, ~ VarCorr(., summary = F)[[1]][[1]][, 1]^2 %>% 
                            data.frame() %>% 
                            set_names("sigma_2_1"))) %>% 
   unnest(sigma_2_1) %>% 
@@ -2548,7 +2583,7 @@ For kicks and giggles, we marked off both 50% and 95% intervals for each. Here's
 ```{r, fig.width = 6, fig.height = 2}
 tibble(name = str_c("fit5.", 19:21)) %>% 
   mutate(fit = map(name, get)) %>% 
-  mutate(rho = map(fit, ~VarCorr(., summary = F)[[1]][[2]][, 2, "Intercept"] %>% 
+  mutate(rho = map(fit, ~ VarCorr(., summary = F)[[1]][[2]][, 2, "Intercept"] %>% 
                            data.frame() %>% 
                            set_names("rho"))) %>% 
   unnest(rho) %>% 
@@ -2566,10 +2601,10 @@ tibble(name = str_c("fit5.", 19:21)) %>%
 
 Here are the WAIC comparisons.
 
-```{r, warning = F, message = F}
-fit5.19 <- add_criterion(fit5.19, "waic")
-fit5.20 <- add_criterion(fit5.20, "waic")
-fit5.21 <- add_criterion(fit5.21, "waic")
+```{r}
+fit5.19 <- add_criterion(fit5.19, criterion = "waic")
+fit5.20 <- add_criterion(fit5.20, criterion = "waic")
+fit5.21 <- add_criterion(fit5.21, criterion = "waic")
 
 loo_compare(fit5.19, fit5.20, fit5.21, criterion = "waic") %>% 
   print(simplify = F)
@@ -2588,11 +2623,13 @@ glimpse(medication_pp)
 
 With this model
 
+$$
 \begin{align*}
 \text{pos}_{ij} & = \pi_{0i} \bigg (\frac{6.67 - \text{time}_{ij}}{6.67} \bigg ) + \pi_{1i} \bigg (\frac {\text{time}_{ij}}{6.67} \bigg ) + \epsilon_{ij} \\
 \pi_{0i}        & = \gamma_{00} + \gamma_{01} \text{treat}_i + \zeta_{0i} \\
 \pi_{1i}        & = \gamma_{10} + \gamma_{11} \text{treat}_i + \zeta_{1i}.
 \end{align*}
+$$
 
 Because of the parameterization, we'll use both variables simultaneously to indicate time. In the code, below, you'll notice we no longer have an intercept parameter. Rather, we just have `initial` and `final`. As such, both of those parameters get the same prior we've been using for the intercept in the previous models.
 
@@ -2620,8 +2657,8 @@ print(fit5.22)
 
 Let's finish up with the WAIC.
 
-```{r, warning = F, message = F}
-fit5.22 <- add_criterion(fit5.22, "waic")
+```{r}
+fit5.22 <- add_criterion(fit5.22, criterion = "waic")
 
 loo_compare(fit5.19, fit5.20, fit5.21, fit5.22, criterion = "waic") %>% 
   print(simplify = F)
@@ -2640,7 +2677,7 @@ sessionInfo()
 
 ```{r, echo = F, message = F, eval = F}
 # here we'll remove our objects
-rm(reading_pp, n, lkj, wages_pp, post, nd, f, wages_small_pp, fit5.6, v, fit5.7, fit5.8, fit5.9, fit5.10, unemployment_pp, lines, arrow, medication_pp, fit5.19, text, fit5.20, fit5.21, fit5.22)
+rm(reading_pp, n, lkj, wages_pp, draws, nd, f, wages_small_pp, fit5.6, v, fit5.7, fit5.8, fit5.9, fit5.10, unemployment_pp, lines, arrow, medication_pp, fit5.19, text, fit5.20, fit5.21, fit5.22)
 
 theme_set(theme_grey())
 pacman::p_unload(pacman::p_loaded(), character.only = TRUE)
