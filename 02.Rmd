@@ -146,7 +146,7 @@ tolerance_pp %>%
   geom_point() +
   coord_cartesian(ylim = c(1, 4)) +
   theme(panel.grid = element_blank()) +
-  facet_wrap(~id)
+  facet_wrap(~ id)
 ```
 
 By default, **ggplot2** sets the scales of the $x$- and $y$-axes to the same values across subpanels. If you'd like to free that constraint, play around with the `scales` argument within `facet_wrap()`.
@@ -162,7 +162,7 @@ tolerance_pp %>%
   geom_line() +
   coord_cartesian(ylim = c(1, 4)) +
   theme(panel.grid = element_blank()) +
-  facet_wrap(~id)
+  facet_wrap(~ id)
 ```
 
 However, Singer and Willett recommend two other approaches: 
@@ -181,7 +181,7 @@ tolerance_pp %>%
   stat_smooth(method = "loess", se = F, span = .9) +
   coord_cartesian(ylim = c(1, 4)) +
   theme(panel.grid = element_blank()) +
-  facet_wrap(~id)
+  facet_wrap(~ id)
 ```
 
 #### Smoothing the empirical growth trajectory using ~~OLS~~ single-level Bayesian regression.
@@ -436,7 +436,7 @@ by_id %>%
   scale_x_continuous(breaks = 0:4, labels = 0:4 + 11) +
   coord_cartesian(ylim = c(0, 4)) +
   theme(panel.grid = element_blank()) +
-  facet_wrap(~id)
+  facet_wrap(~ id)
 ```
 
 ## Exploring differences in change across people
@@ -612,7 +612,7 @@ tol_fitted %>%
   coord_cartesian(ylim = c(0, 4)) +
   theme(legend.position = "none",
         panel.grid = element_blank()) +
-  facet_wrap(~male)
+  facet_wrap(~ male)
 ```
 
 Before we can do the same thing with `exposure`, we'll need to dichotomize it by its median. A simple way is with a conditional statement within the `if_else()` function.
@@ -675,7 +675,7 @@ tol_fitted %>%
   coord_cartesian(ylim = c(0, 4)) +
   theme(legend.position = "none",
         panel.grid = element_blank()) +
-  facet_wrap(~exposure)
+  facet_wrap(~ exposure)
 ```
 
 #### The relationship between ~~OLS-Estimated~~ single-level Bayesian trajectories and substantive predictors
@@ -698,7 +698,7 @@ p1 <-
        y = NULL) +
   theme(legend.position = "none",
         panel.grid = element_blank()) +
-  facet_wrap(~name, scale = "free_y", ncol = 1)
+  facet_wrap(~ name, scale = "free_y", ncol = 1)
 
 p1
 ```
@@ -722,7 +722,7 @@ p2 <-
   labs(y = NULL) +
   theme(legend.position = "none",
         panel.grid = element_blank()) +
-  facet_wrap(~name, scale = "free_y", ncol = 1)
+  facet_wrap(~ name, scale = "free_y", ncol = 1)
 
 p2
 ```

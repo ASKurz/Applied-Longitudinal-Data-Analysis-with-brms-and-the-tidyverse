@@ -58,7 +58,7 @@ early_int %>%
   scale_x_continuous(breaks = c(1, 1.5, 2)) +
   ylim(50, 150) +
   theme(panel.grid = element_blank()) +
-  facet_wrap(~id, ncol = 4)
+  facet_wrap(~ id, ncol = 4)
 ```
 
 Based on these data, we postulate our level-1 submodel to be
@@ -273,7 +273,7 @@ early_int_sim %>%
   ylim(50, 150) +
   theme(legend.position = "none",
         panel.grid = element_blank()) +
-  facet_wrap(~label)
+  facet_wrap(~ label)
 ```
 
 Given the simplicity of the shapes, the bottom panels of Figure 3.4 will take a bit of preparatory work. First, we'll need to wrangle the data a bit to get the necessary points. If we were working with a Bayesian model fit with **brms**, we'd use the `fitted()` function. But since we're working with models fit with base **R**'s OLS estimator, `lm()`, we'll use `predict()`, which accommodates a `newdata` argument. That'll be crucial because in order to get the shapes correct, we'll need to evaluate the minimum and maximum values across the fitted lines across a densely-packed sequence of `age_c` values.
@@ -342,7 +342,7 @@ p %>%
   scale_y_continuous("cog", limits = c(50, 150)) +
   theme(legend.position = "none",
         panel.grid = element_blank()) +
-  facet_wrap(~label)
+  facet_wrap(~ label)
 ```
 
 Returning to the text (p. 58), Singer and Willett asked: "What kind [of] population model might have given rise to these patterns?" Their answer is the level-2 model should have 4 specific features:
@@ -583,7 +583,7 @@ draws %>%
   geom_density(color = "transparent", fill = "grey25") +
   scale_y_continuous(NULL, breaks = NULL) +
   theme(panel.grid = element_blank()) +
-  facet_wrap(~name, scales = "free")
+  facet_wrap(~ name, scales = "free")
 ```
 
 Sure, you could fixate on zero if you wanted to. But of more interest is the overall shape of each parameter's posterior distribution. Look at the central tendency and spread for each. Look at where each is in the parameter space. To my mind, that story is so much richer than fixating on zero.
@@ -646,7 +646,7 @@ as_draws_df(fit3.2) %>%
   scale_y_continuous(NULL, breaks = NULL) +
   theme(panel.grid = element_blank(),
         strip.text = element_text(size = 12)) +
-  facet_wrap(~name, scales = "free", labeller = label_parsed) 
+  facet_wrap(~ name, scales = "free", labeller = label_parsed) 
 ```
 
 As it turns out, the multilevel variance components are often markedly non-Gaussian. This is important for the next section.
