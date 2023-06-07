@@ -1381,7 +1381,11 @@ Yep, the way we parameterize $\mathbf{\Sigma}_r$ might have subtle consequences 
 
 ### 7.3.8 Bonus: Did we trade multilevel for multivariate?
 
-So far in this chapter, only the first model `fit7.1` used the conventional **brms** multilevel syntax, such as `(1 + time | id)`. The other five models used the `unstr()`, `cosy()`, or `ar()` helper functions, instead. In a sense then, `fit7.1` is the only multilevel model we've fit so far in this chapter. You might think of all the others as special kinds of multivariate panel models. To help make this more clear, let's first fit a simplified version of the unstructured model, following the form
+So far in this chapter, only the first model `fit7.1` used the conventional **brms** multilevel syntax, such as `(1 + time | id)`. The other five models used the `unstr()`, `cosy()`, or `ar()` helper functions, instead. Singer and Willett didn't exactly come out and say it this way, but in a sense, `fit7.1` is the only multilevel model we've fit so far in this chapter. @mallinckrod2008recommendations made the point more clearly: 
+
+> A simple formulation of the general linear mixed model... can be implemented in which the random effects are not explicitly modeled, but rather are included as part of the marginal covariance matrix... leading them to what could alternatively be described as a multivariate normal model. (p. 306)
+
+Thus we might think of all our models after `fit7.1` as special kinds of multivariate panel models. To help make this easier to see, let's first fit a simplified version of the unstructured model, following the form
 
 $$
 \begin{align*}
