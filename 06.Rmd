@@ -124,7 +124,7 @@ tibble(exper = c(0, 3, 3, 10),
   
   ggplot(aes(x = exper, y = lnw)) +
   geom_line(aes(color = model),
-            size = 1) +
+            linewidth = 1) +
   scale_color_viridis_d(option = "D", begin = 1/4, end = 3/4) +
   ylim(1.5, 2.5) +
   theme(panel.grid.minor = element_blank())
@@ -153,10 +153,11 @@ $$
 \end{align*}
 $$
 
-In other words, whereas the pre-GED intercept is $\pi_{0i}$, the post-GED intercept is $\pi_{0i} + \pi_{2i}$. To get a better sense of this, we might make a version of the upper left panel of Figure 6.2. Since we'll be making four of these over the next few sections, we might reduce the redundancies in the code by makign a custom plotting function. We'll call it `plot_figure_6.2()`.
+In other words, whereas the pre-GED intercept is $\pi_{0i}$, the post-GED intercept is $\pi_{0i} + \pi_{2i}$. To get a better sense of this, we might make a version of the upper left panel of Figure 6.2. Since we'll be making four of these over the next few sections, we might reduce the redundancies in the code by making a custom plotting function. We'll call it `plot_figure_6.2()`.
 
 ```{r}
-plot_figure_6.2 <- function(data, mapping, 
+plot_figure_6.2 <- function(data, 
+                            mapping, 
                             sizes = c(1, 1/4), 
                             linetypes = c(1, 2), 
                             ...) {
@@ -745,11 +746,13 @@ Though we're avoiding `print()` output, we might take a birds-eye perspective an
 post <-
   tibble(model = letters[1:10],
          fit   = c("fit5.16", str_c("fit6.", 1:9))) %>% 
-  mutate(p = map(fit, ~get(.) %>% 
+  mutate(p = map(fit, ~ get(.) %>% 
                    posterior_summary() %>% 
                    data.frame() %>% 
                    rownames_to_column("parameter") %>% 
-                   filter(!str_detect(parameter, "r_id\\[") & parameter != "lp__"))) %>% 
+                   filter(!str_detect(parameter, "r_id\\[") & 
+                            parameter != "lp__" &
+                            parameter != "lprior"))) %>% 
   unnest(p) 
 
 # wrangle
@@ -794,7 +797,7 @@ post %>%
 
 For our model comparisons, let's compute the WAIC estimates for each.
 
-```{r, message = F, warning = F}
+```{r}
 fit5.16 <- add_criterion(fit5.16, criterion = "waic")
 fit6.1 <- add_criterion(fit6.1, criterion = "waic")
 fit6.2 <- add_criterion(fit6.2, criterion = "waic")
@@ -881,7 +884,7 @@ We'll be plotting with help from the [**GGally** package](https://CRAN.R-project
 ```{r}
 my_diag <- function(data, mapping, ...) {
   ggplot(data = data, mapping = mapping) + 
-    geom_density(fill = "black", size = 0) +
+    geom_density(fill = "black", linewidth = 0) +
     scale_x_continuous(NULL, breaks = NULL) +
     scale_y_continuous(NULL, breaks = NULL)
 }
@@ -913,8 +916,7 @@ Now we're ready to make our version of Figure 6.3. Since we will be expressing t
 nd <-
   crossing(black = 0:1,
            hgc_9 = c(0, 3)) %>% 
-  expand(nesting(black, hgc_9),
-         exper = seq(from = 0, to = 11, by = 0.02)) %>% 
+  expand_grid(exper = seq(from = 0, to = 11, by = 0.02)) %>% 
   mutate(ged      = ifelse(exper < 3, 0, 1),
          postexp  = ifelse(ged == 0, 0, exper - 3),
          uerate_7 = 0)
@@ -986,8 +988,7 @@ In the `alcohol1_pp` data, the criterion `alcuse` was transformed by taking its 
 nd <-
   crossing(coa  = 0:1,
            peer = c(.655, 1.381)) %>% 
-  expand(nesting(coa, peer),
-         age_14 = seq(from = 0, to = 2, length.out = 30))
+  expand_grid(age_14 = seq(from = 0, to = 2, length.out = 30))
 
 # compute the counterfactual trajectories
 fitted(fit4.6, 
@@ -1530,7 +1531,7 @@ fit6.12 <-
                 prior(lkj(4), class = cor)),
       iter = 2500, warmup = 1000, chains = 3, cores = 3,
       seed = 6,
-      control = list(adapt_delta = .99),
+      control = list(adapt_delta = .995),
       file = "fits/fit06.12")
 
 # cubic
@@ -1545,19 +1546,20 @@ fit6.13 <-
                 prior(lkj(4), class = cor)),
       iter = 2500, warmup = 1000, chains = 3, cores = 3,
       seed = 6,
+      control = list(adapt_delta = .85),
       file = "fits/fit06.13")
 ```
 
 Compute and save the WAIC estimates.
 
-```{r, message = F, warning = F}
+```{r}
 fit6.10 <- add_criterion(fit6.10, criterion = "waic")
 fit6.11 <- add_criterion(fit6.11, criterion = "waic")
 fit6.12 <- add_criterion(fit6.12, criterion = "waic")
 fit6.13 <- add_criterion(fit6.13, criterion = "waic")
 ```
 
-Here we'll make a simplified versionof the WAIC output, saving the results as `waic_summary`.
+Here we'll make a simplified version of the WAIC output, saving the results as `waic_summary`.
 
 ```{r, message = F, warning = F}
 # order the parameters, which will come in handy in the next block
@@ -1581,11 +1583,13 @@ Here we'll use a little summarizing, wrangling, and creative plotting, we'll mak
 # extract and wrangle the posterior summaries
 tibble(model = str_c("model ", letters[1:4]),
          fit   = str_c("fit6.1", 0:3)) %>% 
-  mutate(p = map(fit, ~get(.) %>% 
+  mutate(p = map(fit, ~ get(.) %>% 
                    posterior_summary() %>% 
                    data.frame() %>% 
                    rownames_to_column("parameter") %>% 
-                   filter(!str_detect(parameter, "r_id\\[") & parameter != "lp__"))) %>% 
+                   filter(!str_detect(parameter, "r_id\\[") & 
+                            parameter != "lp__" & 
+                            parameter != "lprior"))) %>% 
   unnest(p) %>% 
   mutate(greek = case_when(
     parameter == "b_Intercept" ~ "gamma[0][0]",
@@ -1620,7 +1624,7 @@ tibble(model = str_c("model ", letters[1:4]),
   theme_minimal() +
   theme(axis.text.x = element_text(hjust = 1, color = "black"),
         axis.text.y = element_text(hjust = 0, color = "black"),
-        axis.line.x = element_line(size = 1/4),
+        axis.line.x = element_line(linewidth = 1/4),
         panel.grid = element_blank())
 ```
 
@@ -1640,8 +1644,7 @@ In the text, Singer and Willett preferred the quadratic model (`fit6.12`). Now w
 nd <-
   external_pp_subset %>% 
   distinct(id, case) %>% 
-  expand(nesting(id, case),
-         time = seq(from = 0, to = 5, length.out = 50)) %>% 
+  expand_grid(time = seq(from = 0, to = 5, length.out = 50)) %>% 
   mutate(grade = time + 1)
 
 # extract the fitted trajectories and wrangle
@@ -1665,7 +1668,7 @@ fitted(fit6.12, newdata = nd) %>%
 ```
 
 At the end of this section in the text, Singer and Willett briefly discussed fitting an expansion of the quadratic model which included the variable `female` as time-invariant predictor for the individual differences in initial status ($\pi_{0i}$), the instantaneous rate of change ($\pi_{1i}$), and curvature ($\pi_{2i}$). We might express the model in formal notation as
-                
+
 $$
 \begin{align*}
 \text{external}_{ij} & = \gamma_{00} + \gamma_{01} \text{female}_i \\
@@ -1723,9 +1726,9 @@ posterior_summary(fit6.14)[4:6, ] %>%
   theme(panel.grid = element_blank())
 ```
 
-Yeah, they were wither small or highly uncertain. Let's go all the way with a WAIC comparison with `fit6.12`.
+Yeah, they were either small or highly uncertain. Let's go all the way with a WAIC comparison with `fit6.12`.
 
-```{r, warning = F, message = F}
+```{r}
 fit6.14 <- add_criterion(fit6.14, criterion = "waic")
 
 loo_compare(fit6.12, fit6.14, criterion = "waic") %>% print(simplify = F)
@@ -1892,8 +1895,8 @@ fit6.15 <-
                 prior(exponential(1), class = sigma),
                 prior(lkj(4), class = cor)),
       iter = 2000, warmup = 1000, cores = 3, chains = 3,
-      inits = 0, 
-      control = list(adapt_delta = .999),
+      init = 0, 
+      control = list(adapt_delta = .995),
       file = "fits/fit06.15")
 ```
 
@@ -1980,7 +1983,7 @@ fit6.16 <-
                 prior(exponential(1), class = sigma),
                 prior(lkj(4), class = cor)),
       iter = 2000, warmup = 1000, cores = 3, chains = 3,
-      inits = 0, 
+      init = 0, 
       control = list(adapt_delta = .999),
       file = "fits/fit06.16")
 ```
@@ -1996,7 +1999,7 @@ Before you get worried about how our posterior mean for $\gamma_{01}$ has the op
 ```{r, fig.width = 4, fig.height = 2.75, warning = F, message = F}
 library(tidybayes)
 
-posterior_samples(fit6.16) %>% 
+as_draws_df(fit6.16) %>% 
   ggplot(aes(x = b_g0_read_c, y = 0)) +
   stat_halfeye(.width = c(.8, .95)) +
   geom_vline(xintercept = -0.3745, linetype = 2) +
@@ -2027,7 +2030,7 @@ p2 <-
   ggplot(aes(x = game, y = Estimate, ymin = Q2.5, ymax = Q97.5, 
              fill = read_c, color = read_c)) +
   geom_hline(yintercept = c(1, 20), color = "white") +
-  geom_ribbon(alpha = 1/4, size = 0) +
+  geom_ribbon(alpha = 1/4, linewidth = 0) +
   geom_line() + 
   scale_fill_viridis_d(option = "A", begin = .25, end = .75) +
   scale_color_viridis_d(option = "A", begin = .25, end = .75) +
@@ -2043,7 +2046,7 @@ Notice how unimpressive the expected trajectories between the two levels of `rea
 
 We might compare our two nonlinear models with their WAIC estimates.
 
-```{r, warning = F, message = F}
+```{r}
 fit6.15 <- add_criterion(fit6.15, criterion = "waic")
 fit6.16 <- add_criterion(fit6.16, criterion = "waic")
 
@@ -2058,8 +2061,7 @@ nd <-
   foxngeese_pp %>% 
   distinct(id, read_c) %>% 
   filter(id %in% subset) %>% 
-  expand(nesting(id, read_c),
-         game = seq(from = 0, to = 30, by = 0.1))
+  expand_grid(game = seq(from = 0, to = 30, by = 0.1))
   
 
 # extract the fitted trajectories
@@ -2072,7 +2074,7 @@ fitted(fit6.16, newdata = nd) %>%
   ggplot(aes(x = game)) +
   geom_hline(yintercept = c(1, 20), color = "white") +
   geom_ribbon(aes(ymin = Q2.5, ymax = Q97.5, fill = read_c),
-              alpha = 1/4, size = 0) +
+              alpha = 1/4, linewidth = 0) +
   geom_line(aes(y = Estimate, color = read_c)) + 
   geom_point(data = foxngeese_pp %>% filter(id %in% subset),
              aes(y = nmoves),
@@ -2121,8 +2123,7 @@ text <-
 p1 <-
   crossing(alpha = 100,
            pi1   = c(0.01, 0.02, 0.1)) %>% 
-  expand(nesting(alpha, pi1),
-         time = seq(from = 0, to = 10, by = 0.01)) %>% 
+  expand_grid(time = seq(from = 0, to = 10, by = 0.01)) %>% 
   mutate(y = alpha - (1 / (pi1 * time))) %>% 
   
   ggplot(aes(x = time, y = y, group = pi1)) +
@@ -2164,8 +2165,7 @@ p2 <-
   crossing(alpha = 100,
            pi1   =  0.02,
            pi2   = c(0.015, 0, -0.0015)) %>% 
-  expand(nesting(alpha, pi1, pi2),
-         time = seq(from = 0, to = 10, by = 0.01)) %>% 
+  expand_grid(time = seq(from = 0, to = 10, by = 0.01)) %>% 
   mutate(y = alpha - (1 / (pi1 * time + pi2 * time^2))) %>% 
   
   ggplot(aes(x = time, y = y, group = pi2)) +
@@ -2210,8 +2210,7 @@ text <-
 p3 <-
   crossing(pi0 = 5,
            pi1 = c(0.1, 0.2, 0.3)) %>% 
-  expand(nesting(pi0, pi1),
-         time = seq(from = 0, to = 10, by = 0.01)) %>% 
+  expand_grid(time = seq(from = 0, to = 10, by = 0.01)) %>% 
   mutate(y = pi0 * exp(pi1 * time)) %>% 
   
   ggplot(aes(x = time, y = y, group = pi1)) +
@@ -2240,8 +2239,7 @@ p4 <-
   crossing(alpha = 100,
            pi0   = 20,
            pi1   = c(0.1, 0.2, 0.3)) %>% 
-  expand(nesting(alpha, pi0, pi1),
-         time = seq(from = 0, to = 10, by = 0.01)) %>% 
+  expand_grid(time = seq(from = 0, to = 10, by = 0.01)) %>% 
   mutate(y = alpha - (alpha - pi0) * exp(-pi1 * time)) %>% 
   
   ggplot(aes(x = time, y = y, group = pi1)) +
@@ -2262,7 +2260,7 @@ Now combine the ggplots to make the full version of Figure 6.11.
 (p1 + p2) / (p3 + p4)
 ```
 
-As covered, above, the logistic trajectory is great when you have need of both lower and upper asymptotic. I might note that the logistic models we fit were not what you'd expect when thinking of what is typically called *logistic regression*. Conventional logistic regression models don't add a normally-distributed error term. Rather, error is simply a function of the expected value. It's something of a shame Singer and Willett didn't cover logistic multilevel growth models. Is such a shame, in fact, that we'll go rogue and cover them in a [bonus section][Bonus: The logistic growth model] a the end of this chapter.
+As covered, above, the logistic trajectory is great when you have need of both lower and upper asymptotic. I might note that the logistic models we fit were not what you'd expect when thinking of what is typically called *logistic regression*. Conventional logistic regression models don't add a normally-distributed error term. Rather, error is simply a function of the expected value. It's something of a shame Singer and Willett didn't cover logistic multilevel growth models. It's such a shame, in fact, that we'll go rogue and cover them in a [bonus section][Bonus: The logistic growth model] a the end of this chapter.
 
 ### From substantive theory to mathematical representations of individual growth.
 
@@ -2282,8 +2280,7 @@ text <-
 crossing(alpha = 100,
          pi0   = 10,
          pi1   = c(1, 5, 10)) %>% 
-  expand(nesting(alpha, pi0, pi1),
-         time = seq(from = 0, to = 10, by = 0.01)) %>% 
+  expand_grid(time = seq(from = 0, to = 10, by = 0.01)) %>% 
   mutate(y = pi0 + ((alpha - pi0) * time) / (pi1 + time)) %>% 
   
   ggplot(aes(x = time, y = y, group = pi1)) +
@@ -2313,18 +2310,17 @@ set.seed(6)
 tibble(n   = 1:n,
        pi0 = rnorm(n, mean = 2, sd = 1),
        pi1 = rnorm(n, mean = 5, sd = 2)) %>% 
-  expand(nesting(n, pi0, pi1),
-         game = 0:30) %>% 
+  expand_grid(game = 0:30) %>% 
   mutate(y = pi0 + (((alpha - pi0) * game) / (pi1 + game))) %>%
   
   # plot!
   ggplot(aes(x = game, y = y, group = n)) +
   geom_hline(yintercept = c(1, 20), color = "white") +
-  geom_line(size = 1/4, alpha = 1/2) + 
+  geom_line(linewidth = 1/4, alpha = 1/2) + 
   theme(panel.grid = element_blank())
 ```
 
-Play around with different priors on your own. Here's how to fit the model to the `foxngeese_pp` data.
+I recommend you play around with different priors on your own. Here's how to fit the model to the `foxngeese_pp` data.
 
 ```{r fit6.17}
 fit6.17 <-
@@ -2340,7 +2336,7 @@ fit6.17 <-
                 prior(exponential(1), class = sigma),
                 prior(lkj(4), class = cor)),
       iter = 2000, warmup = 1000, cores = 3, chains = 3,
-      inits = 0, 
+      init = 0, 
       control = list(adapt_delta = .99),
       file = "fits/fit06.17")
 ```
@@ -2359,7 +2355,7 @@ nd <-
   foxngeese_pp %>% 
   distinct(id) %>% 
   filter(id %in% subset) %>% 
-  expand(id, game = seq(from = 1, to = 30, by = 0.1))
+  expand_grid(game = seq(from = 1, to = 30, by = 0.1))
 
 # extract the fitted trajectories
 fitted(fit6.17, newdata = nd) %>% 
@@ -2371,7 +2367,7 @@ fitted(fit6.17, newdata = nd) %>%
   ggplot(aes(x = game)) +
   geom_hline(yintercept = c(1, 20), color = "white") +
   geom_ribbon(aes(ymin = Q2.5, ymax = Q97.5),
-              alpha = 1/4, size = 0) +
+              alpha = 1/4, linewidth = 0) +
   geom_line(aes(y = Estimate)) + 
   geom_point(data = foxngeese_pp %>% filter(id %in% subset),
              aes(y = nmoves),
@@ -2382,9 +2378,9 @@ fitted(fit6.17, newdata = nd) %>%
   facet_wrap(~ id, ncol = 4, labeller = label_both)
 ```
 
-Doesn't look great. Notice how the parameters in this model did not restrict the fitted trajectories to respect the lower asymptote. Thurstone's model has no lower asymptote. Let's see how this model compares with the unconditional logistic model, `fit6.15`, by way of the WAIC.
+Doesn't look great. Notice how the parameters in this model did not restrict the fitted trajectories to respect the lower asymptote. And indeed, Thurstone's model has no lower asymptote. Let's see how this model compares with the unconditional logistic model, `fit6.15`, by way of the WAIC.
 
-```{r, warning = F}
+```{r}
 fit6.17 <- add_criterion(fit6.17, criterion = "waic")
 
 loo_compare(fit6.15, fit6.17, criterion = "waic") %>% print(simplify = F)
@@ -2452,7 +2448,7 @@ This wasn't really addressed in Singer and Willett, but not all data kinds produ
 
 Say you have a set of binary data $y_i$. You can summarize those data as $N$ trials, for which $z$ were $1$'s. So if we had five coin flips, for which we assigned *heads* as 1 and *tails* as 0, we might describe those data as $N = 5$ Bernoulli trials with $z = 4$ successes. In 'Bernoulli trials talk', *success* is often a synonym for $y_i = 1$. Further, you can use the Bernoulli likelihood to describe the probability $y_i = 1$, given an underlying probability $p$, as
 
-$$\operatorname{Pr}(y_i = 1 | p) = p^z (1 - p)^{N - z}.$$
+$$\Pr(y_i = 1 \mid p) = p^z (1 - p)^{N - z}.$$
 
 Let's see how this plays out. First, we'll make a custom `bernoulli_likelihood()` function.
 
@@ -2587,6 +2583,7 @@ Hopefully this is all just review. Now let's consider the longitudinal multileve
 
 If we have $j$ Bernoulli trials nested within $i$ participants over time, we can express the generic logistic multilevel growth model as
 
+$$
 \begin{align*}
 y_{ij} & \sim \operatorname{Bernoulli}(p_{ij}) \\
 \operatorname{logit}(p_{ij}) & = \pi_{0i} + \pi_{1i} \text{time}_{ij} \\
@@ -2601,6 +2598,7 @@ y_{ij} & \sim \operatorname{Bernoulli}(p_{ij}) \\
 \mathbf\Omega & = \begin{bmatrix} 1 & \rho_{01} \\ 
  \rho_{10} & 1 \end{bmatrix},   
 \end{align*}
+$$
 
 where we make the usual multivariate-normal assumptions about $\zeta_{0i}$ and $\zeta_{1i}$. Yet because we are modeling the $y_{ij}$ with the Bernoulli likelihood, we end up setting the linear model to $\operatorname{logit}(p_{ij})$. And also, because the Bernoulli distribution doesn't itself have a $\sigma$ parameter, we have no $\sigma_\epsilon$ term. That is, though the $\zeta$ parameters get a multivariate normal distribution, the $y_{ij}$ data is considered Bernoulli. We have multiple distributional assumptions within a single model and this is totally okay.
 
@@ -2642,8 +2640,7 @@ tibble(iter = 1:n,
        # notice we set the parameters on the log-odds scale
        b0   = rnorm(n, mean = -2, sd = 1),
        b1   = rnorm(n, mean = 0.25, sd = 0.25)) %>% 
-  expand(nesting(iter, b0, b1),
-         trial = seq(from = 0, to = 24, length.out = 50)) %>% 
+  expand_grid(trial = seq(from = 0, to = 24, length.out = 50)) %>% 
   # here we use the inverse logit function to convert the liner model to the probability metric
   mutate(y = inv_logit_scaled(b0 + b1 * trial)) %>% 
   
@@ -2677,7 +2674,7 @@ y_{ij} & \sim \operatorname{Bernoulli}(p_{ij}) \\
  \rho_{10} & 1 \end{bmatrix} \\
 \gamma_{00} & \sim \operatorname{Normal}(-2, 1) \\ 
 \gamma_{10} & \sim \operatorname{Normal}(0.25, 0.25) \\
-\sigma_0\ \&\ \sigma_1 & \sim \operatorname{Exponential}(1) \\ 
+\sigma_0, \sigma_1 & \sim \operatorname{Exponential}(1) \\ 
 \mathbf \Omega & \sim \operatorname{LKJ}(4).
 \end{align*}
 $$
@@ -2707,15 +2704,15 @@ print(fit6.18)
 It can take a while to make sense of the output of a logistic regression model, multilevel or otherwise. Perhaps for now, you might compare the sizes of our posterior means with the priors we used. To me, it's helpful to see what this model predicts. For that, we'll want to extract the posterior draws.
 
 ```{r}
-post <- posterior_samples(fit6.18)
+draws <- as_draws_df(fit6.18)
 ```
 
 If we focus on the $\gamma$'s, here's the population trajectory in $p$, across the trials.
 
-```{r, fig.width = 5.5, fig.height = 3.25}
-post %>% 
-  expand(nesting(b_Intercept, b_trial),
-         trial = seq(from = 0, to = 25, by = 0.1)) %>% 
+```{r, fig.width = 5.5, fig.height = 3.25, warning = F}
+draws %>% 
+  select(b_Intercept, b_trial) %>% 
+  expand_grid(trial = seq(from = 0, to = 25, by = 0.1)) %>% 
   # the magic happens here
   mutate(prob = inv_logit_scaled(b_Intercept + b_trial * trial)) %>% 
   
@@ -2732,9 +2729,9 @@ In the `mutate()` line, note our use of the `brms::inv_logit_scaled()` function 
 
 Another question we might ask of our model is at what point across the `trial` axis do we cross the threshold of a $p = .5$ success rate? For a simple model, like ours, the formula for that threshold is $-\gamma_{00}/ \gamma_{10}$. Here's how to compute and summarize the threshold with our posterior draws.
 
-```{r}
+```{r, warning = F}
 threshold <-
-  post %>%
+  draws %>%
   transmute(threshold = -b_Intercept / b_trial) %>% 
   mean_qi()
 
@@ -2747,13 +2744,12 @@ The population threshold is about 6.7 trials, give or take one. Here's what that
 # adjust for plotting
 threshold <- 
   threshold %>% 
-  expand(nesting(threshold, .lower, .upper),
-         prob = 0:1)
+  expand_grid(prob = 0:1)
 
 # wrangle
-post %>% 
-  expand(nesting(b_Intercept, b_trial),
-         trial = seq(from = 0, to = 25, by = 0.1)) %>% 
+draws %>% 
+  select(b_Intercept, b_trial) %>% 
+  expand_grid(trial = seq(from = 0, to = 25, by = 0.1)) %>% 
   mutate(prob = inv_logit_scaled(b_Intercept + b_trial * trial)) %>% 
   
   # plot
@@ -2779,21 +2775,17 @@ Next, we might want to better understand our model at the level of the dogs. As 
 ```{r, fig.width = 4, fig.height = 3.75}
 # wrangle
 pi <-
-  bind_rows(
+  rbind(
     # pi0
-    post %>% 
-      select(ends_with("Intercept]")) %>% 
-      mutate_all(~ . + post$b_Intercept) %>% 
-      set_names(1:30),
+    coef(fit6.18, summary = F)$dog[, , "Intercept"],
     # pi1
-    post %>% 
-      select(ends_with("trial]")) %>% 
-      mutate_all(~ . + post$b_trial) %>% 
-      set_names(1:30)
+    coef(fit6.18, summary = F)$dog[, , "trial"]
   ) %>% 
-  mutate(iter = rep(1:3000, times = 2),
+  data.frame() %>% 
+  set_names(1:30) %>% 
+  mutate(draw = rep(1:3000, times = 2),
          pi   = rep(c("p0", "p1"), each = n() / 2)) %>% 
-  pivot_longer(-c(iter, pi)) %>% 
+  pivot_longer(-c(draw, pi)) %>% 
   pivot_wider(names_from = pi, values_from = value) 
 
 # plot
