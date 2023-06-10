@@ -125,7 +125,7 @@ The values in the `n_employed` column the *risk set*, those who are "*eligible* 
 
 If we let $T_i$ stand for the discrete value in time person $i$ experiences the event, we can express the conditional probability the event might occur in the $j^\text{th}$ interval as
 
-$$h(t_{ij}) = \text{Pr}[T_i = j | T \geq j].$$
+$$h(t_{ij}) = \Pr[T_i = j \mid T \geq j].$$
 
 That last part, $T \geq j$, clarifies the event can only occur once and, therefore, cannot have occurred in any of the prior levels of $j$. More plainly put, imagine the event is death and person $i$ died during the period of $T_j = 20$. In such a case, it's nonsensical to speak of that $i^\text{th}$ person's hazard for the period of $T_j = 25$. They're already dead.
 
@@ -158,7 +158,7 @@ The survivor function provides another way of describing the distribution of eve
 
 We can formally define the survivor function, $S(t_{ij})$, as
 
-$$S(t_{ij}) = \text{Pr}[T > j],$$
+$$S(t_{ij}) = \Pr[T > j],$$
 
 where $S$ is survival as a function of time, $t$. But since our data are finite, we can only have an estimate of the "true" survivor function, which we call $\hat S(t_{ij})$. Here it is in a plot, our version of the bottom panel of Figure 10.1.
 
@@ -583,7 +583,7 @@ tibble(n_j   = 1000,
         panel.grid = element_blank())
 ```
 
-Also, as the size of the risk set, $n_j$, influences the standard errors in the typical way. All things equal, a larger $n$ will make for a smaller $se$. To give a sense, here's the same basic plot from above, but this time with $n_j = 100, 1,000, \text{ and } 10,000$.
+Also, as the size of the risk set, $n_j$, influences the standard errors in the typical way. All things equal, a larger $n$ will make for a smaller $se$. To give a sense, here's the same basic plot from above, but this time with $n_j = 100, 1{,}000, \text{ and } 10{,}000$.
 
 ```{r, fig.width = 8, fig.height = 2.75}
 crossing(n_j   = c(100, 1000, 10000),
@@ -760,7 +760,7 @@ Happily, the exercises in the last section did a great job preparing us for the 
 
 So far in this text, we have primarily focused on models using the Gaussian likelihood. Though it's a workhorse, the Gaussian is inappropriate for modeling proportions/probabilities. Good old Gauss is great at modeling unbounded continuous data, but it can fail miserably when working with bounded data and our proportions/probabilities are most certainly bounded. The binomial likelihood, however, is well-suited for handling probabilities. Imagine you have data that can take on values of 0 and 1, such as failures/successes, no's/yesses, fails/passes, and no-events/events. If you sum up all the 1's and divide them by the total cases, you get a proportion/probability. The simple binomial model takes just that kind of data--the number of 1's and the number of total cases. The formula for the binomial likelihood is
 
-$$\operatorname{Pr} (z | n, p) = \frac{n!}{z!(n - z)!} p^z (1 - p)^{n - z},$$
+$$\Pr (z \mid n, p) = \frac{n!}{z!(n - z)!} p^z (1 - p)^{n - z},$$
 
 where $z$ is the number of cases for which the value is 1, $n$ is the total number of cases, and $p$ is the probability of a 1 across cases. As the data provide us with $z$ and $n$, we end up estimating $p$. If we're willing to use what's called a *link function*, we can estimate $p$ with a linear model with any number of predictors. When fitting binomial regression models, you can take your choice among several link functions, the most popular of which is the logit. This will be our approach. As you may have guesses, using the logit link to fit a binomial model is often termed *logistic regression*. Welcome to the generalized linear model.
 
@@ -809,7 +809,7 @@ Compare these `Estimate` values with the values in the "Estimated hazard probabi
 ```{r, fig.width = 6, fig.height = 3, warning = F, message = F}
 library(tidybayes)
 
-posterior_samples(fit10.6) %>% 
+as_draws_df(fit10.6) %>% 
   select(starts_with("b_")) %>% 
   mutate_all(inv_logit_scaled) %>% 
   set_names(1:12) %>% 
@@ -835,10 +835,10 @@ posterior_samples(fit10.6) %>%
 
 For comparison sake, those violet dots in the foreground are the hazard estimates from the frequentist `survival::survfit()` function. Turns out our Bayesian results are very similar to the frequentist ones. Hopefully this isn't a surprise. There was a lot of data and we used fairly weak priors. For simple models under those conditions, frequentist and Bayesian results should be pretty close.
 
-Remember that $se \big (\hat h(t_j) \big)$ formula from back in section 10.4.1? That doesn't quite apply to the posterior standard deviations from our Bayesian model. Even so, our posterior $SD$s will be very similar to the ML standard errors. Let's compare those in a plot, too.
+Remember that $se \big (\hat h(t_j) \big)$ formula from back in section 10.4.1? That doesn't quite apply to the posterior standard deviations from our Bayesian model. Even so, our posterior $\textit{SD}$s will be very similar to the ML standard errors. Let's compare those in a plot, too.
 
-```{r, fig.width = 6, fig.height = 3}
-posterior_samples(fit10.6) %>% 
+```{r, fig.width = 6, fig.height = 3, warning = F}
+as_draws_df(fit10.6) %>% 
   select(starts_with("b_")) %>% 
   mutate_all(inv_logit_scaled) %>% 
   set_names(1:12) %>% 
@@ -869,13 +869,13 @@ Man those are close.
 
 We can also use our **brms** output to depict the survivor function. On page 337 in the text (Equation 10.5), Singer and Willett demonstrated how to define the survivor function in terms of the hazard function. It follows the form
 
-$$\hat S (t_j) = [1 - \hat h (t_j)][1 - \hat h (t_{j - 1})][1 - \hat h (t_{j - 2})]...[1 - \hat h (t_1)].$$
+$$\hat S (t_j) = [1 - \hat h (t_j)][1 - \hat h (t_{j - 1})][1 - \hat h (t_{j - 2})] \dots [1 - \hat h (t_1)].$$
 
-In words, "each year's estimated survival probability is the successive product of the complement of the estimated hazard function probabilities across *this* and *all previous* years" (p. 337, *emphasis* in the original). Here's how you might do that with the output from `posterior_samples()`.
+In words, "each year's estimated survival probability is the successive product of the complement of the estimated hazard function probabilities across *this* and *all previous* years" (p. 337, *emphasis* in the original). Here's how you might do that with the output from `as_draws_df()`.
 
-```{r}
-post <-
-  posterior_samples(fit10.6) %>% 
+```{r, warning = F}
+draws <-
+  as_draws_df(fit10.6) %>% 
   select(starts_with("b_")) %>% 
   # transform the hazards from the log-odds metric to probabilities
   mutate_all(inv_logit_scaled) %>% 
@@ -897,7 +897,7 @@ post <-
             s11 = h1 * h2 * h3 * h4 * h5 * h6 * h7 * h8 * h9 * h10 * h11, 
             s12 = h1 * h2 * h3 * h4 * h5 * h6 * h7 * h8 * h9 * h10 * h11 * h12)
 
-glimpse(post)
+glimpse(draws)
 ```
 
 We'll learn how to simplify that syntax with help from the `cumprod()` function in the next chapter. Now we have our survival estimates, we can make our Bayesian version of the lower panel of Figure 10.1.
@@ -909,9 +909,8 @@ line <-
          survival = c(.5, .5, 0))
 
 # wrangle
-post %>% 
-  pivot_longer(everything(),
-               values_to = "survival") %>% 
+draws %>% 
+  pivot_longer(everything(), values_to = "survival") %>% 
   mutate(period = str_remove(name, "s") %>% as.double()) %>% 
   
   # plot!
@@ -939,7 +938,7 @@ sessionInfo()
 
 ```{r, echo = F, message = F}
 # here we'll remove our objects
-rm(teachers, fit10.1, most_rows, row_1, d, m, m_plus_1, stm, stm_plus_1, iml, line, cocaine, sex, suicide, congress, fit10.2, fit10.3, fit10.4, fit10.5, make_lt, lt_cocaine, lt_sex, lt_suicide, lt_congress, make_iml, line_tbl, h_plot, s_plot, p1, p2, p3, p4, p5, p6, p7, p8, p12, p34, p56, p78, se_h_hat, teachers_pp, teachers_lt, fit10.6, post)
+rm(teachers, fit10.1, most_rows, row_1, d, m, m_plus_1, stm, stm_plus_1, iml, line, cocaine, sex, suicide, congress, fit10.2, fit10.3, fit10.4, fit10.5, make_lt, lt_cocaine, lt_sex, lt_suicide, lt_congress, make_iml, line_tbl, h_plot, s_plot, p1, p2, p3, p4, p5, p6, p7, p8, p12, p34, p56, p78, se_h_hat, teachers_pp, teachers_lt, fit10.6, draws)
 
 pacman::p_unload(pacman::p_loaded(), character.only = TRUE)
 ```
