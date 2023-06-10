@@ -294,7 +294,7 @@ tibble(p = seq(from = .01, to = .99, by = .01)) %>%
   labs(x = "probability",
        y = "transformed scale") +
   theme(panel.grid = element_blank()) +
-  facet_wrap(~name, scales = "free")
+  facet_wrap(~ name, scales = "free")
 ```
 
 Odds are bounded to values of zero and above and have an inflection at 1. Log-odds are unbounded and have an inflection point at 0. Here we'll save the odds and log-odds for our hazard functions within the `lt` life table.
@@ -457,7 +457,7 @@ p1 <-
   ggplot(aes(x = period, group = pt,
              fill = pt, color = pt)) +
   geom_ribbon(aes(ymin = Q2.5, ymax = Q97.5),
-              size = 0, alpha = 1/4) +
+              linewidth = 0, alpha = 1/4) +
   geom_line(aes(y = Estimate),
             alpha = 1/2) +
   geom_point(aes(y = log_odds(event / total))) +
@@ -477,7 +477,7 @@ p2 <-
   ggplot(aes(x = period, group = pt,
              fill = pt, color = pt)) +
   geom_ribbon(aes(ymin = Q2.5, ymax = Q97.5),
-              size = 0, alpha = 1/4) +
+              linewidth = 0, alpha = 1/4) +
   geom_line(aes(y = Estimate),
             alpha = 1/2) +
   geom_point(aes(y = log_odds(event / total))) +
@@ -496,7 +496,7 @@ p3 <-
   ggplot(aes(x = period, group = pt,
              fill = pt, color = pt)) +
   geom_ribbon(aes(ymin = Q2.5, ymax = Q97.5),
-              size = 0, alpha = 1/4) +
+              linewidth = 0, alpha = 1/4) +
   geom_line(aes(y = Estimate),
             alpha = 1/2) +
   geom_point(aes(y = log_odds(event / total))) +
@@ -516,9 +516,9 @@ Now combine the plots with **patchwork** syntax.
   theme(panel.grid = element_blank())
 ```
 
-In addition to the posterior means (i.e., our analogues to the fitted values in the text), we added the 95% Bayesian intervals to give a better sense of the uncertainty in each model. Singer and Willet mused the unconstrained model (`fit6`) was a better fit to the data than the other two. We can quantify that with a LOO comparison.
+In addition to the posterior means (i.e., our analogues to the fitted values in the text), we added the 95% Bayesian intervals to give a better sense of the uncertainty in each model. Singer and Willett mused the unconstrained model (`fit6`) was a better fit to the data than the other two. We can quantify that with a LOO comparison.
 
-```{r, warning = F, message = F}
+```{r}
 fit11.4 <- add_criterion(fit11.4, "loo")
 fit11.5 <- add_criterion(fit11.5, "loo")
 fit11.6 <- add_criterion(fit11.6, "loo")
@@ -536,7 +536,7 @@ model_weights(fit11.4, fit11.5, fit11.6, weights = "loo") %>% round(digits = 3)
 
 Earlier equations for the hazard function omitted substantive predictors. Now consider the case where $X_{1ij}, X_{2ij}, \dots , X_{Pij}$ stand for the $P$ predictors which may or may not vary across individuals $i$ and time periods $j$. Thus $x_{pij}$ is the value for the $i^\text{th}$ individual on the $p^\text{th}$ variable during the $j^\text{th}$ period. We can use this to define the conditional hazard function as
 
-$$h(t_{ij}) = \operatorname{Pr} [T_i = j | T \geq j \text{ and } X_{1ij} = x_{1ij}, X_{2ij} = x_{2ij}, \dots , X_{Pij} = x_{pij}].$$
+$$h(t_{ij}) = \Pr [T_i = j \mid T \geq j \text{ and } X_{1ij} = x_{1ij}, X_{2ij} = x_{2ij}, \dots , X_{Pij} = x_{pij}].$$
 
 Building further and keeping the baseline shape of the discrete hazard function flexible, we want a method that allows each of the $j$ time periods to have its own value. Imagine a set of $J$ dummy variables, $D_1, D_2, \dots, D_J$, marking off each of the time periods. For example, say $J = 6$, we could depict this in a tibble like so.
 
@@ -571,12 +571,14 @@ $$\operatorname{logit} h(t_{ij}) = [\alpha_7 D_{7ij} + \alpha_8 D_{8ij} + \cdots
 
 And since we're practicing fitting these models as Bayesians, the `fit6` equation with a fuller expression of the likelihood and the priors looks like
 
+$$
 \begin{align*}
 \text{event}_{ij} & = \operatorname{Binomial}(n = \text{trials}_{ij}, p_{ij}) \\ 
 \operatorname{logit} (p_{ij}) & =  [\alpha_7 D_{7ij} + \alpha_8 D_{8ij} + \cdots + \alpha_{12} D_{12ij}] + [\beta_0 \text{PT}_{0i} + \beta_1 \text{PT}_{1i} ] \\
 \alpha_7, \alpha_8, \dots, \alpha_{12} & \sim \operatorname{Normal}(0, 4) \\
 \beta_0 \text{ and } \beta_1 & \sim \operatorname{Normal}(0, 4),
 \end{align*}
+$$
 
 where we're describing the model in terms of the criterion, `event`, rather than in terms of $h(t_{ij})$. And what is the criterion, `event`? It's a vector of counts. The binomial likelihood allows us to model vectors of counts in terms of the number of trials, as indexed by our `trials` vector, and the (conditional) probability of a "1" in a given trial. In this context, $h(t_{ij}) = p_{ij}$.
 
@@ -584,10 +586,12 @@ where we're describing the model in terms of the criterion, `event`, rather than
 
 Given our factor coding of `pt`, our two submodels for the equations in the last section are
 
+$$
 \begin{align*}
 \text{when PT = 0: } \operatorname{logit} h(t_j) & = [\alpha_7 D_7 + \alpha_8 D_8 + \cdots + \alpha_{12} D_{12}] + \beta_0 \\
 \text{when PT = 1: } \operatorname{logit} h(t_j) & = [\alpha_7 D_7 + \alpha_8 D_8 + \cdots + \alpha_{12} D_{12}] + \beta_1,
 \end{align*}
+$$
 
 where we used Singer and Willett's simplified notation and dropped all the $i$ subscripts and most of the $j$ subscripts.
 
@@ -595,7 +599,9 @@ where we used Singer and Willett's simplified notation and dropped all the $i$ s
 
 In the previous sections, we expressed the model in terms of the logit of the criterion or the $p$ parameter of the likelihood. Another strategy is the express the criterion (or $p$) in its natural metric and put the nonlinear portion on the right side of the equation. If we consider the generic discrete conditional hazard function, that would follow the form
 
-$$h(t_{ij})  = \frac{1}{1 + e^{-([\alpha_1 D_{1ij} + \alpha_2 D_{2ij} + \cdots + \alpha_J D_{Jij}] + [\beta_1 X_{1ij} + \beta_2 X_{2ij} + \cdots + \beta_P X_{Pij}])}}.$$
+$$
+h(t_{ij})  = \frac{1}{1 + e^{-([\alpha_1 D_{1ij} + \alpha_2 D_{2ij} + \cdots + \alpha_J D_{Jij}] + [\beta_1 X_{1ij} + \beta_2 X_{2ij} + \cdots + \beta_P X_{Pij}])}}.
+$$
 
 This is just a particular kind of logistic regression model. It also clarifies that "by specifying a linear relationship between predictors and logit hazard we imply a *nonlinear* relationship between predictors and *raw hazard*" (p. 377, *emphasis* in the original). We can explore what that might look like with our version of Figure 11.4. Here we continue to use `fit6`, but this time we'll save the output from `fitted()` before plotting.
 
@@ -620,7 +626,7 @@ p1 <-
   ggplot(aes(x = period, group = pt,
              fill = pt, color = pt)) +
   geom_ribbon(aes(ymin = Q2.5, ymax = Q97.5),
-              size = 0, alpha = 1/6) +
+              linewidth = 0, alpha = 1/6) +
   geom_line(aes(y = Estimate)) +
   labs(subtitle = "logit(hazard)",
        y = NULL) +
@@ -637,7 +643,7 @@ p2 <-
   ggplot(aes(x = period, group = pt,
              fill = pt, color = pt)) +
   geom_ribbon(aes(ymin = Q2.5, ymax = Q97.5),
-              size = 0, alpha = 1/6) +
+              linewidth = 0, alpha = 1/6) +
   geom_line(aes(y = Estimate)) +
   labs(subtitle = "odds",
        y = NULL) +
@@ -652,7 +658,7 @@ p3 <-
   ggplot(aes(x = period, group = pt,
              fill = pt, color = pt)) +
   geom_ribbon(aes(ymin = Q2.5, ymax = Q97.5),
-              size = 0, alpha = 1/6) +
+              linewidth = 0, alpha = 1/6) +
   geom_line(aes(y = Estimate)) +
   labs(subtitle = "hazard (i.e., probability)",
        y = NULL) +
@@ -699,7 +705,9 @@ sex_pp %>%
 
 We're not going to walk through all the foundational equations for the likelihood and log-likelihood functions (Equations 11.11 through 11.13). For our purposes, just note that "it turns out that the standard logistic regression routines widely available in all major statistical packages, *when applied appropriately in the person-period data set*, actually provide estimates of the parameters of the discrete-time hazard model" (p. 383, *emphasis* in the original). Happily, this is what we've been doing. Bayesian logistic regression via the binomial likelihood has been our approach. And since we're Bayesians, the same caveat applies to survival models as applied to the other longitudinal models we fit in earlier chapters. We're not just maximizing likelihoods, here. Bayes's formula requires us to multiply the likelihood by the prior.
 
-$$\underbrace{p(\theta | d)}_\text{posterior} \propto \underbrace{p(d | \theta)}_\text{likelihood} \; \underbrace{p(\theta)}_\text{prior}$$
+$$
+\\underbrace{p(\theta \mid d)}_\text{posterior} \propto \underbrace{p(d \mid \theta)}_\text{likelihood} \; \underbrace{p(\theta)}_\text{prior}
+$$
 
 ### Fitting the discrete-time hazard model to data.
 
@@ -711,7 +719,7 @@ sex_aggregated
 
 Now recall the formula for the binomial likelihood from the end of last chapter:
 
-$$\text{Pr} (z | n, p) = \frac{n!}{z!(n - z)!} p^z (1 - p)^{n - z},$$
+$$\Pr (z \mid n, p) = \frac{n!}{z!(n - z)!} p^z (1 - p)^{n - z},$$
 
 where $z$ is the number of cases for which the value is 1, $n$ is the total number of cases, and $p$ is the constant chance of a 1 across cases. We refer to binomial data as aggregated with $n > 1$. Our $n$ vector in the `sex_aggregated`, `total`, ranged from 38 to 108. Accordingly, our $z$ vector, `event`, was always some value equal or lower to that in the same row for `total`.
 
@@ -954,8 +962,8 @@ range(sex_pp$pas)
 
 Exponentiating (i.e., taking the anti-log) the posterior of a continuous predictor is a legitimate way to convert it to a hazard ratio.
 
-```{r, fig.width = 6, fig.height = 2.5}
-posterior_samples(fit11.9) %>% 
+```{r, fig.width = 6, fig.height = 2.5, warning = F}
+as_draws_df(fit11.9) %>% 
   transmute(`log-odds`     = b_pas,
             `hazard ratio` = exp(b_pas)) %>% 
   pivot_longer(everything()) %>% 
@@ -977,8 +985,8 @@ exp(fixef(fit11.9)[7, 1] * 2)
 
 Here's what that looks like in a plot.
 
-```{r, fig.width = 8, fig.height = 2.5}
-posterior_samples(fit11.9) %>% 
+```{r, fig.width = 8, fig.height = 2.5, warning = F}
+as_draws_df(fit11.9) %>% 
   transmute(`log-odds`                   = b_pas,
             `hazard ratio`               = exp(b_pas),
             `hr for a 2-unit difference` = exp(b_pas * 2)) %>% 
@@ -1060,7 +1068,7 @@ tibble(sd = c(2, 1.5, 1)) %>%
   geom_histogram(bins = 50) +
   scale_y_continuous(NULL, breaks = NULL) +
   theme(panel.grid = element_blank()) +
-  facet_wrap(~sd)
+  facet_wrap(~ sd)
 ```
 
 It looks like the log-odds $\operatorname{Normal}(0, 1)$ gently regularizes $p$ toward .5, but still allows for stronger values. This might be a good prior to use for our substantive covariates, what Singer and Willett referred to as the $\beta$ parameters. But I don't know that this makes sense for our $\alpha$ parameters. If you've been following along with the model output, the life tables, and so on, you'll have noticed those tend to drift toward the lower end of the probability range. Regularizing toward $p = .5$ might not be a good idea. In the absence of good substantive or statistical theory, perhaps it's best to use a flat prior. The log-odds $\operatorname{Normal} (0, 1.5)$ prior is nearly flat on the probability space, but it does still push the mass away from the boundaries.
@@ -1195,7 +1203,7 @@ p1 <-
   ggplot(aes(x = period, group = pt,
              fill = pt, color = pt)) +
   geom_ribbon(aes(ymin = Q2.5, ymax = Q97.5),
-              size = 0, alpha = 1/6) +
+              linewidth = 0, alpha = 1/6) +
   geom_line(aes(y = Estimate)) +
   labs(subtitle = "fitted logit(hazard)",
        y = NULL) +
@@ -1212,7 +1220,7 @@ p2 <-
   ggplot(aes(x = period, group = pt,
              fill = pt, color = pt)) +
   geom_ribbon(aes(ymin = Q2.5, ymax = Q97.5),
-              size = 0, alpha = 1/6) +
+              linewidth = 0, alpha = 1/6) +
   geom_line(aes(y = Estimate)) +
   labs(subtitle = "fitted hazard",
        y = NULL) +
@@ -1281,7 +1289,7 @@ p3 <-
                y = -Inf, yend = .5,
                color = "white", linetype = 2) +
   geom_ribbon(aes(ymin = s_lower, ymax = s_upper),
-              size = 0, alpha = 1/6) +
+              linewidth = 0, alpha = 1/6) +
   geom_line(aes(y = s)) + 
   scale_y_continuous(NULL, breaks = c(0, .5, 1)) +
   labs(subtitle = "fitted survival probability") +
@@ -1354,12 +1362,12 @@ p1 <-
   ggplot(aes(x = period, group = pas,
              fill = pas, color = pas)) +
   geom_ribbon(aes(ymin = Q2.5, ymax = Q97.5),
-              size = 0, alpha = 1/6) +
+              linewidth = 0, alpha = 1/6) +
   geom_line(aes(y = Estimate)) +
   labs(subtitle = "fitted logit(hazard)",
        y = NULL) +
   coord_cartesian(ylim = c(0, .5)) +
-  facet_wrap(~pt)
+  facet_wrap(~ pt)
 
 # hazard
 p2 <-
@@ -1380,13 +1388,13 @@ p2 <-
              fill = pas, color = pas)) +
   geom_hline(yintercept = .5, color = "white") +
   geom_ribbon(aes(ymin = s_lower, ymax = s_upper),
-              size = 0, alpha = 1/6) +
+              linewidth = 0, alpha = 1/6) +
   geom_line(aes(y = s)) +
   scale_y_continuous(NULL, breaks = c(0, .5, 1)) +
   labs(subtitle = "fitted survival probability") +
   coord_cartesian(ylim = c(0, 1)) +
   theme(legend.position = "none") +
-  facet_wrap(~pt)
+  facet_wrap(~ pt)
 ```
 
 Combine the subplots to make our version of Figure 11.7.
@@ -1455,7 +1463,7 @@ ll %>%
   scale_y_continuous(NULL, breaks = NULL) +
   xlab(NULL) +
   theme(panel.grid = element_blank()) +
-  facet_wrap(~name, scales = "free")
+  facet_wrap(~ name, scales = "free")
 ```
 
 Here's how to compute the LL and deviance distributions for each of our four models, `fit11.7` through `fit11.10`, in bulk.
@@ -1487,7 +1495,7 @@ ll %>%
   labs(x = NULL,
        y = NULL) +
   theme(panel.grid = element_blank()) +
-  facet_wrap(~statistic, scales = "free_x")
+  facet_wrap(~ statistic, scales = "free_x")
 ```
 
 ### Deviance-based hypothesis tests for individual predictors.
@@ -1523,7 +1531,7 @@ We won't be doing this.
 
 Now we return to our preferred methods for model comparison. Use the `add_criterion()` function to compute the WAIC and LOO and add their output to the model fits.
 
-```{r, message = F}
+```{r}
 fit11.7  <- add_criterion(fit11.7, c("loo", "waic"))
 fit11.8  <- add_criterion(fit11.8, c("loo", "waic"))
 fit11.9  <- add_criterion(fit11.9, c("loo", "waic"))
@@ -1570,10 +1578,10 @@ print(fit11.10)
 
 Recall that the second column for our 'Population-Level Effects', 'Est.Error', contains the standard deviation for each dimension of the posteriors listed (i.e., for each parameter ranging from `d7` to `pas`). This is similar, but distinct from, the frequentist standard error. Instead of focusing on $p$-values connected to standard errors, why not look at the marginal posteriors directly?
 
-```{r, fig.width = 6, fig.height = 2.5}
-post <- posterior_samples(fit11.10)
+```{r, fig.width = 6, fig.height = 2.5, warning = F}
+draws <- as_draws_df(fit11.10)
 
-post %>% 
+draws %>% 
   pivot_longer(b_pt:b_pas) %>% 
   
   ggplot(aes(x = value, y = name, fill = stat(x > 0))) +
@@ -1589,8 +1597,8 @@ If we'd like to keep with the NHST perspective, zero is not a particularly credi
 
 Looking at those densities might lead one to ask, *Exactly what proportion of the posterior draws for each is zero or below*? You can compute that like this.
 
-```{r}
-post %>% 
+```{r, warning = F}
+draws %>% 
   pivot_longer(b_pt:b_pas) %>% 
   group_by(name) %>% 
   summarise(`percent zero or below` = 100 * mean(value <= 0))
@@ -1608,8 +1616,8 @@ fixef(fit11.10)
 
 We find the lower- and upper-limits for our percentile-based Bayesian credible intervals in the last two columns. If you’d like HDIs instead, use the convenience functions from **tidybayes**.
 
-```{r}
-post %>% 
+```{r, warning = F}
+draws %>% 
   pivot_longer(b_pt:b_pas) %>% 
   group_by(name) %>% 
   mean_hdi(value)
@@ -1623,8 +1631,8 @@ fixef(fit11.10)[c("pt", "pas"), -2] %>% exp()
 
 Keep in mind that fixating on just the 95% intervals is a little NHST-centric. Since we have entire posterior distributions to summarize, we might consider other intervals. Here we use another graphical approach by using `tidybayes_statintervalh()` to mark off the 10, 30, 50, 70, and 90% intervals for both substantive predictors. Both are in the odds-ratio metric.
 
-```{r, fig.width = 6, fig.height = 1.75}
-post %>% 
+```{r, fig.width = 6, fig.height = 1.75, warning = F}
+draws %>% 
   pivot_longer(b_pt:b_pas) %>% 
   mutate(`odds ratio` = exp(value)) %>% 
   
@@ -1648,7 +1656,7 @@ sessionInfo()
 
 ```{r, echo = F, message = F}
 # here we'll remove our objects
-rm(sex, fit11.1, fit11.2, fit11.3, make_lt, lt, p1, p2, make_iml, odds, log_odds, p3, sex_pp, sex_aggregated, fit11.4, fit11.5, fit11.6, f, fit11.7, fit11.8, fit11.9, fit11.10, dat, fit11.11, fit11.12, nd, imls, ll, post)
+rm(sex, fit11.1, fit11.2, fit11.3, make_lt, lt, p1, p2, make_iml, odds, log_odds, p3, sex_pp, sex_aggregated, fit11.4, fit11.5, fit11.6, f, fit11.7, fit11.8, fit11.9, fit11.10, dat, fit11.11, fit11.12, nd, imls, ll, draws)
 
 pacman::p_unload(pacman::p_loaded(), character.only = TRUE)
 ```
