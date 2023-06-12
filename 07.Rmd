@@ -1235,7 +1235,7 @@ Even though there's still a strict band diagonal correlation structure, the hete
 
 Handy as it is, **brms** is not yet set up to fit models with the Toeplitz error covariance matrix, at this time. For details, see **brms** GitHub [issue #403](https://github.com/paul-buerkner/brms/issues/403#issuecomment-381404989).
 
-```{r fit7.7, eval = F, echo = F}
+```{r fit7.7c, eval = F, echo = F}
 # this is what you might call a hetergeneous version of the
 # *standard* multilevel model for change
 
