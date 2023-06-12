@@ -72,7 +72,7 @@ honking %>%
 
 "In continuous time, the survival probability for individual $i$ at time $t_j$ is the probability that his or her event time, $T_i$ will exceed $t_j$" (p. 472). This follows the equation
 
-$$S(t_{ij}) = \operatorname{Pr} [T_i > t_j].$$
+$$S(t_{ij}) = \Pr [T_i > t_j].$$
 
 Heads up: When Singer and Willett "do not distinguish individuals on the basis of predictors, [they] remove the subscript $i$, letting $S(t_j)$ represent the survivor function for a randomly selected member of the population" (p. 472).
 
@@ -97,7 +97,7 @@ year * days * hours * minutes * seconds
 
 Building, we define the continuous-time hazard function as
 
-$$h(t_{ij}) = \text{limit as } \Delta t \rightarrow 0 \left \{ \frac{\text{Pr}[T_i \text{ is in the interval } (t_j, t_j + \Delta t) | T_i \geq t_j]}{\Delta t} \right \},$$
+$$h(t_{ij}) = \text{limit as } \Delta t \rightarrow 0 \left \{ \frac{\Pr[T_i \text{ is in the interval } (t_j, t_j + \Delta t) | T_i \geq t_j]}{\Delta t} \right \},$$
 
 where $[t_j, t_j + \Delta t)$ is the $j$th time interval and "the opening phrase '$\text{limit as } \Delta t \rightarrow 0$' indicates that we evaluate the conditional probability in brackets as the interval width modes closer and closer to 0" (p. 474).
 
@@ -231,11 +231,11 @@ As with the discrete-time model, we can formally define the survivor function fo
 
 $$\hat S(t_j) =  \big(1 - \hat p(t_1)\big) \big(1 - \hat p(t_2)\big)... \big(1 - \hat p(t_j)\big).$$
 
-It'll take a little wrangling effort to transform the output from `posterior_samples(fit13.1)` into a useful form for plotting and summarizing $\hat S(t_j)$. We'll save it as `s`.
+It'll take a little wrangling effort to transform the output from `as_draws_df(fit13.1)` into a useful form for plotting and summarizing $\hat S(t_j)$. We'll save it as `s`.
 
-```{r}
+```{r, warning = F}
 s <-
-  posterior_samples(fit13.1) %>% 
+  as_draws_df(fit13.1) %>% 
   select(starts_with("b_")) %>% 
   mutate_all(inv_logit_scaled) %>% 
   mutate(b_ub_f0 = 0) %>% 
@@ -305,11 +305,11 @@ s_medians <-
 3 + (s_medians[1] - .5) / (s_medians[1] - s_medians[2]) * (4 - 3)
 ```
 
-Here's how we might convert the output of `posterior_samples(fit13.1)` into a useful format for our hazard function.
+Here's how we might convert the output of `as_draws_df(fit13.1)` into a useful format for our hazard function.
 
-```{r}
+```{r, warning = F}
 h <-
-  posterior_samples(fit13.1) %>% 
+  as_draws_df(fit13.1) %>% 
   select(starts_with("b_")) %>% 
   mutate_all(inv_logit_scaled) %>% 
   set_names(c(2:8, 18)) %>% 
@@ -606,7 +606,7 @@ p2 <-
   geom_segment(data = arrow,
                aes(x = x, xend = xend,
                    y = y, yend = yend),
-               size = 1/3, arrow = arrow(length = unit(0.15,"cm"), type = "closed")) +
+               linewidth = 1/3, arrow = arrow(length = unit(0.15,"cm"), type = "closed")) +
   geom_text(data = text,
             aes(x = x, y = y, label = label)) +
   scale_x_continuous("seconds after light turns green", limits = c(0, 20))
@@ -717,7 +717,7 @@ crossing(mean = -4:-1,
   scale_y_continuous(NULL, breaks = NULL) +
   xlab(expression(italic(p))) +
   theme(panel.grid = element_blank()) +
-  facet_grid(sd~mean)
+  facet_grid(sd ~ mean)
 ```
 
 As you decrease the prior mean, the mass in the probability metric heads to zero. Increasing or shrinking the prior standard deviation accelerates or attenuates that leftward concentration. To my way of thinking, we want a prior that, while concentrating the mass toward zero, still offers a good spread toward the middle. Let's try `normal(-4, 3)`. 
@@ -730,7 +730,7 @@ fit13.3 <-
       prior(normal(-4, 3), class = b),
       chains = 4, cores = 1, iter = 2000, warmup = 1000,
       seed = 13,
-      file = "~/Dropbox/Recoding Applied Longitudinal Data Analysis/fits/fit13.03")
+      file = "fits/fit13.03")
 ```
 
 Check the summary.
@@ -741,13 +741,13 @@ print(fit13.3)
 
 Our parameter diagnostics look excellent. It might be helpful to inspect their posteriors in a plot. Here we show them in both the log-odds and probability metrics.
 
-```{r, fig.width = 6, fig.height = 4}
-post <-
-  posterior_samples(fit13.3) %>% 
-  select(-lp__) %>% 
+```{r, fig.width = 6, fig.height = 4, warning = F}
+draws <-
+  as_draws_df(fit13.3) %>% 
+  select(starts_with("b_")) %>% 
   set_names(1:42) 
 
-post %>% 
+draws %>% 
   pivot_longer(everything(),
                names_to = "parameter",
                values_to = "log_odds") %>% 
@@ -760,14 +760,14 @@ post %>%
   labs(x = expression(hat(italic(p))[Bayes](italic(t[j]))),
        y = expression(italic(j))) +
   theme(panel.grid = element_blank()) +
-  facet_wrap(~name, scales = "free_x")
+  facet_wrap(~ name, scales = "free_x")
 ```
 
-Let's wrangle our `post` object a little to put it in a more useful format.
+Let's wrangle our `draws` object a little to put it in a more useful format.
 
 ```{r}
-post <-
-  post %>% 
+draws <-
+  draws %>% 
   mutate_all(inv_logit_scaled) %>% 
   mutate(`0` = 0) %>% 
   mutate(iter = 1:n()) %>% 
@@ -780,13 +780,13 @@ post <-
   mutate(survivor = cumprod(1 - p)) %>% 
   ungroup() 
 
-glimpse(post)
+glimpse(draws)
 ```
 
 We might want to compare our Bayesian $\hat p(t_j)$ estimates with their Maximum Likelihood counterparts. Since the Bayesian marginal posteriors are rather asymmetrical, we'll summarize $\hat p_\text{Bayes} (t_j)$ with means, medians, and modes.
 
 ```{r, fig.width = 6, fig.height = 3.5}
-post %>% 
+draws %>% 
   mutate(interval = factor(interval, levels = 0:42)) %>% 
   group_by(interval) %>% 
   summarise(mean   = mean(survivor),
@@ -812,7 +812,7 @@ post %>%
 The black dots were the ML estimates and the colored circles were the Bayesian counterparts. Overall, it looks like they matched up pretty well! Building on those sensibilities, here's an alternative version of the top panel from Figure 13.2, this time comparing the frequentist $\hat S (t_j)$ with our Bayesian counterpart.
 
 ```{r, fig.width = 6, fig.height = 3.5}
-post %>% 
+draws %>% 
   group_by(interval) %>% 
   summarise(mean   = mean(survivor),
             median = median(survivor),
@@ -847,16 +847,16 @@ tail(honking_km)
 Based on the `n_risk` column, the number of trials ranged from $n = 9$ at `interval == 37` to $n = 2$ fpr `interval == 42`. With so little information informing the likelihood, you largely get back the prior. Moving forward, here's another version of the survivor function of Figure 13.2, but this time using posterior intervals to highlight uncertainty in the estimates.
 
 ```{r, fig.width = 6, fig.height = 3.5}
-# augment post
-post <-
-  post %>% 
+# augment draws
+draws <-
+  draws %>% 
   bind_rows(
-    post %>% 
+    draws %>% 
       filter(interval == 42) %>% 
       mutate(interval = 43)
     )
 
-post %>% 
+draws %>% 
   left_join(
     bind_rows(
       distinct(honking_km, interval, seconds),
@@ -885,7 +885,7 @@ post %>%
 Just for giggles, here's how you might depict our $\hat S_\text{Bayes} (t_j)$ with more of a 3D approach.
 
 ```{r, fig.width = 6, fig.height = 3.5}
-post %>% 
+draws %>% 
   left_join(
     bind_rows(
       distinct(honking_km, interval, seconds),
@@ -1009,7 +1009,7 @@ p8 <- d %>%
   theme(panel.grid = element_blank())
 ```
 
-Did you notice our use of the gamma and Fréchet distributions? Both are supported for continuous-time survival models in **brms** (see Bürkner's vignette, [*Parameterization of response distributions in brms*](https://CRAN.R-project.org/package=brms/vignettes/brms_families.html#time-to-event-models)). 
+Did you notice our use of the gamma and Fréchet distributions? Both are supported for continuous-time survival models in **brms** (see Bürkner's vignette, [*Parameterization of response distributions in brms*](https://CRAN.R-project.org/package=brms/vignettes/brms_families.html#time-to-event-models)).
 
 ### Estimating the cumulative hazard function.
 
@@ -1073,7 +1073,7 @@ p2 <-
 Visualizing the cumulative hazard function from our Bayesian `fit13.3` is a minor extension to the approach we used for the survivor function, above. As an example, here's our plot for $\hat H_{- \text{LS}} (t_j)$. The biggest change in the code is the last line in the second `mutate()` statement, `hazard = -log(survivor)`.
 
 ```{r, fig.width = 7, fig.height = 4, message = F}
-post %>% 
+draws %>% 
   left_join(
     bind_rows(
       distinct(honking_km, interval, seconds),
@@ -1154,7 +1154,7 @@ tibble(width = 1:3) %>%
   scale_x_continuous("seconds after light turns green", limits = c(0, 20)) +
   ylab("smoothed hazard") +
   theme(panel.grid = element_blank()) +
-  facet_wrap(~width, nrow = 3)
+  facet_wrap(~ width, nrow = 3)
 ```
 
 ## Developing an intuition about continuous-time survivor, cumulative hazard, and kernel-smoothed hazard functions
@@ -1243,7 +1243,7 @@ Now apply `km_tibble()` to our four new fits.
 ```{r}
 km <-
   tibble(ml_fit = str_c("fit13.", 4:7)) %>% 
-  mutate(d = map(ml_fit, ~get(.) %>% km_tibble())) %>% 
+  mutate(d = map(ml_fit, ~ get(.) %>% km_tibble())) %>% 
   unnest(d)
 ```
 
@@ -1424,40 +1424,40 @@ print(fit13.10)
 print(fit13.11)
 ```
 
-Since we're working with four `brm()` fits, it might make sense to bundle the steps and keep the results in one place. Here we make something of a super function. With `wrangle_samples()`, we'll extract the posterior draws from each model; add a couple interval columns; convert the results to the $\widehat{p (t_j)}$, $\widehat{S (t_j)}$, and $\widehat{H (t_j)}$ metrics; and join the results to the data stored in `km`. If the steps seem overwhelming, just flip back to the ends of Sections 13.3 and 13.4. This is a small extension of the data wrangling steps we took to make the $\widehat{S (t_j)}$ and $\widehat{H (t_j)}$ plots for our **brms** model `fit13.3`.
+Since we're working with four `brm()` fits, it might make sense to bundle the steps and keep the results in one place. Here we make something of a super function. With `wrangle_draws()`, we'll extract the posterior draws from each model; add a couple interval columns; convert the results to the $\widehat{p (t_j)}$, $\widehat{S (t_j)}$, and $\widehat{H (t_j)}$ metrics; and join the results to the data stored in `km`. If the steps seem overwhelming, just flip back to the ends of Sections 13.3 and 13.4. This is a small extension of the data wrangling steps we took to make the $\widehat{S (t_j)}$ and $\widehat{H (t_j)}$ plots for our **brms** model `fit13.3`.
 
 ```{r}
-wrangle_samples <- function(brms, survfit) {
+wrangle_draws <- function(brms, survfit) {
   
-  # extract the samples
-  post <-
+  # extract the draws
+  draws <-
     get(brms) %>% 
-    posterior_samples() %>% 
-    select(-lp__)
+    as_draws_df() %>% 
+    select(starts_with("b_"))
   
   # how many columns?
-  n_col <- ncol(post)  
+  n_col <- ncol(draws)  
   
   # transform to the p metric, add a 0 interval, make it long, and add S
-  post <- 
-    post %>% 
+  draws <- 
+    draws %>% 
     set_names(1:n_col) %>% 
     mutate_all(inv_logit_scaled) %>% 
     mutate(`0` = 0) %>% 
-    mutate(iter = 1:n()) %>% 
-    pivot_longer(-iter,
+    mutate(draw = 1:n()) %>% 
+    pivot_longer(-draw,
                  names_to = "interval",
                  values_to = "p") %>% 
     mutate(interval = interval %>% as.double()) %>% 
     arrange(interval) %>% 
-    group_by(iter) %>% 
+    group_by(draw) %>% 
     mutate(S = cumprod(1 - p)) %>% 
     ungroup() %>% 
     mutate(H = -log(S))
   
   # add the final interval, join the data, and return()
-  bind_rows(post,
-            post %>% filter(interval == n_col) %>% mutate(interval = n_col + 1)) %>% 
+  bind_rows(draws,
+            draws %>% filter(interval == n_col) %>% mutate(interval = n_col + 1)) %>% 
     left_join(km %>% filter(ml_fit == survfit) %>% select(interval:n_censored),
               by = "interval") %>% 
     return()
@@ -1465,16 +1465,16 @@ wrangle_samples <- function(brms, survfit) {
 }
 ```
 
-Our `wrangle_samples()` function takes two arguments, `brms` and `survfit`, which indicate the desired **brms** model and the corresponding index within `km` that contains the associated survival data. Let's put it to work.
+Our `wrangle_draws()` function takes two arguments, `brms` and `survfit`, which indicate the desired **brms** model and the corresponding index within `km` that contains the associated survival data. Let's put it to work.
 
 ```{r}
-post <-
+draws <-
   tibble(brms    = str_c("fit13.", 8:11),
          survfit = str_c("fit13.", 4:7)) %>% 
-  mutate(post = map2(brms, survfit, wrangle_samples)) %>% 
-  unnest(post)
+  mutate(draw = map2(brms, survfit, wrangle_draws)) %>% 
+  unnest(draw)
 
-post
+draws
 ```
 
 Like before, we have 12 subplots to make and we can reduce redundancies in the code by working with custom geoms. To accommodate our Bayesian fits, we'll redefine `geom_S()` and `geom_H()` to depict the step functions with `tidybayes::stat_lineribbon()`. Happily, our `geom_h()` is good to go as is.
@@ -1511,28 +1511,28 @@ Make and save the subplots.
 ```{r, warning = F, message = F}
 # use `geom_S()` to make and save the top row
 p1 <-
-  post %>% 
+  draws %>% 
   filter(brms == "fit13.8") %>% 
   ggplot(aes(x = time, y = S)) +
   geom_S(x_ul = 110, y_lab = expression(widehat(italic(S(t[j]))))) +
   labs(subtitle = "Cooney et al (1991)")
 
 p2 <-
-  post %>% 
+  draws %>% 
   filter(brms == "fit13.9") %>% 
   ggplot(aes(x = time, y = S)) +
   geom_S(x_ul = 36, y_lab = NULL) +
   labs(subtitle = "Zorn &  Van Winkle (2000)")
 
 p3 <-
-  post %>% 
+  draws %>% 
   filter(brms == "fit13.10") %>% 
   ggplot(aes(x = time, y = S)) +
   geom_S(x_ul = 102, y_lab = NULL) +
   labs(subtitle = "Sorenson et al (1991)")
 
 p4 <-
-  post %>% 
+  draws %>% 
   filter(brms == "fit13.11") %>% 
   ggplot(aes(x = time, y = S)) +
   geom_S(x_ul = 150, y_lab = NULL) +
@@ -1540,70 +1540,70 @@ p4 <-
   
 # use `geom_H()` to make and save the middle row
 p5 <-
-  post %>% 
+  draws %>% 
   filter(brms == "fit13.8") %>% 
   ggplot(aes(x = time, y = H)) +
   geom_H(x_ul = 110, y_lab = expression(widehat(italic(H(t[j])))))
 
 p6 <-
-  post %>% 
+  draws %>% 
   filter(brms == "fit13.9") %>% 
   ggplot(aes(x = time, y = H)) +
   geom_H(x_ul = 36, y_lab = NULL)
 
 p7 <-
-  post %>% 
+  draws %>% 
   filter(brms == "fit13.10") %>% 
   ggplot(aes(x = time, y = H)) +
   geom_H(x_ul = 102, y_lab = NULL)
 
 p8 <-
-  post %>% 
+  draws %>% 
   filter(brms == "fit13.11") %>% 
   ggplot(aes(x = time, y = H)) +
   geom_H(x_ul = 150, y_lab = NULL)
   
 # use `geom_h()` to make and save the bottom row
 p9 <-
-  post %>% 
+  draws %>% 
   filter(brms == "fit13.8") %>% 
   group_by(interval, time) %>% 
   summarize(median = median(S)) %>% 
   nest(data = everything()) %>% 
-  mutate(smooth = map(data, ~my_smooth(width = 12, time = .$time, survive = .$median))) %>% 
+  mutate(smooth = map(data, ~ my_smooth(width = 12, time = .$time, survive = .$median))) %>% 
   unnest(smooth) %>%
   ggplot(aes(x = x, y = y)) +
   geom_h(x_lab = "weeks after discharge", x_ul = 110, y_lab = expression(widehat(italic(h(t[j])))))
 
 p10 <-
-  post %>% 
+  draws %>% 
   filter(brms == "fit13.9") %>% 
   group_by(interval, time) %>% 
   summarize(median = median(S)) %>% 
   nest(data = everything()) %>% 
-  mutate(smooth = map(data, ~my_smooth(width = 12, time = .$time, survive = .$median))) %>% 
+  mutate(smooth = map(data, ~ my_smooth(width = 12, time = .$time, survive = .$median))) %>% 
   unnest(smooth) %>%
   ggplot(aes(x = x, y = y)) +
   geom_h(x_lab = "years on court", x_ul = 36, y_lab = NULL)
 
 p11 <-
-  post %>% 
+  draws %>% 
   filter(brms == "fit13.10") %>% 
   group_by(interval, time) %>% 
   summarize(median = median(S)) %>% 
   nest(data = everything()) %>% 
-  mutate(smooth = map(data, ~my_smooth(width = 12, time = .$time, survive = .$median))) %>% 
+  mutate(smooth = map(data, ~ my_smooth(width = 12, time = .$time, survive = .$median))) %>% 
   unnest(smooth) %>%
   ggplot(aes(x = x, y = y)) +
   geom_h(x_lab = "age (in years)", x_ul = 102, y_lab = NULL)
 
 p12 <-
-  post %>% 
+  draws %>% 
   filter(brms == "fit13.11") %>% 
   group_by(interval, time) %>% 
   summarize(median = median(S)) %>% 
   nest(data = everything()) %>% 
-  mutate(smooth = map(data, ~my_smooth(width = 12, time = .$time, survive = .$median))) %>% 
+  mutate(smooth = map(data, ~ my_smooth(width = 12, time = .$time, survive = .$median))) %>% 
   unnest(smooth) %>%
   ggplot(aes(x = x, y = y)) +
   geom_h(x_lab = "weeks since hired", x_ul = 150, y_lab = NULL)
