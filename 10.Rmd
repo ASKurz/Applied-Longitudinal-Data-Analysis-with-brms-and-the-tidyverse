@@ -597,7 +597,7 @@ crossing(n_j   = c(100, 1000, 10000),
        y = expression(italic(se)(hat(italic(h))(italic(t[j]))))) +
   theme(text = element_text(family = "Times"),
         panel.grid = element_blank()) +
-  facet_wrap(~n_j, nrow = 1, labeller = label_parsed)
+  facet_wrap(~ n_j, nrow = 1, labeller = label_parsed)
 ```
 
 ### Standard error of the estimated survival probabilities.
