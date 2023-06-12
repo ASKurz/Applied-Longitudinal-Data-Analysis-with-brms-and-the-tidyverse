@@ -1032,7 +1032,7 @@ fit7.5 <-
       file = "fits/fit07.05")
 ```
 
-```{r fit7.5, eval = F, echo = F}
+```{r fit7.5b, eval = F, echo = F}
 fit7.5b <-
   brm(data = opposites_pp,
       family = gaussian,
