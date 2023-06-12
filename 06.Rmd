@@ -360,7 +360,7 @@ $$
 \end{align*}
 $$
 
-Once people secure their GED, $\pi_{2i}$ is always multiplied by 1 (i.e., $\pi_{2i} (1) $) and the values by which we multiply $\pi_{3i}$ scale linearly with `exper`, but with the offset the way we discussed in the previous subsection. To emphasize that, we might rewrite the equation as
+Once people secure their GED, $\pi_{2i}$ is always multiplied by 1 (i.e., $\pi_{2i} (1)$) and the values by which we multiply $\pi_{3i}$ scale linearly with `exper`, but with the offset the way we discussed in the previous subsection. To emphasize that, we might rewrite the equation as
 
 $$
 \begin{align*}
@@ -2890,7 +2890,7 @@ To keep things simple, we only focused on threshold posterior means.
 
 ### You may want more.
 
-If you'd like more practice with logistic regression, with other aspects of the generalized linear model, Here are a few resources to consider:
+If you'd like more practice with logistic regression, or with other aspects of the generalized linear model, here are a few resources to consider:
 
 * @gelmanDataAnalysisUsing2006 covered the generalized linear model, including logistic regression, in both single-level and multilevel contexts. You can find their supplemental materials at [https://www.stat.columbia.edu/~gelman/arm/software/](https://www.stat.columbia.edu/~gelman/arm/software/). Heads up: some of their Bayesian model code is getting a dated.
 * @gelmanRegressionOtherStories2020 is something of a second edition of the first half of @gelmanDataAnalysisUsing2006. This text covered the generalized linear model, but only from a single-level context. You can find supporting materials at [https://avehtari.github.io/ROS-Examples/](https://avehtari.github.io/ROS-Examples/).
