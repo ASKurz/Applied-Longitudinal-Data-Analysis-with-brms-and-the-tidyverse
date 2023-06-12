@@ -9,7 +9,7 @@ options(width = 110)
 
 > In this chapter..., we focus on the model's *random* effects as embodied in its error covariance structure. Doing so allows us to both describe the particular error covariance structure that the "standard" multilevel model for change invokes and it also allows us to broaden its representation to other—sometimes more tenable assumptions—about its behavior. [@singerAppliedLongitudinalData2003, p. 243, *emphasis* in the original]
 
-## 7.1 The "standard" specification of the multilevel model for change 
+## The "standard" specification of the multilevel model for change 
 
 Load the `opposites_pp` data [@willett1988QuestionsAndAnswers].
 
@@ -108,7 +108,7 @@ sigma %>%
   mutate_if(is.double, round, digits = 2)
 ```
 
-## 7.2 Using the composite model to understand assumptions about the error covariance matrix 
+## Using the composite model to understand assumptions about the error covariance matrix 
 
 Dropping the terms specifying the distributional assumptions, we can reexpress the model formula, from above, in the composite format as
 
@@ -219,7 +219,7 @@ r & \sim \mathcal{N}
 
 The bulk of the rest of the material in this chapter will focus around how different models handle $\mathbf{\Sigma}_r$. The *standard* multilevel growth model has one way. There are many others.
 
-### 7.2.1 Variance of the composite residual.
+### Variance of the composite residual.
 
 Under the conventional multilevel growth model
 
@@ -334,7 +334,7 @@ sigma %>%
   median_qi(r)
 ```
 
-### 7.2.2 Covariance of the composite residuals.
+### Covariance of the composite residuals.
 
 In addition to the variances in $\mathbf{\Sigma}_r$, we might focus on the off-diagonal covariances, too. We can define the covariance between two time points $\sigma_{r_j, r_{j'}}$ as
 
@@ -428,7 +428,7 @@ $$
 
 > Compound symmetric error covariance structures are particularly common in longitudinal data, especially if the slopes of the change trajectories do not differ much asroc people. Regardless of these special cases, however, the most sensible question to ask of your data is whether the error covariance structure that the "standard" multilevel model for change demands is realistic when applied to data in practice? The answer to this question will determine whether the standard model can be applied ubiquitously, as question we soon address. (pp. 255--256)
 
-### 7.2.3 Autocorrelation of the composite residuals.
+### Autocorrelation of the composite residuals.
 
 We can use the following equation to convert our $\mathbf{\Sigma}_r$ into a correlation matrix:
 
@@ -517,7 +517,7 @@ sigma %>%
 
 If you look at the "estimate" column in Table 7.3 (pp. 258--259), you'll see the $\hat \rho$ values for the autoregressive and heterogeneous-autoregressive models are very similar to the $\hat \rho$ posterior we just computed for the standard multilevel model of change. The standard multilevel model of change accounts for autocorrelation, but it does so without an explicit $\rho$ parameter.
 
-## 7.3 Postulating an alternative error covariance structure
+## Postulating an alternative error covariance structure
 
 Singer and Willett wrote:
 
@@ -534,7 +534,7 @@ Frequentest **R** users would likely do this with the [**nlme** package](https:/
 
 The Toeplitz structure is not currently available with **brms**, but we can experiment with the first five. For details, see [issue #403](https://github.com/paul-buerkner/brms/issues/403) in the **brms** GitHub repo.
 
-### 7.3.1 Unstructured error covariance matrix.
+### Unstructured error covariance matrix.
 
 Models using an unstructured error covariance matrix include $k (k + 1) / 2$ variance/covariance parameters, where $k$ is the number of time waves in the data. In the case of our `opposites_pp` data, we can compute the number of parameters as follows.
 
@@ -712,7 +712,7 @@ sigma.us %>%
 
 But again, I suspect it will be easier to appreciate our posterior $\hat{\mathbf \Sigma}$ in a tile plot. Here's a summary using the posterior medians, similar to what Singer and Willett reported in the rightmost column of Table 7.3.
 
-```{r, warning = F, eval = F, echo = F}
+```{r, fig.width = 5, fig.height = 3.5}
 levels <- 
   c("sigma[1]^2", "sigma[12]", "sigma[13]", "sigma[14]", 
     "sigma[21]", "sigma[2]^2", "sigma[23]", "sigma[24]", 
@@ -737,25 +737,6 @@ sigma.us %>%
   labs(subtitle = expression(hat(Sigma)[italic(r)]*" for the unstructured model")) +
   theme(legend.text = element_text(hjust = 1)) +
   facet_wrap(~ name, labeller = label_parsed)
-
-sigma.us %>% 
-  pivot_longer(everything()) %>%  
-  mutate(name = factor(name, levels = levels)) %>% 
-  group_by(name) %>% 
-  mean_qi(value) %>% 
-  mutate(label = round(value, digits = 0)) %>% 
-  
-  ggplot(aes(x = 0, y = 0)) +
-  geom_tile(aes(fill = value)) +
-  geom_text(aes(label = label, color = value < 1),
-            show.legend = F) +
-  scale_fill_viridis_c("posterior\nmean", option = "A", limits = c(0, NA)) +
-  scale_color_manual(values = c("black", "white")) +
-  scale_x_continuous(NULL, breaks = NULL, expand = c(0, 0)) +
-  scale_y_continuous(NULL, breaks = NULL, expand = c(0, 0)) +
-  labs(subtitle = expression(hat(Sigma)[italic(r)]*" for the unstructured model")) +
-  theme(legend.text = element_text(hjust = 1)) +
-  facet_wrap(~ name, labeller = label_parsed)
 ```
 
 In case you're curious, here's the variance/covariance matrix from the sample data.
@@ -771,7 +752,16 @@ fit7.2$data %>%
 
 The **brms** default priors are weakly regularizing, particularly the LKJ prior for the correlation matrix $\mathbf \Omega$, and I believe this is why the values from our model are systemically lower that the sample statistics. If you find this upsetting, collect more data, which hill help the likelihood dominate the prior.
 
-### 7.3.2 Compound symmetric error covariance matrix.
+
+
+
+
+
+
+
+
+
+### Compound symmetric error covariance matrix.
 
 "A *compound symmetric* error covariance matrix requires just two parameters, labeled $\sigma^2$ and $\sigma_1^2$ in table 7.3" (p. 260). From the table, we see that matrix follows the form
 
@@ -868,7 +858,7 @@ crossing(row = 1:4,
   theme(legend.text = element_text(hjust = 1))
 ```
 
-### 7.3.3 Heterogeneous compound symmetric error covariance matrix .
+### Heterogeneous compound symmetric error covariance matrix .
 
 Now we extend the compound symmetric matrix by allowing the residual variances to vary across the time waves. Thus, instead of a single $\sigma_\epsilon^2$ parameter, we'll have $\sigma_1^2$ through $\sigma_4^2$. However, we still have a single correlation parameter $\rho$. We can express this as
 
@@ -983,7 +973,7 @@ sigma.hcs %>%
   facet_wrap(~ name, labeller = label_parsed)
 ```
 
-### 7.3.4 Autoregressive error covariance matrix.
+### Autoregressive error covariance matrix.
 
 The first-order autoregressive has a strict "band-diagonal" structure governed by two parameters, which Singer and Willett called $\sigma^2$ and $\rho$. From Table 7.3 (p. 260), we see that matrix follows the form
 
@@ -1106,7 +1096,7 @@ crossing(row = 1:4,
 
 With this presentation, that strict band-diagonal structure really pops.
 
-### 7.3.5 Heterogeneous autoregressive error covariance matrix.
+### Heterogeneous autoregressive error covariance matrix.
 
 For the heterogeneous autoregressive error covariance matrix, we relax the assumption that the variances on the diagonal of the $\mathbf{\Sigma}_r$ matrix are constant across waves. From Table 7.3 (p. 260), we see that matrix follows the form
 
@@ -1225,7 +1215,7 @@ crossing(row = 1:4,
 
 Even though there's still a strict band diagonal correlation structure, the heterogeneous variances allow for differences among the covariances within the bands.
 
-### 7.3.6 Toeplitz error covariance matrix.
+### Toeplitz error covariance matrix.
 
 Handy as it is, **brms** is not yet set up to fit models with the Toeplitz error covariance matrix, at this time. For details, see **brms** GitHub [issue #403](https://github.com/paul-buerkner/brms/issues/403#issuecomment-381404989).
 
@@ -1251,7 +1241,7 @@ fit7.7 <-
       )
 ```
 
-### 7.3.7 Does choosing the "correct" error covariance structure really matter?
+### Does choosing the "correct" error covariance structure really matter?
 
 Now we have all our models, we might compare them with information criteria, as was done in the text. Here we'll use the WAIC. First, compute and save the WAIC estimates.
 
@@ -1362,7 +1352,7 @@ tibble(fit  = str_c("fit7.", c(1:6)),
 
 Yep, the way we parameterize $\mathbf{\Sigma}_r$ might have subtle consequences for the widths of our marginal $\gamma$ posteriors. This can matter a lot when you're analyzing data from, say, a clinical trial where lives may depend on the results of your analysis. Rearrange the deck chairs on your *Titanic* with caution, friends. Someone might trip and hurt themselves.
 
-### 7.3.8 Bonus: Did we trade multilevel for multivariate?
+### Bonus: Did we trade multilevel for multivariate?
 
 So far in this chapter, only the first model `fit7.1` used the conventional **brms** multilevel syntax, such as `(1 + time | id)`. The other five models used the `unstr()`, `cosy()`, or `ar()` helper functions, instead. Singer and Willett didn't exactly come out and say it this way, but in a sense, `fit7.1` is the only multilevel model we've fit so far in this chapter. @mallinckrod2008recommendations made the point more clearly: 
 
