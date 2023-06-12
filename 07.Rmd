@@ -127,7 +127,6 @@ $$
 
 If we were willing to presume, as in OLS or single-level Bayesian regression, that all residuals are independent and normally distributed, we could express that in statistical notation as
 
-$$
 \begin{align*}
 \begin{bmatrix} r_{11} \\ r_{12} \\ r_{13} \\ r_{14} \\ r_{21} \\ r_{22} \\ r_{23} \\ r_{24} \\ \vdots \\ r_{n1} \\ r_{n2} \\ r_{n3} \\ r_{n4} \end{bmatrix} & \sim \mathcal{N}
 
@@ -156,13 +155,11 @@ $$
 
 \end{pmatrix},
 \end{align*}
-$$
 
 where $r_{ij}$ is the $i$th person's residual on the $j$th time point. The variance/covariance matrix $\mathbf \Sigma$ is diagonal (i.e., all the off-diagonal elements are 0's) and *homoscedastic* (i.e., all the diagonal elements are the same value, $\sigma_r^2$).
 
 These assumptions are absurd for longitudinal data, which is why we don't analyze such data with single-level models. If we were to make the less restrictive assumptions that, within people, the residuals were *correlated over time* and were *heteroscedastic*, we could express that as
 
-$$
 \begin{align*}
 \begin{bmatrix} r_{11} \\ r_{12} \\ r_{13} \\ r_{14} \\ r_{21} \\ r_{22} \\ r_{23} \\ r_{24} \\ \vdots \\ r_{n1} \\ r_{n2} \\ r_{n3} \\ r_{n4} \end{bmatrix} & \sim \mathcal{N}
 
@@ -191,13 +188,11 @@ $$
 
 \end{pmatrix}.
 \end{align*}
-$$
 
 this kind of structure can be called *block diagonal*, which means the off-diagonal elements are zero between persons, but allowed to be non-zero within persons (i.e., within blocks). The zero elements between person blocks explicate how the residuals are independent between persons. Notice that the variances on the diagonal vary across the four time points (i.e., $\sigma_{r_1}^2, \dots, \sigma_{r_4}^2$). Yet also notice that the block for one person is identical to the block for all others. Thus, this model allows for *heterogeneity* across time within persons, but *homogeneity* between persons.
 
 We can express this in the more compact notation,
 
-$$
 \begin{align*}
 r & \sim \mathcal{N}
 \begin{pmatrix} \mathbf 0, 
@@ -221,7 +216,6 @@ r & \sim \mathcal{N}
   \sigma_{r_4 r_1} & \sigma_{r_4 r_2} & \sigma_{r_4 r_3} & \sigma_{r_4}^2 \end{bmatrix}.
 
 \end{align*}
-$$
 
 The bulk of the rest of the material in this chapter will focus around how different models handle $\mathbf{\Sigma}_r$. The *standard* multilevel growth model has one way. There are many others.
 
@@ -651,7 +645,7 @@ as_draws_df(fit7.2) %>%
 
 Here's how to compute and summarize the $\mathbf D$ and $\mathbf \Omega$ parameters with the `as_draws_df()` output.
 
-```{r}
+```{r, warning = F}
 # wrangle
 sigma.us <-
   as_draws_df(fit7.2) %>%
@@ -1300,7 +1294,7 @@ fitted(fit7.1, newdata = nd) %>%
   data.frame() %>% 
   bind_cols(nd) %>% 
   ggplot(aes(x = time + 1, y = Estimate, group = id)) +
-  geom_line(size = 1/4, alpha = 2/3) +
+  geom_line(linewidth = 1/4, alpha = 2/3) +
   labs(subtitle = "35 person-specific growth trajectories",
        x = "day",
        y = "opposites naming task") +
@@ -1570,6 +1564,11 @@ bind_rows(
 Now the results between the two methods are very similar. If you wanted to, you could make a similar kind of plot for the two versions of the correlation matrix, too. Thus, the various models Singer and Willett introduced in this chapter are special multivariate alternatives to the standard multilevel approach we've preferred up to this point. Cool, huh?
 
 ## Session info {-}
+
+```{r}
+sessionInfo()
+```
+
 
 ```{r, eval = F, echo = F}
 # this is a second Bonus section showing a MELSM alternative
