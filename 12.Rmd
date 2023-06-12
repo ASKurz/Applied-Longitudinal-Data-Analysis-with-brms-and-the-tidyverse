@@ -130,9 +130,10 @@ fit12.6 <-
       family = binomial,
       event | trials(1) ~ 0 + Intercept + period + I(period^2) + I(period^3) + I(period^4) + I(period^5),
       prior(normal(0, 4), class = b),
-      chains = 4, cores = 4, iter = 3000, warmup = 2000,
-      control = list(max_treedepth = 13),
+      chains = 4, cores = 4, iter = 2000, warmup = 1000,
+      control = list(max_treedepth = 14),
       seed = 12,
+      init = 0,
       file = "fits/fit12.06")
 
 # general
@@ -179,7 +180,7 @@ p1 <-
                   ymax = fixef(fit12.1)[, 4] %>% inv_logit_scaled()),
               alpha = 1/5) +
   geom_line(aes(y = fixef(fit12.1)[, 1] %>% inv_logit_scaled()),
-            size = 1, color = "blue1") +
+            linewidth = 1, color = "blue1") +
   ggtitle("constant") +
   ylab("event | trials(1)")
 ```
@@ -196,15 +197,15 @@ library(patchwork)
 
 We are going to depart from Singer and Willett and no longer entertain using deviance for Bayesian model comparison. But we will compare then using the WAIC and the LOO.
 
-```{r, message = F}
-fit12.1 <- add_criterion(fit12.1, c("loo", "waic"))
-fit12.2 <- add_criterion(fit12.2, c("loo", "waic"))
-fit12.3 <- add_criterion(fit12.3, c("loo", "waic"))
-fit12.4 <- add_criterion(fit12.4, c("loo", "waic"))
-fit12.5 <- add_criterion(fit12.5, c("loo", "waic"))
-fit12.6 <- add_criterion(fit12.6, c("loo", "waic"))
-fit12.7 <- add_criterion(fit12.7, c("loo", "waic"))
-fit12.8 <- add_criterion(fit12.8, c("loo", "waic"))
+```{r}
+fit12.1 <- add_criterion(fit12.1, criterion = c("loo", "waic"))
+fit12.2 <- add_criterion(fit12.2, criterion = c("loo", "waic"))
+fit12.3 <- add_criterion(fit12.3, criterion = c("loo", "waic"))
+fit12.4 <- add_criterion(fit12.4, criterion = c("loo", "waic"))
+fit12.5 <- add_criterion(fit12.5, criterion = c("loo", "waic"))
+fit12.6 <- add_criterion(fit12.6, criterion = c("loo", "waic"))
+fit12.7 <- add_criterion(fit12.7, criterion = c("loo", "waic"))
+fit12.8 <- add_criterion(fit12.8, criterion = c("loo", "waic"))
 ```
 
 Before comparing the models in bulk, as in Table 12.2, let's confirm that whether we use the dummy variable method (`fit12.7`) or the factor variable method (`fit12.8`), the results for the general model are the same.
@@ -534,8 +535,8 @@ $$\text{flipover point} = [c - 1/2 (\alpha_1 / \alpha_2)].$$
 
 Here's what that looks like using the posterior samples.
 
-```{r, fig.width = 4, fig.height = 2.5}
-posterior_samples(fit12.9) %>% 
+```{r, fig.width = 4, fig.height = 2.5, warning = F}
+as_draws_df(fit12.9) %>% 
   transmute(c  = 5,
             a1 = b_period_5,
             a2 = b_Iperiod_5E2) %>% 
@@ -613,8 +614,8 @@ Do you see that $\pm$ sign in the numerator? That's what gives us the two points
 
 ```{r, fig.width = 8, fig.height = 2.5, warning = F}
 # extract the posterior draws
-post <-
-  posterior_samples(fit12.10) %>% 
+draws <-
+  as_draws_df(fit12.10) %>% 
   transmute(c  = 5,
             a1 = b_period_5,
             a2 = b_Iperiod_5E2,
@@ -622,7 +623,7 @@ post <-
 
 # flipover point with "+" in the numerator
 p1 <-
-  post %>% 
+  draws %>% 
   mutate(`flipover point 1` = c + (- a2 + sqrt(a2^2 - 3 * a1 * a3)) / (3 * a3)) %>% 
   filter(!is.na(`flipover point 1`)) %>% 
   filter(`flipover point 1` > -50 & `flipover point 1` < 50) %>% 
@@ -638,7 +639,7 @@ p1 <-
 
 # flipover point with "-" in the numerator
 p2 <-
-  post %>% 
+  draws %>% 
   mutate(`flipover point 2` = c + (- a2 - sqrt(a2^2 - 3 * a1 * a3)) / (3 * a3)) %>% 
   filter(!is.na(`flipover point 2`)) %>% 
   
@@ -690,7 +691,7 @@ On the region to the right of 0 on the $x$-axis, the plot looks a lot like the o
 ```{r, fig.width = 4, fig.height = 3}
 f %>% 
   ggplot(aes(x = period, y = value, group = iter)) +
-  geom_line(alpha = 1/10, size = 1/10) +
+  geom_line(alpha = 1/10, linewidth = 1/10) +
   ylab("logit hazard") +
   coord_cartesian(xlim = c(-7, 10),
                   ylim = c(-13, 0)) +
@@ -728,7 +729,7 @@ tibble(p = seq(from = .00001, to = .99999, length.out = 1e4)) %>%
   # plot
   ggplot(aes(x = p, y = value, color = name)) +
   geom_hline(yintercept = 0, color = "white") +
-  geom_line(size = 1) +
+  geom_line(linewidth = 1) +
   scale_color_viridis_d(NULL, option = "A", end = .6) +
   scale_y_continuous("transformed hazard probability", 
                      breaks = -3:3 * 5, limits = c(-15, 15)) +
@@ -847,10 +848,12 @@ f %>%
 
 Our next step is to fit proper models to the data. First, we will refit `fit11.8` from last chapter. Then we'll fit the clog-log analogue to the same model. The two models, respectively, follow the form
 
+$$
 \begin{align*}
 \operatorname{logit} h(t_{ij}) & = [\alpha_7 D_{7ij} + \alpha_8 D_{8ij} + \cdots + \alpha_{12} D_{12ij}] + [\beta_1 \text{PT}_i ] \; \text{and} \\
 \operatorname{clog-log} h(t_{ij}) & = [\alpha_7 D_{7ij} + \alpha_8 D_{8ij} + \cdots + \alpha_{12} D_{12ij}] + [\beta_1 \text{PT}_i ].
 \end{align*}
+$$
 
 Fit the models.
 
@@ -876,14 +879,16 @@ fit12.15 <-
       file = "fits/fit12.15")
 ```
 
-Both models used the binomial likelihood. They only differed in which link function we used to transform the data. To further explicate,  we can more fully write out our Bayesian clog-log model as
+Both models used the binomial likelihood. They only differed in which link function we used to transform the data. To further explicate, we can more fully write out our Bayesian clog-log model as
 
+$$
 \begin{align*}
 \text{event}_{ij} & = \operatorname{Binomial}(n = 1, p_{ij}) \\ 
 \operatorname{clog-log} (p_{ij}) & =  [\alpha_7 D_{7ij} + \alpha_8 D_{8ij} + \cdots + \alpha_{12} D_{12ij}] + [\beta_1 \text{PT}_{1i} ] \\
 \alpha_7, \alpha_8, ..., \alpha_{12} & \sim \operatorname{Normal}(0, 4) \\
 \beta_1 & \sim \operatorname{Normal}(0, 4).
 \end{align*}
+$$
 
 Here are the posterior means for `fit11.8` and `fit12.15`, as depicted in the firs three columns of Table 12.3.
 
@@ -916,9 +921,9 @@ pars %>%
   facet_wrap(~par, ncol = 1)
 ```
 
-Instead of comparing them with deviances, we will compare the two models using Bayesian information criteria. For simplicity, we'll focus on the LOO.
+Instead of comparing them with deviance values, we will compare the two models using Bayesian information criteria. For simplicity, we'll focus on the LOO.
 
-```{r, warning = F, message = F}
+```{r}
 fit12.15 <- add_criterion(fit12.15, c("loo", "waic"))
 
 loo_compare(fit12.15, fit11.8, criterion = "loo") %>% print(simplify = F)
@@ -963,7 +968,7 @@ Now focus on the `pt` parameter for both models.
 Here's that in a plot.
 
 ```{r}
-posterior_samples(fit11.8) %>% 
+as_draws_df(fit11.8) %>% 
   ggplot(aes(x = b_pt %>% exp(), y = 0)) +
   stat_halfeye(.width = c(.5, .95), na.rm = T) +
   scale_x_continuous("b_pt (exponentiated)") +
@@ -976,8 +981,9 @@ posterior_samples(fit11.8) %>%
 
 
 ```{r, fig.width = 8, fig.height = 2.75}
+# left
 p1 <-
-  posterior_samples(fit11.8) %>% 
+  as_draws_df(fit11.8) %>% 
   ggplot(aes(x = b_pt %>% exp(), y = 0)) +
   stat_halfeye(.width = c(.5, .95), na.rm = T) +
   scale_x_continuous("b_pt (exponentiated)") +
@@ -987,8 +993,9 @@ p1 <-
   coord_cartesian(xlim = c(1, 5)) +
   theme(panel.grid = element_blank())
 
+# right
 p2 <-
-  posterior_samples(fit12.15) %>% 
+  as_draws_df(fit12.15) %>% 
   ggplot(aes(x = b_pt %>% exp(), y = 0)) +
   stat_halfeye(.width = c(.5, .95)) +
   scale_x_continuous("b_pt (exponentiated)", limits = c(1, 5)) +
@@ -997,6 +1004,7 @@ p2 <-
        subtitle = "Exponentiating this parameter yields a hazard ratio.") +
   theme(panel.grid = element_blank())
 
+# combine
 p1 | p2
 ```
 
@@ -1046,8 +1054,9 @@ depression_pp %>%
 
 Here we fit the discrete hazard model based on a quadratic treatment of $\text{age} - 18$ with and the time-varying predictor `pd` and without/with the time-invariant predictor `female`.
 
+1:52
 ```{r fit12.16}
-# each took about 45 minutes to fit
+# 1.092947 hours
 fit12.16 <-
   brm(data = depression_pp,
       family = binomial,
@@ -1057,6 +1066,7 @@ fit12.16 <-
       seed = 12,
       file = "fits/fit12.16")
 
+# 1.055131 hours
 fit12.17 <-
   brm(data = depression_pp,
       family = binomial,
@@ -1156,6 +1166,7 @@ We jumped the gun a little, but to repeat:
 
 For example, here is the statistical formula we used when we fit `fit12.17`:
 
+$$
 \begin{align*}
 \text{event}_{ij}             & = \operatorname{Binomial}(n = 1, p_{ij}) \\ 
 \operatorname{logit} (p_{ij}) & = [\alpha_0 + \alpha_1 (\text{age}_{ij} - 18) + \alpha_2 (\text{age}_{ij} - 18)^2 + \alpha_3 (\text{age}_{ij} - 18)^3] \\
@@ -1163,6 +1174,7 @@ For example, here is the statistical formula we used when we fit `fit12.17`:
 \alpha_0, ..., \alpha_3       & \sim \operatorname{Normal}(0, 4) \\
 \beta_1 \text{ and } \beta_2  & \sim \operatorname{Normal}(0, 4),
 \end{align*}
+$$
 
 where $\operatorname{logit} (p_{ij}) = \operatorname{logit} \hat h(t_{ij})$. If you'd like to compare our results for those displayed by Singer and Willett in Equation 12.8, here are our posterior means.
 
@@ -1170,20 +1182,20 @@ where $\operatorname{logit} (p_{ij}) = \operatorname{logit} \hat h(t_{ij})$. If 
 fixef(fit12.17)[, 1] %>% round(digits = 4)
 ```
 
-The values are pretty close. Though we won't compare `fit12.16` and `fit12.17` using deviances, we will use information criteria. Before you execute this code on your end, heads up! In my experience, large data sets like this often result in long computation times for Bayesian information criteria. Between the two, the LOO often takes longer. So here we’ll go with the WAIC. Even so, it took just under four hours to execute both `add_criterion()` lines. **Proceed with causion**.
+The values are pretty close. Though we won't compare `fit12.16` and `fit12.17` using deviance values, we will use information criteria.
 
-```{r, message = F}
-fit12.16 <- add_criterion(fit12.16, "waic")
-fit12.17 <- add_criterion(fit12.17, "waic")
+```{r}
+fit12.16 <- add_criterion(fit12.16, criterion = "waic")
+fit12.17 <- add_criterion(fit12.17, criterion = "waic")
 
 loo_compare(fit12.16, fit12.17, criterion = "waic") %>% print(simplify = F)
 model_weights(fit12.16, fit12.17, weights = "waic") %>% round(digits = 3)
 ```
 
-Based on both the WAIC difference and the WAIC weights, `fit12.17` is the clear favorite. From that model, Here's a plot of the antilogged (i.e., exponentiated) posteriors for `pd` and `female`, which yields their odds ratios.
+Based on both the WAIC difference and the WAIC weights, `fit12.17` is the clear favorite. From that model, Here's a plot of the anti-logged (i.e., exponentiated) posteriors for `pd` and `female`, which yields their odds ratios.
 
-```{r, fig.width = 4, fig.height = 2.75}
-posterior_samples(fit12.17) %>% 
+```{r, fig.width = 4, fig.height = 2.75, warning = F}
+as_draws_df(fit12.17) %>% 
   pivot_longer(b_pd:b_female) %>% 
   mutate(`odds ratio` = exp(value)) %>% 
   
@@ -1200,8 +1212,7 @@ Here is our version of Figure 12.5.
 nd <- 
   crossing(female = 0:1,
            pd     = 0:1) %>% 
-  expand(nesting(female, pd),
-         age_18 = -14:21) %>% 
+  expand_grid(age_18 = -14:21) %>% 
   mutate(age = age_18 + 18)
   
 f <-
@@ -1218,7 +1229,7 @@ p1 <-
   f %>% 
   ggplot(aes(x = age, group = pd, color = pd, fill = pd)) +
   geom_ribbon(aes(ymin = Q2.5, ymax = Q97.5),
-              alpha = 1/5, size = 0) +
+              alpha = 1/5, linewidth = 0) +
   geom_line(aes(y = Estimate)) +
   scale_x_continuous(NULL, breaks = NULL, limits = c(0, 40)) +
   scale_y_continuous("fitted hazard", limits = c(0, 0.04))
@@ -1232,7 +1243,7 @@ p2 <-
   ggplot(aes(x = age, group = pd, color = pd, fill = pd)) +
   geom_hline(yintercept = .5, color = "white") +
   geom_ribbon(aes(ymin = Q2.5, ymax = Q97.5),
-              alpha = 1/5, size = 0) +
+              alpha = 1/5, linewidth = 0) +
   geom_line(aes(y = Estimate)) +
   scale_x_continuous(breaks = 0:8 * 5, limits = c(0, 40)) +
   scale_y_continuous("fitted survival probability", limits = c(0, 1)) +
@@ -1446,26 +1457,24 @@ fit12.23 <-
          file = "fits/fit12.23")
 ```
 
-Let's compare the models with information criteria. Not unlike with `fit12.16` and `fit12.17`, these are big models for a big data set and it took about an hour on my 2012-era laptop to return the WAIC. The LOO would likely have taken longer. Proceed with caution.
+Let's compare the models with information criteria.
 
-```{r, message = F}
-fit12.22 <- add_criterion(fit12.22, "waic")
-fit12.23 <- add_criterion(fit12.23, "waic")
+```{r}
+fit12.22 <- add_criterion(fit12.22, criterion = "waic")
+fit12.23 <- add_criterion(fit12.23, criterion = "waic")
 
 loo_compare(fit12.22, fit12.23, criterion = "waic") %>% print(simplify = F)
 model_weights(fit12.22, fit12.23, weights = "waic") %>% round(digits = 3)
 ```
 
-Our results diverge a bit from those in the text. For the deviance test on page 446, Singer and Willett reported a difference of $4.05 \; (p < .05, df = 1)$ in favor of the full model (i.e., `fit12.23`). Though both our WAIC difference score and the WAIC weights favor `fit12.23`, it's by a hair.
+Our results diverge a bit from those in the text. For the deviance test on page 446, Singer and Willett reported a difference of $4.05 \; (p < .05, \textit{df} = 1)$ in favor of the full model (i.e., `fit12.23`). Though both our WAIC difference score and the WAIC weights favor `fit12.23`, it's by a hair.
 
 "As in linear (or logistic) regression, we interpret interaction effects by simultaneously considering *all* the constituent parameters, for the cross-product term and its main-effect components" (p. 446, *emphasis* in the original). Rather than the point-estimate table Singer and Willett displayed at the bottom of the page, we'll present the full posterior distributions odds ratios in a faceted plot.
 
 ```{r, fig.width = 6, fig.height = 3}
-posterior_samples(fit12.23) %>% 
-  mutate(iter = 1:n()) %>% 
-  expand(nesting(iter, b_abused, b_black, `b_abused:black`),
-         abused = 0:1,
-         black  = 0:1) %>% 
+as_draws_df(fit12.23) %>%
+  expand_grid(abused = 0:1,
+              black  = 0:1) %>% 
   mutate(`odds ratio` = exp(b_abused * abused + b_black * black  + `b_abused:black` * abused * black),
          abused       = str_c("abused = ", abused),
          black        = str_c("black = ", black)) %>% 
@@ -1494,7 +1503,7 @@ make_fitted(fit12.23, scale = "linear") %>%
   # plot!
   ggplot(aes(x = period, y = Estimate, ymin = Q2.5, ymax = Q97.5,
              fill = abused, color = abused)) +
-  geom_ribbon(alpha = 1/5, size = 0) +
+  geom_ribbon(alpha = 1/5, linewidth = 0) +
   geom_line() +
   scale_fill_viridis_d(NULL, option = "A", end = .6, direction = -1) +
   scale_color_viridis_d(NULL, option = "A", end = .6, direction = -1) +
@@ -1522,7 +1531,7 @@ Our three models will be cubic with respect to our time variable, `age_18`. The 
 
 ```{r}
 # model a (linear)  
-# 1.286668 hours
+# 1.598436 hours
 fit12.24 <-
   brm(data = depression_pp,
       family = binomial,
@@ -1542,7 +1551,7 @@ print(fit12.24)
 Here we invert the antilog of `nsibs` and summarize the posterior with `median_qi()`.
 
 ```{r}
-posterior_samples(fit12.24) %>% 
+as_draws_df(fit12.24) %>% 
   median_qi(1 / exp(b_nsibs)) %>% 
   mutate_if(is.double, round, digits = 3)
 ```
@@ -1559,7 +1568,7 @@ depression_pp %>%
   theme(panel.grid = element_blank())
 ```
 
-Yep, sure is. Here's a way to save Singer and Willette's discretized version of `nsibs` and then break the cases down in terms of $n$ and percentage, which matches nicely with the numbers at the bottom of page 449.
+Yep, sure is. Here's a way to save Singer and Willett's discretized version of `nsibs` and then break the cases down in terms of $n$ and percentage, which matches nicely with the numbers at the bottom of page 449.
 
 ```{r}
 depression_pp <-
@@ -1586,7 +1595,7 @@ Now fit our version of Model B, in which we replace the original linear predicto
 
 ```{r fit12.25}
 # model b (nonlinear)  
-# 2.253822 hours
+# 2.346094 hours
 fit12.25 <-
   brm(data = depression_pp,
       family = binomial,
@@ -1605,8 +1614,8 @@ print(fit12.25)
 
 It might be easier to compare the various `sibs*` coefficients with a coefficient plot.
 
-```{r, fig.width = 6, fig.height = 1.75}
-posterior_samples(fit12.25) %>% 
+```{r, fig.width = 6, fig.height = 1.75, warning = F}
+as_draws_df(fit12.25) %>% 
   pivot_longer(contains("sibs")) %>% 
   mutate(name = str_remove(name, "b_")) %>% 
   
@@ -1635,7 +1644,7 @@ Now fit our version of Model C, the dichotomized `bigfamily` model.
 
 ```{r fit12.26}
 # model c (dichotomized)  
-# 1.434827 hours
+# 1.560219 hours
 fit12.26 <-
   brm(data = depression_pp,
       family = binomial,
@@ -1660,7 +1669,7 @@ breaks <- c(exp(fixef(fit12.26)["bigfamily", c(1, 3:4)]), 1) %>% as.vector()
 labels <- c(exp(fixef(fit12.26)["bigfamily", c(1, 3:4)]), 1) %>% round(digits = 3) %>% as.vector()
 
 # plot!
-posterior_samples(fit12.26) %>% 
+as_draws_df(fit12.26) %>% 
   ggplot(aes(x = exp(b_bigfamily), y = 0)) +
   geom_vline(xintercept = 1, color = "white") +
   stat_halfeye(.width = c(.5, .95)) +
@@ -1671,10 +1680,10 @@ posterior_samples(fit12.26) %>%
 
 Now compute the WAIC estimates for `fit12.24` through `fit12.26` and compare them by their WAIC differences and WAIC weights.
 
-```{r, message = F}
-fit12.24 <- add_criterion(fit12.24, criterion = "waic")  # 1.524841 hours
-fit12.25 <- add_criterion(fit12.25, criterion = "waic")  # 1.285394 hours
-fit12.26 <- add_criterion(fit12.26, criterion = "waic")  # 1.741655 hours
+```{r}
+fit12.24 <- add_criterion(fit12.24, criterion = "waic")
+fit12.25 <- add_criterion(fit12.25, criterion = "waic")
+fit12.26 <- add_criterion(fit12.26, criterion = "waic")
 
 loo_compare(fit12.24, fit12.25, fit12.26, criterion = "waic") %>% print(simplify = F)
 
@@ -1743,7 +1752,7 @@ p4 <-
         panel.grid = element_blank())
 ```
 
-In case is wasn’t clear, I just winged it on the equations for the `y` values in each subplot. If you'd like to annotate the subplots with the arrows and $\beta$ labels as depicted in the original Figure 12.7, consider it a homework exercise.
+In case is wasn't clear, I just winged it on the equations for the `y` values in each subplot. If you'd like to annotate the subplots with the arrows and $\beta$ labels as depicted in the original Figure 12.7, consider it a homework exercise.
 
 ### Investigating the proportionality assumption in practice.
 
@@ -1814,10 +1823,10 @@ fit12.29 <-
       file = "fits/fit12.29")
 ```
 
-Heads up about the `formula` for `fit12.28` (Model B). Many of the examples in the text and the corresponding data sets we've been working with included pre-computed interaction terms. We have been quietly ignoring those and making our interactions by hand in our `formula` arguments. Here we went ahead with the text and just used `event | trials(1) ~ 0 + hs11 + hs12 + coll1 + coll2 + coll3 + fhs11 + fhs12 + fcoll1 + fcoll2 + fcoll3`. If you wanted a more verbose version of that code, we could have specified either 
+Heads up about the `formula` for `fit12.28` (Model B). Many of the examples in the text and the corresponding data sets we've been working with included pre-computed interaction terms. We have been quietly ignoring those and making our interactions by hand in our `formula` arguments. Here we went ahead with the text and just used `event | trials(1) ~ 0 + hs11 + hs12 + coll1 + coll2 + coll3 + fhs11 + fhs12 + fcoll1 + fcoll2 + fcoll3`. If you wanted a more verbose version of that code, we could have specified either
 
 * `event | trials(1) ~ 0 + hs11 + hs12 + coll1 + coll2 + coll3 + female:hs11 + female:hs12 + female:coll1 + female:coll2 + female:coll3` or
-* `event | trials(1) ~ 0 + hs11 + hs12 + coll1 + coll2 + coll3 + female:(hs11 + hs12 + coll1 + coll2 + coll3)`. 
+* `event | trials(1) ~ 0 + hs11 + hs12 + coll1 + coll2 + coll3 + female:(hs11 + hs12 + coll1 + coll2 + coll3)`.
 
 All three return the same results. Anyway, let's check the model summaries.
 
@@ -1830,7 +1839,7 @@ print(fit12.29)
 The results are similar to those in Table 12.5. Based on `fit12.27` (Model A), here is the posterior for the odds ratio for `female`.
 
 ```{r, fig.width = 4, fig.height = 2.5}
-posterior_samples(fit12.27) %>% 
+as_draws_df(fit12.27) %>% 
   ggplot(aes(x = exp(b_female), y = 0)) +
   stat_halfeye(.width = c(.5, .95)) +
   scale_y_continuous(NULL, breaks = NULL) +
@@ -1840,8 +1849,8 @@ posterior_samples(fit12.27) %>%
 
 With regard to the interaction terms for `fit12.28` (Model B), Singer and Willett remarked: "Notice how the estimates rise over time" (p. 457). It might be easiest to observe that in a plot.
 
-```{r, fig.width = 6, fig.height = 1.75}
-posterior_samples(fit12.28) %>% 
+```{r, fig.width = 6, fig.height = 1.75, warning = F}
+as_draws_df(fit12.28) %>% 
   pivot_longer(starts_with("b_f")) %>% 
   mutate(name = factor(str_remove(name, "b_"),
                        levels = c(str_c("fhs", 11:12), str_c("fcoll", 1:3)))) %>%
@@ -1895,7 +1904,7 @@ p2 <-
   # plot
   ggplot(aes(x = period, y = Estimate, ymin = Q2.5, ymax = Q97.5,
              fill = female, color = female)) +
-  geom_ribbon(alpha = 1/5, size = 0) +
+  geom_ribbon(alpha = 1/5, linewidth = 0) +
   geom_line() +
   scale_fill_viridis_d(NULL, option = "A", end = .6, direction = -1) +
   scale_y_continuous("fitted logit(hazard)", breaks = -2:0) +
@@ -1915,7 +1924,7 @@ p3 <-
   # plot
   ggplot(aes(x = period, y = Estimate, ymin = Q2.5, ymax = Q97.5,
              fill = female, color = female)) +
-  geom_ribbon(alpha = 1/5, size = 0) +
+  geom_ribbon(alpha = 1/5, linewidth = 0) +
   geom_line() +
   scale_fill_viridis_d(NULL, option = "A", end = .6, direction = -1) +
   scale_y_continuous("fitted logit(hazard)", breaks = -2:0) +
@@ -1935,7 +1944,7 @@ p4 <-
   # plot
   ggplot(aes(x = period, y = Estimate, ymin = Q2.5, ymax = Q97.5,
              fill = female, color = female)) +
-  geom_ribbon(alpha = 1/5, size = 0) +
+  geom_ribbon(alpha = 1/5, linewidth = 0) +
   geom_line() +
   scale_fill_viridis_d(NULL, option = "A", end = .6, direction = -1) +
   scale_y_continuous("fitted logit(hazard)", breaks = -2:0) +
@@ -1953,12 +1962,12 @@ Now combine the subplots, augment them in bulk, and return our version of Figure
   theme(panel.grid = element_blank())
 ```
 
-Compute the information criteria for the three models. Since these were much faster to compute than for some of the earlier models in this chapter, we'll go ahead and compute both the LOO and the WAIC.
+Compute the information criteria for the three models. Since these were a bit faster to compute than for some of the earlier models in this chapter, we'll go ahead and compute both the LOO and the WAIC.
 
-```{r, message = F}
-fit12.27 <- add_criterion(fit12.27, c("loo", "waic"))
-fit12.28 <- add_criterion(fit12.28, c("loo", "waic"))
-fit12.29 <- add_criterion(fit12.29, c("loo", "waic"))
+```{r}
+fit12.27 <- add_criterion(fit12.27, criterion = c("loo", "waic"))
+fit12.28 <- add_criterion(fit12.28, criterion = c("loo", "waic"))
+fit12.29 <- add_criterion(fit12.29, criterion = c("loo", "waic"))
 ```
 
 Now compare the models with information criteria differences and weights.
@@ -1977,8 +1986,8 @@ You'll note both the LOO and WAIC estimates are very close to those displayed in
 
 Let's examine those results with our Bayesian fit.
 
-```{r, fig.width = 6, fig.height = 2.5}
-posterior_samples(fit12.29) %>% 
+```{r, fig.width = 6, fig.height = 2.5, warning = F}
+as_draws_df(fit12.29) %>% 
   mutate(`log odds` = b_female,
          `odds ratio` = exp(b_female)) %>% 
   pivot_longer(contains("odds")) %>% 
@@ -1993,8 +2002,8 @@ posterior_samples(fit12.29) %>%
 
 Now examine the odds ratio for three different educational periods.
 
-```{r, fig.width = 8, fig.height = 2.75}
-posterior_samples(fit12.29) %>% 
+```{r, fig.width = 8, fig.height = 2.75, warning = F}
+as_draws_df(fit12.29) %>% 
   mutate(`12th grade`              = exp(b_female + b_fltime),
          `1st semester of college` = exp(b_female + 2 * b_fltime),
          `3rd semester of college` = exp(b_female + 4 * b_fltime)) %>% 
@@ -2142,7 +2151,7 @@ sessionInfo()
 
 ```{r, echo = F, message = F}
 # here we'll remove our objects
-rm(tenure_pp, fit12.1, fit12.2, fit12.3, fit12.4, fit12.5, fit12.6, fit12.7, fit12.8, p1, p2, p3, p4, p5, p6, p7, make_fitted, nd, f, models, new_rows, l1, l2, l3, n, pp, fit12.9, fit12.10, post, sex_pp, fit12.11, fit12.12, fit12.13, fit12.14, fit11.8, fit12.15, pars, depression_pp, fit12.16, fit12.17, depression_aggregated, firstarrest_pp, fit12.18, fit12.19, fit12.20, fit12.21, fit12.22, fit12.23, fit12.24, fit12.25, fit12.26, breaks, labels, mathdropout_pp, fit12.27, fit12.28, fit12.29, fit11.10)
+rm(tenure_pp, fit12.1, fit12.2, fit12.3, fit12.4, fit12.5, fit12.6, fit12.7, fit12.8, p1, p2, p3, p4, p5, p6, p7, make_fitted, nd, f, models, new_rows, l1, l2, l3, n, pp, fit12.9, fit12.10, draws, sex_pp, fit12.11, fit12.12, fit12.13, fit12.14, fit11.8, fit12.15, pars, depression_pp, fit12.16, fit12.17, depression_aggregated, firstarrest_pp, fit12.18, fit12.19, fit12.20, fit12.21, fit12.22, fit12.23, fit12.24, fit12.25, fit12.26, breaks, labels, mathdropout_pp, fit12.27, fit12.28, fit12.29, fit11.10)
 
 pacman::p_unload(pacman::p_loaded(), character.only = TRUE)
 ```
