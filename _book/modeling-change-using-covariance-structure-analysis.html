@@ -6,11 +6,10 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
   <title>8 Modeling Change Using Covariance Structure Analysis | Applied longitudinal data analysis in brms and the tidyverse</title>
   <meta name="description" content="This project is a reworking of Singer and Willett’s classic (2003) text within a contemporary Bayesian framework with emphasis of the brms and tidyverse packages within the R computational framework." />
-  <meta name="generator" content="bookdown 0.21 and GitBook 2.6.7" />
+  <meta name="generator" content="bookdown 0.34 and GitBook 2.6.7" />
 
   <meta property="og:title" content="8 Modeling Change Using Covariance Structure Analysis | Applied longitudinal data analysis in brms and the tidyverse" />
   <meta property="og:type" content="book" />
-  
   
   <meta property="og:description" content="This project is a reworking of Singer and Willett’s classic (2003) text within a contemporary Bayesian framework with emphasis of the brms and tidyverse packages within the R computational framework." />
   <meta name="github-repo" content="ASKurz/Applied-Longitudinal-Data-Analysis-with-brms-and-the-tidyverse" />
@@ -24,7 +23,7 @@
 <meta name="author" content="A Solomon Kurz" />
 
 
-<meta name="date" content="2021-04-06" />
+<meta name="date" content="2023-06-12" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -33,8 +32,8 @@
   
 <link rel="prev" href="examining-the-multilevel-models-error-covariance-structure.html"/>
 <link rel="next" href="a-framework-for-investigating-event-occurrence.html"/>
-<script src="libs/header-attrs-2.7/header-attrs.js"></script>
-<script src="libs/jquery-2.2.3/jquery.min.js"></script>
+<script src="libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fuse.js@6.4.6/dist/fuse.min.js"></script>
 <link href="libs/gitbook-2.6.7/css/style.css" rel="stylesheet" />
 <link href="libs/gitbook-2.6.7/css/plugin-table.css" rel="stylesheet" />
 <link href="libs/gitbook-2.6.7/css/plugin-bookdown.css" rel="stylesheet" />
@@ -50,8 +49,11 @@
 
 
 
-
-<link href="libs/tabwid-1.0.0/tabwid.css" rel="stylesheet" />
+<link href="libs/anchor-sections-1.1.0/anchor-sections.css" rel="stylesheet" />
+<link href="libs/anchor-sections-1.1.0/anchor-sections-hash.css" rel="stylesheet" />
+<script src="libs/anchor-sections-1.1.0/anchor-sections.js"></script>
+<link href="libs/tabwid-1.1.3/tabwid.css" rel="stylesheet" />
+<script src="libs/tabwid-1.1.3/tabwid.js"></script>
 
 
 <style type="text/css">
@@ -92,7 +94,7 @@ code span.al { color: #ff0000; font-weight: bold; } /* Alert */
 code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
 code span.at { color: #7d9029; } /* Attribute */
 code span.bn { color: #40a070; } /* BaseN */
-code span.bu { } /* BuiltIn */
+code span.bu { color: #008000; } /* BuiltIn */
 code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
 code span.ch { color: #4070a0; } /* Char */
 code span.cn { color: #880000; } /* Constant */
@@ -105,7 +107,7 @@ code span.er { color: #ff0000; font-weight: bold; } /* Error */
 code span.ex { } /* Extension */
 code span.fl { color: #40a070; } /* Float */
 code span.fu { color: #06287e; } /* Function */
-code span.im { } /* Import */
+code span.im { color: #008000; font-weight: bold; } /* Import */
 code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
 code span.kw { color: #007020; font-weight: bold; } /* Keyword */
 code span.op { color: #666666; } /* Operator */
@@ -117,6 +119,33 @@ code span.st { color: #4070a0; } /* String */
 code span.va { color: #19177c; } /* Variable */
 code span.vs { color: #4070a0; } /* VerbatimString */
 code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+</style>
+
+<style type="text/css">
+  
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+</style>
+<style type="text/css">
+/* Used with Pandoc 2.11+ new --citeproc when CSL is used */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+}
+.hanging div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}
 </style>
 
 </head>
@@ -134,7 +163,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <li class="chapter" data-level="" data-path="index.html"><a href="index.html"><i class="fa fa-check"></i>What and why</a>
 <ul>
 <li class="chapter" data-level="" data-path="index.html"><a href="index.html#caution-work-in-progress"><i class="fa fa-check"></i>Caution: Work in progress</a></li>
-<li><a href="index.html#r-setup"><strong>R</strong> setup</a></li>
+<li class="chapter" data-level="" data-path="index.html"><a href="index.html#r-setup"><i class="fa fa-check"></i><strong>R</strong> setup</a></li>
 <li class="chapter" data-level="" data-path="index.html"><a href="index.html#license-and-citation"><i class="fa fa-check"></i>License and citation</a></li>
 </ul></li>
 <li class="chapter" data-level="1" data-path="a-framework-for-investigating-change-over-time.html"><a href="a-framework-for-investigating-change-over-time.html"><i class="fa fa-check"></i><b>1</b> A Framework for Investigating Change over Time</a>
@@ -302,6 +331,24 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 </ul></li>
 <li class="chapter" data-level="7" data-path="examining-the-multilevel-models-error-covariance-structure.html"><a href="examining-the-multilevel-models-error-covariance-structure.html"><i class="fa fa-check"></i><b>7</b> Examining the Multilevel Model’s Error Covariance Structure</a>
 <ul>
+<li class="chapter" data-level="7.1" data-path="examining-the-multilevel-models-error-covariance-structure.html"><a href="examining-the-multilevel-models-error-covariance-structure.html#the-standard-specification-of-the-multilevel-model-for-change"><i class="fa fa-check"></i><b>7.1</b> The “standard” specification of the multilevel model for change</a></li>
+<li class="chapter" data-level="7.2" data-path="examining-the-multilevel-models-error-covariance-structure.html"><a href="examining-the-multilevel-models-error-covariance-structure.html#using-the-composite-model-to-understand-assumptions-about-the-error-covariance-matrix"><i class="fa fa-check"></i><b>7.2</b> Using the composite model to understand assumptions about the error covariance matrix</a>
+<ul>
+<li class="chapter" data-level="7.2.1" data-path="examining-the-multilevel-models-error-covariance-structure.html"><a href="examining-the-multilevel-models-error-covariance-structure.html#variance-of-the-composite-residual."><i class="fa fa-check"></i><b>7.2.1</b> Variance of the composite residual.</a></li>
+<li class="chapter" data-level="7.2.2" data-path="examining-the-multilevel-models-error-covariance-structure.html"><a href="examining-the-multilevel-models-error-covariance-structure.html#covariance-of-the-composite-residuals."><i class="fa fa-check"></i><b>7.2.2</b> Covariance of the composite residuals.</a></li>
+<li class="chapter" data-level="7.2.3" data-path="examining-the-multilevel-models-error-covariance-structure.html"><a href="examining-the-multilevel-models-error-covariance-structure.html#autocorrelation-of-the-composite-residuals."><i class="fa fa-check"></i><b>7.2.3</b> Autocorrelation of the composite residuals.</a></li>
+</ul></li>
+<li class="chapter" data-level="7.3" data-path="examining-the-multilevel-models-error-covariance-structure.html"><a href="examining-the-multilevel-models-error-covariance-structure.html#postulating-an-alternative-error-covariance-structure"><i class="fa fa-check"></i><b>7.3</b> Postulating an alternative error covariance structure</a>
+<ul>
+<li class="chapter" data-level="7.3.1" data-path="examining-the-multilevel-models-error-covariance-structure.html"><a href="examining-the-multilevel-models-error-covariance-structure.html#unstructured-error-covariance-matrix."><i class="fa fa-check"></i><b>7.3.1</b> Unstructured error covariance matrix.</a></li>
+<li class="chapter" data-level="7.3.2" data-path="examining-the-multilevel-models-error-covariance-structure.html"><a href="examining-the-multilevel-models-error-covariance-structure.html#compound-symmetric-error-covariance-matrix."><i class="fa fa-check"></i><b>7.3.2</b> Compound symmetric error covariance matrix.</a></li>
+<li class="chapter" data-level="7.3.3" data-path="examining-the-multilevel-models-error-covariance-structure.html"><a href="examining-the-multilevel-models-error-covariance-structure.html#heterogeneous-compound-symmetric-error-covariance-matrix-."><i class="fa fa-check"></i><b>7.3.3</b> Heterogeneous compound symmetric error covariance matrix .</a></li>
+<li class="chapter" data-level="7.3.4" data-path="examining-the-multilevel-models-error-covariance-structure.html"><a href="examining-the-multilevel-models-error-covariance-structure.html#autoregressive-error-covariance-matrix."><i class="fa fa-check"></i><b>7.3.4</b> Autoregressive error covariance matrix.</a></li>
+<li class="chapter" data-level="7.3.5" data-path="examining-the-multilevel-models-error-covariance-structure.html"><a href="examining-the-multilevel-models-error-covariance-structure.html#heterogeneous-autoregressive-error-covariance-matrix."><i class="fa fa-check"></i><b>7.3.5</b> Heterogeneous autoregressive error covariance matrix.</a></li>
+<li class="chapter" data-level="7.3.6" data-path="examining-the-multilevel-models-error-covariance-structure.html"><a href="examining-the-multilevel-models-error-covariance-structure.html#toeplitz-error-covariance-matrix."><i class="fa fa-check"></i><b>7.3.6</b> Toeplitz error covariance matrix.</a></li>
+<li class="chapter" data-level="7.3.7" data-path="examining-the-multilevel-models-error-covariance-structure.html"><a href="examining-the-multilevel-models-error-covariance-structure.html#does-choosing-the-correct-error-covariance-structure-really-matter"><i class="fa fa-check"></i><b>7.3.7</b> Does choosing the “correct” error covariance structure really matter?</a></li>
+<li class="chapter" data-level="7.3.8" data-path="examining-the-multilevel-models-error-covariance-structure.html"><a href="examining-the-multilevel-models-error-covariance-structure.html#bonus-did-we-trade-multilevel-for-multivariate"><i class="fa fa-check"></i><b>7.3.8</b> Bonus: Did we trade multilevel for multivariate?</a></li>
+</ul></li>
 <li class="chapter" data-level="" data-path="examining-the-multilevel-models-error-covariance-structure.html"><a href="examining-the-multilevel-models-error-covariance-structure.html#session-info-6"><i class="fa fa-check"></i>Session info</a></li>
 </ul></li>
 <li class="chapter" data-level="8" data-path="modeling-change-using-covariance-structure-analysis.html"><a href="modeling-change-using-covariance-structure-analysis.html"><i class="fa fa-check"></i><b>8</b> Modeling Change Using Covariance Structure Analysis</a>
@@ -486,31 +533,35 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
           <div class="page-inner">
 
             <section class="normal" id="section-">
-<div id="modeling-change-using-covariance-structure-analysis" class="section level1" number="8">
-<h1><span class="header-section-number">8</span> Modeling Change Using Covariance Structure Analysis</h1>
+<div id="modeling-change-using-covariance-structure-analysis" class="section level1 hasAnchor" number="8">
+<h1><span class="header-section-number">8</span> Modeling Change Using Covariance Structure Analysis<a href="modeling-change-using-covariance-structure-analysis.html#modeling-change-using-covariance-structure-analysis" class="anchor-section" aria-label="Anchor link to header"></a></h1>
 <p>To be fleshed out later</p>
-<div id="session-info-7" class="section level2 unnumbered">
-<h2>Session info</h2>
-<div class="sourceCode" id="cb907"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb907-1"><a href="modeling-change-using-covariance-structure-analysis.html#cb907-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span></code></pre></div>
-<pre><code>## R version 4.0.4 (2021-02-15)
-## Platform: x86_64-apple-darwin17.0 (64-bit)
-## Running under: macOS Catalina 10.15.7
+<div id="session-info-7" class="section level2 unnumbered hasAnchor">
+<h2>Session info<a href="modeling-change-using-covariance-structure-analysis.html#session-info-7" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<div class="sourceCode" id="cb1020"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1020-1"><a href="modeling-change-using-covariance-structure-analysis.html#cb1020-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span></code></pre></div>
+<pre><code>## R version 4.3.0 (2023-04-21)
+## Platform: x86_64-apple-darwin20 (64-bit)
+## Running under: macOS Monterey 12.4
 ## 
 ## Matrix products: default
-## BLAS:   /Library/Frameworks/R.framework/Versions/4.0/Resources/lib/libRblas.dylib
-## LAPACK: /Library/Frameworks/R.framework/Versions/4.0/Resources/lib/libRlapack.dylib
+## BLAS:   /Library/Frameworks/R.framework/Versions/4.3-x86_64/Resources/lib/libRblas.0.dylib 
+## LAPACK: /Library/Frameworks/R.framework/Versions/4.3-x86_64/Resources/lib/libRlapack.dylib;  LAPACK version 3.11.0
 ## 
 ## locale:
 ## [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
+## 
+## time zone: America/Chicago
+## tzcode source: internal
 ## 
 ## attached base packages:
 ## [1] stats     graphics  grDevices utils     datasets  methods   base     
 ## 
 ## loaded via a namespace (and not attached):
-##  [1] compiler_4.0.4    magrittr_2.0.1    bookdown_0.21     htmltools_0.5.1.1
-##  [5] tools_4.0.4       stringi_1.5.3     rmarkdown_2.7     knitr_1.31       
-##  [9] stringr_1.4.0     digest_0.6.27     xfun_0.22         rlang_0.4.10     
-## [13] evaluate_0.14</code></pre>
+##  [1] digest_0.6.31   R6_2.5.1        bookdown_0.34   fastmap_1.1.1  
+##  [5] xfun_0.39       cachem_1.0.8    knitr_1.42      htmltools_0.5.5
+##  [9] rmarkdown_2.21  cli_3.6.1       sass_0.4.6      jquerylib_0.1.4
+## [13] compiler_4.3.0  rstudioapi_0.14 tools_4.3.0     evaluate_0.21  
+## [17] bslib_0.4.2     rlang_1.1.1     jsonlite_1.8.4</code></pre>
 
 </div>
 </div>
@@ -524,7 +575,6 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
     </div>
   </div>
 <script src="libs/gitbook-2.6.7/js/app.min.js"></script>
-<script src="libs/gitbook-2.6.7/js/lunr.js"></script>
 <script src="libs/gitbook-2.6.7/js/clipboard.min.js"></script>
 <script src="libs/gitbook-2.6.7/js/plugin-search.js"></script>
 <script src="libs/gitbook-2.6.7/js/plugin-sharing.js"></script>
@@ -543,6 +593,7 @@ gitbook.start({
 "weibo": false,
 "instapaper": false,
 "vk": false,
+"whatsapp": false,
 "all": ["facebook", "twitter", "linkedin", "weibo", "instapaper"]
 },
 "fontsettings": {
@@ -563,6 +614,10 @@ gitbook.start({
 "text": null
 },
 "download": null,
+"search": {
+"engine": "fuse",
+"options": null
+},
 "toc": {
 "collapse": "subsection"
 }
@@ -576,7 +631,7 @@ gitbook.start({
     var script = document.createElement("script");
     script.type = "text/javascript";
     var src = "true";
-    if (src === "" || src === "true") src = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML";
+    if (src === "" || src === "true") src = "https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.9/latest.js?config=TeX-MML-AM_CHTML";
     if (location.protocol !== "file:")
       if (/^https?:/.test(src))
         src = src.replace(/^https?:/, '');

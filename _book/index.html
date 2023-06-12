@@ -6,11 +6,10 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
   <title>Applied longitudinal data analysis in brms and the tidyverse</title>
   <meta name="description" content="This project is a reworking of Singer and Willett’s classic (2003) text within a contemporary Bayesian framework with emphasis of the brms and tidyverse packages within the R computational framework." />
-  <meta name="generator" content="bookdown 0.21 and GitBook 2.6.7" />
+  <meta name="generator" content="bookdown 0.34 and GitBook 2.6.7" />
 
   <meta property="og:title" content="Applied longitudinal data analysis in brms and the tidyverse" />
   <meta property="og:type" content="book" />
-  
   
   <meta property="og:description" content="This project is a reworking of Singer and Willett’s classic (2003) text within a contemporary Bayesian framework with emphasis of the brms and tidyverse packages within the R computational framework." />
   <meta name="github-repo" content="ASKurz/Applied-Longitudinal-Data-Analysis-with-brms-and-the-tidyverse" />
@@ -24,7 +23,7 @@
 <meta name="author" content="A Solomon Kurz" />
 
 
-<meta name="date" content="2021-04-06" />
+<meta name="date" content="2023-06-12" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -33,8 +32,8 @@
   
 
 <link rel="next" href="a-framework-for-investigating-change-over-time.html"/>
-<script src="libs/header-attrs-2.7/header-attrs.js"></script>
-<script src="libs/jquery-2.2.3/jquery.min.js"></script>
+<script src="libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fuse.js@6.4.6/dist/fuse.min.js"></script>
 <link href="libs/gitbook-2.6.7/css/style.css" rel="stylesheet" />
 <link href="libs/gitbook-2.6.7/css/plugin-table.css" rel="stylesheet" />
 <link href="libs/gitbook-2.6.7/css/plugin-bookdown.css" rel="stylesheet" />
@@ -50,8 +49,11 @@
 
 
 
-
-<link href="libs/tabwid-1.0.0/tabwid.css" rel="stylesheet" />
+<link href="libs/anchor-sections-1.1.0/anchor-sections.css" rel="stylesheet" />
+<link href="libs/anchor-sections-1.1.0/anchor-sections-hash.css" rel="stylesheet" />
+<script src="libs/anchor-sections-1.1.0/anchor-sections.js"></script>
+<link href="libs/tabwid-1.1.3/tabwid.css" rel="stylesheet" />
+<script src="libs/tabwid-1.1.3/tabwid.js"></script>
 
 
 <style type="text/css">
@@ -92,7 +94,7 @@ code span.al { color: #ff0000; font-weight: bold; } /* Alert */
 code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
 code span.at { color: #7d9029; } /* Attribute */
 code span.bn { color: #40a070; } /* BaseN */
-code span.bu { } /* BuiltIn */
+code span.bu { color: #008000; } /* BuiltIn */
 code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
 code span.ch { color: #4070a0; } /* Char */
 code span.cn { color: #880000; } /* Constant */
@@ -105,7 +107,7 @@ code span.er { color: #ff0000; font-weight: bold; } /* Error */
 code span.ex { } /* Extension */
 code span.fl { color: #40a070; } /* Float */
 code span.fu { color: #06287e; } /* Function */
-code span.im { } /* Import */
+code span.im { color: #008000; font-weight: bold; } /* Import */
 code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
 code span.kw { color: #007020; font-weight: bold; } /* Keyword */
 code span.op { color: #666666; } /* Operator */
@@ -117,6 +119,33 @@ code span.st { color: #4070a0; } /* String */
 code span.va { color: #19177c; } /* Variable */
 code span.vs { color: #4070a0; } /* VerbatimString */
 code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+</style>
+
+<style type="text/css">
+  
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+</style>
+<style type="text/css">
+/* Used with Pandoc 2.11+ new --citeproc when CSL is used */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+}
+.hanging div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}
 </style>
 
 </head>
@@ -134,7 +163,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <li class="chapter" data-level="" data-path="index.html"><a href="index.html"><i class="fa fa-check"></i>What and why</a>
 <ul>
 <li class="chapter" data-level="" data-path="index.html"><a href="index.html#caution-work-in-progress"><i class="fa fa-check"></i>Caution: Work in progress</a></li>
-<li><a href="index.html#r-setup"><strong>R</strong> setup</a></li>
+<li class="chapter" data-level="" data-path="index.html"><a href="index.html#r-setup"><i class="fa fa-check"></i><strong>R</strong> setup</a></li>
 <li class="chapter" data-level="" data-path="index.html"><a href="index.html#license-and-citation"><i class="fa fa-check"></i>License and citation</a></li>
 </ul></li>
 <li class="chapter" data-level="1" data-path="a-framework-for-investigating-change-over-time.html"><a href="a-framework-for-investigating-change-over-time.html"><i class="fa fa-check"></i><b>1</b> A Framework for Investigating Change over Time</a>
@@ -302,6 +331,24 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 </ul></li>
 <li class="chapter" data-level="7" data-path="examining-the-multilevel-models-error-covariance-structure.html"><a href="examining-the-multilevel-models-error-covariance-structure.html"><i class="fa fa-check"></i><b>7</b> Examining the Multilevel Model’s Error Covariance Structure</a>
 <ul>
+<li class="chapter" data-level="7.1" data-path="examining-the-multilevel-models-error-covariance-structure.html"><a href="examining-the-multilevel-models-error-covariance-structure.html#the-standard-specification-of-the-multilevel-model-for-change"><i class="fa fa-check"></i><b>7.1</b> The “standard” specification of the multilevel model for change</a></li>
+<li class="chapter" data-level="7.2" data-path="examining-the-multilevel-models-error-covariance-structure.html"><a href="examining-the-multilevel-models-error-covariance-structure.html#using-the-composite-model-to-understand-assumptions-about-the-error-covariance-matrix"><i class="fa fa-check"></i><b>7.2</b> Using the composite model to understand assumptions about the error covariance matrix</a>
+<ul>
+<li class="chapter" data-level="7.2.1" data-path="examining-the-multilevel-models-error-covariance-structure.html"><a href="examining-the-multilevel-models-error-covariance-structure.html#variance-of-the-composite-residual."><i class="fa fa-check"></i><b>7.2.1</b> Variance of the composite residual.</a></li>
+<li class="chapter" data-level="7.2.2" data-path="examining-the-multilevel-models-error-covariance-structure.html"><a href="examining-the-multilevel-models-error-covariance-structure.html#covariance-of-the-composite-residuals."><i class="fa fa-check"></i><b>7.2.2</b> Covariance of the composite residuals.</a></li>
+<li class="chapter" data-level="7.2.3" data-path="examining-the-multilevel-models-error-covariance-structure.html"><a href="examining-the-multilevel-models-error-covariance-structure.html#autocorrelation-of-the-composite-residuals."><i class="fa fa-check"></i><b>7.2.3</b> Autocorrelation of the composite residuals.</a></li>
+</ul></li>
+<li class="chapter" data-level="7.3" data-path="examining-the-multilevel-models-error-covariance-structure.html"><a href="examining-the-multilevel-models-error-covariance-structure.html#postulating-an-alternative-error-covariance-structure"><i class="fa fa-check"></i><b>7.3</b> Postulating an alternative error covariance structure</a>
+<ul>
+<li class="chapter" data-level="7.3.1" data-path="examining-the-multilevel-models-error-covariance-structure.html"><a href="examining-the-multilevel-models-error-covariance-structure.html#unstructured-error-covariance-matrix."><i class="fa fa-check"></i><b>7.3.1</b> Unstructured error covariance matrix.</a></li>
+<li class="chapter" data-level="7.3.2" data-path="examining-the-multilevel-models-error-covariance-structure.html"><a href="examining-the-multilevel-models-error-covariance-structure.html#compound-symmetric-error-covariance-matrix."><i class="fa fa-check"></i><b>7.3.2</b> Compound symmetric error covariance matrix.</a></li>
+<li class="chapter" data-level="7.3.3" data-path="examining-the-multilevel-models-error-covariance-structure.html"><a href="examining-the-multilevel-models-error-covariance-structure.html#heterogeneous-compound-symmetric-error-covariance-matrix-."><i class="fa fa-check"></i><b>7.3.3</b> Heterogeneous compound symmetric error covariance matrix .</a></li>
+<li class="chapter" data-level="7.3.4" data-path="examining-the-multilevel-models-error-covariance-structure.html"><a href="examining-the-multilevel-models-error-covariance-structure.html#autoregressive-error-covariance-matrix."><i class="fa fa-check"></i><b>7.3.4</b> Autoregressive error covariance matrix.</a></li>
+<li class="chapter" data-level="7.3.5" data-path="examining-the-multilevel-models-error-covariance-structure.html"><a href="examining-the-multilevel-models-error-covariance-structure.html#heterogeneous-autoregressive-error-covariance-matrix."><i class="fa fa-check"></i><b>7.3.5</b> Heterogeneous autoregressive error covariance matrix.</a></li>
+<li class="chapter" data-level="7.3.6" data-path="examining-the-multilevel-models-error-covariance-structure.html"><a href="examining-the-multilevel-models-error-covariance-structure.html#toeplitz-error-covariance-matrix."><i class="fa fa-check"></i><b>7.3.6</b> Toeplitz error covariance matrix.</a></li>
+<li class="chapter" data-level="7.3.7" data-path="examining-the-multilevel-models-error-covariance-structure.html"><a href="examining-the-multilevel-models-error-covariance-structure.html#does-choosing-the-correct-error-covariance-structure-really-matter"><i class="fa fa-check"></i><b>7.3.7</b> Does choosing the “correct” error covariance structure really matter?</a></li>
+<li class="chapter" data-level="7.3.8" data-path="examining-the-multilevel-models-error-covariance-structure.html"><a href="examining-the-multilevel-models-error-covariance-structure.html#bonus-did-we-trade-multilevel-for-multivariate"><i class="fa fa-check"></i><b>7.3.8</b> Bonus: Did we trade multilevel for multivariate?</a></li>
+</ul></li>
 <li class="chapter" data-level="" data-path="examining-the-multilevel-models-error-covariance-structure.html"><a href="examining-the-multilevel-models-error-covariance-structure.html#session-info-6"><i class="fa fa-check"></i>Session info</a></li>
 </ul></li>
 <li class="chapter" data-level="8" data-path="modeling-change-using-covariance-structure-analysis.html"><a href="modeling-change-using-covariance-structure-analysis.html"><i class="fa fa-check"></i><b>8</b> Modeling Change Using Covariance Structure Analysis</a>
@@ -488,20 +535,20 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
             <section class="normal" id="section-">
 <div id="header">
 <h1 class="title"><em>Applied longitudinal data analysis</em> in brms and the tidyverse</h1>
-<h2 class="subtitle"><em>version 0.0.2</em></h2>
+<h2 class="subtitle"><em>version 0.0.3</em></h2>
 <p class="author"><em>A Solomon Kurz</em></p>
-<p class="date"><em>2021-04-06</em></p>
+<p class="date"><em>2023-06-12</em></p>
 </div>
-<div id="what-and-why" class="section level1 unnumbered">
-<h1>What and why</h1>
-<p>This project is based on Singer and Willett’s classic <span class="citation">(<a href="references.html#ref-singerAppliedLongitudinalData2003" role="doc-biblioref">2003</a>)</span> text, <a href="https://www.oxfordscholarship.com/view/10.1093/acprof:oso/9780195152968.001.0001/acprof-9780195152968"><em>Applied longitudinal data analysis: Modeling change and event occurrence</em></a>. You can download the data used in the text at <a href="https://www.bristol.ac.uk/cmm/learning/support/singer-willett.html">http://www.bristol.ac.uk/cmm/learning/support/singer-willett.html</a> and find a wealth of ideas on how to fit the models in the text at <a href="https://stats.idre.ucla.edu/other/examples/alda/">https://stats.idre.ucla.edu/other/examples/alda/</a>. My contributions show how to fit these models and others like them within a Bayesian framework. I make extensive use of Paul Bürkner’s <a href="https://github.com/paul-buerkner/brms"><strong>brms</strong> package</a> <span class="citation">(<a href="references.html#ref-burknerBrmsPackageBayesian2017" role="doc-biblioref">Bürkner, 2017</a>, <a href="references.html#ref-burknerAdvancedBayesianMultilevel2018" role="doc-biblioref">2018</a>, <a href="references.html#ref-R-brms" role="doc-biblioref">2020b</a>)</span>, which makes it easy to fit Bayesian regression models in <strong>R</strong> <span class="citation">(<a href="references.html#ref-R-base" role="doc-biblioref">R Core Team, 2020</a>)</span> using Hamiltonian Monte Carlo (HMC) via the <a href="https://mc-stan.org">Stan</a> probabilistic programming language <span class="citation">(<a href="references.html#ref-carpenterStanProbabilisticProgramming2017" role="doc-biblioref">Carpenter et al., 2017</a>)</span>. Much of the data wrangling and plotting code is done with packages connected to the <a href="http://style.tidyverse.org"><strong>tidyverse</strong></a> <span class="citation">(<a href="references.html#ref-R-tidyverse" role="doc-biblioref">Wickham, 2019</a>; <a href="references.html#ref-wickhamWelcomeTidyverse2019" role="doc-biblioref">Wickham et al., 2019</a>)</span>.</p>
-<div id="caution-work-in-progress" class="section level2 unnumbered">
-<h2>Caution: Work in progress</h2>
-<p>This release contains drafts of Chapters 1 through 6 and 9 through 13. Chapters 1 through 6 provide the motivation and foundational principles for fitting longitudinal multilevel models. Chapters 9 through 13 motivation and foundational principles for fitting discrete-time survival analyses.</p>
+<div id="what-and-why" class="section level1 unnumbered hasAnchor">
+<h1>What and why<a href="index.html#what-and-why" class="anchor-section" aria-label="Anchor link to header"></a></h1>
+<p>This project is based on Singer and Willett’s classic <span class="citation">(<a href="#ref-singerAppliedLongitudinalData2003" role="doc-biblioref">2003</a>)</span> text, <a href="https://www.oxfordscholarship.com/view/10.1093/acprof:oso/9780195152968.001.0001/acprof-9780195152968"><em>Applied longitudinal data analysis: Modeling change and event occurrence</em></a>. You can download the data used in the text at <a href="https://www.bristol.ac.uk/cmm/learning/support/singer-willett.html">http://www.bristol.ac.uk/cmm/learning/support/singer-willett.html</a> and find a wealth of ideas on how to fit the models in the text at <a href="https://stats.idre.ucla.edu/other/examples/alda/">https://stats.idre.ucla.edu/other/examples/alda/</a>. My contributions show how to fit these models and others like them within a Bayesian framework. I make extensive use of Paul Bürkner’s <a href="https://github.com/paul-buerkner/brms"><strong>brms</strong> package</a> <span class="citation">(<a href="#ref-burknerBrmsPackageBayesian2017" role="doc-biblioref">Bürkner, 2017</a>, <a href="#ref-burknerAdvancedBayesianMultilevel2018" role="doc-biblioref">2018</a>, <a href="#ref-R-brms" role="doc-biblioref">2022b</a>)</span>, which makes it easy to fit Bayesian regression models in <strong>R</strong> <span class="citation">(<a href="#ref-R-base" role="doc-biblioref">R Core Team, 2022</a>)</span> using Hamiltonian Monte Carlo (HMC) via the <a href="https://mc-stan.org">Stan</a> probabilistic programming language <span class="citation">(<a href="#ref-carpenterStanProbabilisticProgramming2017" role="doc-biblioref">Carpenter et al., 2017</a>)</span>. Much of the data wrangling and plotting code is done with packages connected to the <a href="http://style.tidyverse.org"><strong>tidyverse</strong></a> <span class="citation">(<a href="#ref-wickhamWelcomeTidyverse2019" role="doc-biblioref">Wickham et al., 2019</a>; <a href="#ref-R-tidyverse" role="doc-biblioref">Wickham, 2022</a>)</span>.</p>
+<div id="caution-work-in-progress" class="section level2 unnumbered hasAnchor">
+<h2>Caution: Work in progress<a href="index.html#caution-work-in-progress" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<p>This release contains drafts of Chapters 1 through 7 and 9 through 13. Chapters 1 through 7 provide the motivation and foundational principles for fitting longitudinal multilevel models. Chapters 9 through 13 motivation and foundational principles for fitting discrete-time survival analyses.</p>
 <p>In addition to fleshing out more of the chapters, I plan to add more goodies like introductions to multivariate longitudinal models and mixed-effect location and scale models. But there is no time-table for this project. To keep up with the latest changes, check in at the GitHub repository, <a href="https://github.com/ASKurz/Applied-Longitudinal-Data-Analysis-with-brms-and-the-tidyverse">https://github.com/ASKurz/Applied-Longitudinal-Data-Analysis-with-brms-and-the-tidyverse</a>, or follow my announcements on twitter at <a href="https://twitter.com/SolomonKurz">https://twitter.com/SolomonKurz</a>.</p>
 </div>
-<div id="r-setup" class="section level2 unnumbered">
-<h2><strong>R</strong> setup</h2>
+<div id="r-setup" class="section level2 unnumbered hasAnchor">
+<h2><strong>R</strong> setup<a href="index.html#r-setup" class="anchor-section" aria-label="Anchor link to header"></a></h2>
 <p>To get the full benefit from this ebook, you’ll need some software. Happily, everything will be free (provided you have access to a decent personal computer and an good internet connection).</p>
 <p>First, you’ll need to install <strong>R</strong>, which you can learn about at <a href="https://cran.r-project.org/">https://cran.r-project.org/</a>.</p>
 <p>Though not necessary, your <strong>R</strong> experience might be more enjoyable if done through the free RStudio interface, which you can learn about at <a href="https://rstudio.com/products/rstudio/">https://rstudio.com/products/rstudio/</a>.</p>
@@ -509,10 +556,9 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="index.html#cb1-1" aria-hidden="true" tabindex="-1"></a>packages <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;bayesplot&quot;</span>, <span class="st">&quot;brms&quot;</span>, <span class="st">&quot;broom&quot;</span>, <span class="st">&quot;devtools&quot;</span>, <span class="st">&quot;flextable&quot;</span>, <span class="st">&quot;GGally&quot;</span>, <span class="st">&quot;ggmcmc&quot;</span>, <span class="st">&quot;ggrepel&quot;</span>, <span class="st">&quot;gtools&quot;</span>, <span class="st">&quot;loo&quot;</span>, <span class="st">&quot;patchwork&quot;</span>, <span class="st">&quot;psych&quot;</span>, <span class="st">&quot;Rcpp&quot;</span>, <span class="st">&quot;remotes&quot;</span>, <span class="st">&quot;rstan&quot;</span>, <span class="st">&quot;StanHeaders&quot;</span>, <span class="st">&quot;survival&quot;</span>, <span class="st">&quot;tidybayes&quot;</span>, <span class="st">&quot;tidyverse&quot;</span>)</span>
 <span id="cb1-2"><a href="index.html#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-3"><a href="index.html#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">install.packages</span>(packages, <span class="at">dependencies =</span> T)</span></code></pre></div>
-<p>A few of the other packages are not officially available via the Comprehensive R Archive Network (CRAN; <a href="https://cran.r-project.org/" class="uri">https://cran.r-project.org/</a>). You can download them directly from GitHub by executing the following.</p>
+<p>A couple of the other packages are not officially available via the Comprehensive R Archive Network (CRAN; <a href="https://cran.r-project.org/" class="uri">https://cran.r-project.org/</a>). You can download them directly from GitHub by executing the following.</p>
 <div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="index.html#cb2-1" aria-hidden="true" tabindex="-1"></a>devtools<span class="sc">::</span><span class="fu">install_github</span>(<span class="st">&quot;stan-dev/cmdstanr&quot;</span>)</span>
-<span id="cb2-2"><a href="index.html#cb2-2" aria-hidden="true" tabindex="-1"></a>remotes<span class="sc">::</span><span class="fu">install_github</span>(<span class="st">&quot;stan-dev/posterior&quot;</span>)</span>
-<span id="cb2-3"><a href="index.html#cb2-3" aria-hidden="true" tabindex="-1"></a>devtools<span class="sc">::</span><span class="fu">install_github</span>(<span class="st">&quot;rmcelreath/rethinking&quot;</span>)</span></code></pre></div>
+<span id="cb2-2"><a href="index.html#cb2-2" aria-hidden="true" tabindex="-1"></a>devtools<span class="sc">::</span><span class="fu">install_github</span>(<span class="st">&quot;rmcelreath/rethinking&quot;</span>)</span></code></pre></div>
 <p>It’s possible you’ll have problems installing some of these packages. Here are some likely suspects and where you can find help:</p>
 <ul>
 <li>for difficulties installing <strong>brms</strong>, go to <a href="https://github.com/paul-buerkner/brms#how-do-i-install-brms">https://github.com/paul-buerkner/brms#how-do-i-install-brms</a> or search around in the <a href="https://discourse.mc-stan.org/c/interfaces/brms/36"><strong>brms</strong> section of the Stan forums</a>;</li>
@@ -521,18 +567,45 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <li>for difficulties installing <strong>rstan</strong>, go to <a href="https://github.com/stan-dev/rstan/wiki/RStan-Getting-Started">https://github.com/stan-dev/rstan/wiki/RStan-Getting-Started</a>.</li>
 </ul>
 </div>
-<div id="license-and-citation" class="section level2 unnumbered">
-<h2>License and citation</h2>
+<div id="license-and-citation" class="section level2 unnumbered hasAnchor">
+<h2>License and citation<a href="index.html#license-and-citation" class="anchor-section" aria-label="Anchor link to header"></a></h2>
 <p>This book is licensed under the Creative Commons Zero v1.0 Universal license. You can learn the details, <a href="https://github.com/ASKurz/Applied-Longitudinal-Data-Analysis-with-brms-and-the-tidyverse/blob/master/LICENSE">here</a>. In short, you can use my work. Just please give me the appropriate credit the same way you would for any other scholarly resource. Here’s the citation information:</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="index.html#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="sc">@</span>book{kurzAppliedLongitudinalDataAnalysis2021,</span>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="index.html#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="sc">@</span>book{kurzAppliedLongitudinalDataAnalysis2023,</span>
 <span id="cb3-2"><a href="index.html#cb3-2" aria-hidden="true" tabindex="-1"></a>  title <span class="ot">=</span> {Applied longitudinal data analysis <span class="cf">in</span> brms and the tidyverse},</span>
 <span id="cb3-3"><a href="index.html#cb3-3" aria-hidden="true" tabindex="-1"></a>  author <span class="ot">=</span> {Kurz, A. Solomon},</span>
-<span id="cb3-4"><a href="index.html#cb3-4" aria-hidden="true" tabindex="-1"></a>  year <span class="ot">=</span> {<span class="dv">2021</span>},</span>
-<span id="cb3-5"><a href="index.html#cb3-5" aria-hidden="true" tabindex="-1"></a>  month <span class="ot">=</span> {<span class="dv">4</span>},</span>
-<span id="cb3-6"><a href="index.html#cb3-6" aria-hidden="true" tabindex="-1"></a>  edition <span class="ot">=</span> {version <span class="dv">0</span>.<span class="fl">0.2</span>},</span>
+<span id="cb3-4"><a href="index.html#cb3-4" aria-hidden="true" tabindex="-1"></a>  year <span class="ot">=</span> {<span class="dv">2023</span>},</span>
+<span id="cb3-5"><a href="index.html#cb3-5" aria-hidden="true" tabindex="-1"></a>  month <span class="ot">=</span> {<span class="dv">6</span>},</span>
+<span id="cb3-6"><a href="index.html#cb3-6" aria-hidden="true" tabindex="-1"></a>  edition <span class="ot">=</span> {version <span class="dv">0</span>.<span class="fl">0.3</span>},</span>
 <span id="cb3-7"><a href="index.html#cb3-7" aria-hidden="true" tabindex="-1"></a>  url <span class="ot">=</span> {https<span class="sc">:</span><span class="er">//</span>bookdown.org<span class="sc">/</span>content<span class="sc">/</span><span class="dv">4253</span><span class="sc">/</span>}</span>
 <span id="cb3-8"><a href="index.html#cb3-8" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
 
+</div>
+</div>
+<h3>References<a href="references.html#references" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<div id="refs" class="references csl-bib-body hanging-indent" line-spacing="2">
+<div id="ref-burknerBrmsPackageBayesian2017" class="csl-entry">
+Bürkner, P.-C. (2017). <span class="nocase">brms</span>: <span>An R</span> package for <span>Bayesian</span> multilevel models using <span>Stan</span>. <em>Journal of Statistical Software</em>, <em>80</em>(1), 1–28. <a href="https://doi.org/10.18637/jss.v080.i01">https://doi.org/10.18637/jss.v080.i01</a>
+</div>
+<div id="ref-burknerAdvancedBayesianMultilevel2018" class="csl-entry">
+Bürkner, P.-C. (2018). Advanced <span>Bayesian</span> multilevel modeling with the <span>R</span> package brms. <em>The R Journal</em>, <em>10</em>(1), 395–411. <a href="https://doi.org/10.32614/RJ-2018-017">https://doi.org/10.32614/RJ-2018-017</a>
+</div>
+<div id="ref-R-brms" class="csl-entry">
+Bürkner, P.-C. (2022b). <em><span class="nocase">brms</span>: <span>Bayesian</span> regression models using ’<span>Stan</span>’</em>. <a href="https://CRAN.R-project.org/package=brms">https://CRAN.R-project.org/package=brms</a>
+</div>
+<div id="ref-carpenterStanProbabilisticProgramming2017" class="csl-entry">
+Carpenter, B., Gelman, A., Hoffman, M. D., Lee, D., Goodrich, B., Betancourt, M., Brubaker, M., Guo, J., Li, P., &amp; Riddell, A. (2017). Stan: <span>A</span> probabilistic programming language. <em>Journal of Statistical Software</em>, <em>76</em>(1). <a href="https://doi.org/10.18637/jss.v076.i01">https://doi.org/10.18637/jss.v076.i01</a>
+</div>
+<div id="ref-R-base" class="csl-entry">
+R Core Team. (2022). <em>R: <span>A</span> language and environment for statistical computing</em>. <span>R Foundation for Statistical Computing</span>. <a href="https://www.R-project.org/">https://www.R-project.org/</a>
+</div>
+<div id="ref-singerAppliedLongitudinalData2003" class="csl-entry">
+Singer, J. D., &amp; Willett, J. B. (2003). <em>Applied longitudinal data analysis: <span>Modeling</span> change and event occurrence</em>. <span>Oxford University Press, USA</span>. <a href="https://oxford.universitypressscholarship.com/view/10.1093/acprof:oso/9780195152968.001.0001/acprof-9780195152968">https://oxford.universitypressscholarship.com/view/10.1093/acprof:oso/9780195152968.001.0001/acprof-9780195152968</a>
+</div>
+<div id="ref-R-tidyverse" class="csl-entry">
+Wickham, H. (2022). <em><span class="nocase">tidyverse</span>: <span>Easily</span> install and load the ’tidyverse’</em>. <a href="https://CRAN.R-project.org/package=tidyverse">https://CRAN.R-project.org/package=tidyverse</a>
+</div>
+<div id="ref-wickhamWelcomeTidyverse2019" class="csl-entry">
+Wickham, H., Averick, M., Bryan, J., Chang, W., McGowan, L. D., François, R., Grolemund, G., Hayes, A., Henry, L., Hester, J., Kuhn, M., Pedersen, T. L., Miller, E., Bache, S. M., Müller, K., Ooms, J., Robinson, D., Seidel, D. P., Spinu, V., … Yutani, H. (2019). Welcome to the tidyverse. <em>Journal of Open Source Software</em>, <em>4</em>(43), 1686. <a href="https://doi.org/10.21105/joss.01686">https://doi.org/10.21105/joss.01686</a>
 </div>
 </div>
             </section>
@@ -545,7 +618,6 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
     </div>
   </div>
 <script src="libs/gitbook-2.6.7/js/app.min.js"></script>
-<script src="libs/gitbook-2.6.7/js/lunr.js"></script>
 <script src="libs/gitbook-2.6.7/js/clipboard.min.js"></script>
 <script src="libs/gitbook-2.6.7/js/plugin-search.js"></script>
 <script src="libs/gitbook-2.6.7/js/plugin-sharing.js"></script>
@@ -564,6 +636,7 @@ gitbook.start({
 "weibo": false,
 "instapaper": false,
 "vk": false,
+"whatsapp": false,
 "all": ["facebook", "twitter", "linkedin", "weibo", "instapaper"]
 },
 "fontsettings": {
@@ -584,6 +657,10 @@ gitbook.start({
 "text": null
 },
 "download": null,
+"search": {
+"engine": "fuse",
+"options": null
+},
 "toc": {
 "collapse": "subsection"
 }
@@ -597,7 +674,7 @@ gitbook.start({
     var script = document.createElement("script");
     script.type = "text/javascript";
     var src = "true";
-    if (src === "" || src === "true") src = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML";
+    if (src === "" || src === "true") src = "https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.9/latest.js?config=TeX-MML-AM_CHTML";
     if (location.protocol !== "file:")
       if (/^https?:/.test(src))
         src = src.replace(/^https?:/, '');

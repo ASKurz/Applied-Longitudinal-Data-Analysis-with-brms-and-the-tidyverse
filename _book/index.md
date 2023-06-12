@@ -1,8 +1,8 @@
 --- 
 title: "*Applied longitudinal data analysis* in brms and the tidyverse"
-subtitle: "version 0.0.2"
+subtitle: "version 0.0.3"
 author: "A Solomon Kurz"
-date: "2021-04-06"
+date: "2023-06-12"
 site: bookdown::bookdown_site
 output: 
   bookdown::gitbook:
@@ -30,7 +30,7 @@ This project is based on Singer and Willett's classic [-@singerAppliedLongitudin
 
 ## Caution: Work in progress {-}
 
-This release contains drafts of Chapters 1 through 6 and 9 through 13. Chapters 1 through 6 provide the motivation and foundational principles for fitting longitudinal multilevel models. Chapters 9 through 13 motivation and foundational principles for fitting discrete-time survival analyses.
+This release contains drafts of Chapters 1 through 7 and 9 through 13. Chapters 1 through 7 provide the motivation and foundational principles for fitting longitudinal multilevel models. Chapters 9 through 13 motivation and foundational principles for fitting discrete-time survival analyses.
 
 In addition to fleshing out more of the chapters, I plan to add more goodies like introductions to multivariate longitudinal models and mixed-effect location and scale models. But there is no time-table for this project. To keep up with the latest changes, check in at the GitHub repository, [https://github.com/ASKurz/Applied-Longitudinal-Data-Analysis-with-brms-and-the-tidyverse](https://github.com/ASKurz/Applied-Longitudinal-Data-Analysis-with-brms-and-the-tidyverse), or follow my announcements on twitter at [https://twitter.com/SolomonKurz](https://twitter.com/SolomonKurz).
 
@@ -51,12 +51,11 @@ packages <- c("bayesplot", "brms", "broom", "devtools", "flextable", "GGally", "
 install.packages(packages, dependencies = T)
 ```
 
-A few of the other packages are not officially available via the Comprehensive R Archive Network (CRAN; https://cran.r-project.org/). You can download them directly from GitHub by executing the following.
+A couple of the other packages are not officially available via the Comprehensive R Archive Network (CRAN; https://cran.r-project.org/). You can download them directly from GitHub by executing the following.
 
 
 ```r
 devtools::install_github("stan-dev/cmdstanr")
-remotes::install_github("stan-dev/posterior")
 devtools::install_github("rmcelreath/rethinking")
 ```
 
@@ -73,12 +72,12 @@ This book is licensed under the Creative Commons Zero v1.0 Universal license. Yo
 
 
 ```r
-@book{kurzAppliedLongitudinalDataAnalysis2021,
+@book{kurzAppliedLongitudinalDataAnalysis2023,
   title = {Applied longitudinal data analysis in brms and the tidyverse},
   author = {Kurz, A. Solomon},
-  year = {2021},
-  month = {4},
-  edition = {version 0.0.2},
+  year = {2023},
+  month = {6},
+  edition = {version 0.0.3},
   url = {https://bookdown.org/content/4253/}
 }
 ```

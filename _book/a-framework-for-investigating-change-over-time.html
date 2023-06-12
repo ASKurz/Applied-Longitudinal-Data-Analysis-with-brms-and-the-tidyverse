@@ -6,11 +6,10 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
   <title>1 A Framework for Investigating Change over Time | Applied longitudinal data analysis in brms and the tidyverse</title>
   <meta name="description" content="This project is a reworking of Singer and Willett’s classic (2003) text within a contemporary Bayesian framework with emphasis of the brms and tidyverse packages within the R computational framework." />
-  <meta name="generator" content="bookdown 0.21 and GitBook 2.6.7" />
+  <meta name="generator" content="bookdown 0.34 and GitBook 2.6.7" />
 
   <meta property="og:title" content="1 A Framework for Investigating Change over Time | Applied longitudinal data analysis in brms and the tidyverse" />
   <meta property="og:type" content="book" />
-  
   
   <meta property="og:description" content="This project is a reworking of Singer and Willett’s classic (2003) text within a contemporary Bayesian framework with emphasis of the brms and tidyverse packages within the R computational framework." />
   <meta name="github-repo" content="ASKurz/Applied-Longitudinal-Data-Analysis-with-brms-and-the-tidyverse" />
@@ -24,7 +23,7 @@
 <meta name="author" content="A Solomon Kurz" />
 
 
-<meta name="date" content="2021-04-06" />
+<meta name="date" content="2023-06-12" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -33,8 +32,8 @@
   
 <link rel="prev" href="index.html"/>
 <link rel="next" href="exploring-longitudinal-data-on-change.html"/>
-<script src="libs/header-attrs-2.7/header-attrs.js"></script>
-<script src="libs/jquery-2.2.3/jquery.min.js"></script>
+<script src="libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fuse.js@6.4.6/dist/fuse.min.js"></script>
 <link href="libs/gitbook-2.6.7/css/style.css" rel="stylesheet" />
 <link href="libs/gitbook-2.6.7/css/plugin-table.css" rel="stylesheet" />
 <link href="libs/gitbook-2.6.7/css/plugin-bookdown.css" rel="stylesheet" />
@@ -50,8 +49,11 @@
 
 
 
-
-<link href="libs/tabwid-1.0.0/tabwid.css" rel="stylesheet" />
+<link href="libs/anchor-sections-1.1.0/anchor-sections.css" rel="stylesheet" />
+<link href="libs/anchor-sections-1.1.0/anchor-sections-hash.css" rel="stylesheet" />
+<script src="libs/anchor-sections-1.1.0/anchor-sections.js"></script>
+<link href="libs/tabwid-1.1.3/tabwid.css" rel="stylesheet" />
+<script src="libs/tabwid-1.1.3/tabwid.js"></script>
 
 
 <style type="text/css">
@@ -92,7 +94,7 @@ code span.al { color: #ff0000; font-weight: bold; } /* Alert */
 code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
 code span.at { color: #7d9029; } /* Attribute */
 code span.bn { color: #40a070; } /* BaseN */
-code span.bu { } /* BuiltIn */
+code span.bu { color: #008000; } /* BuiltIn */
 code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
 code span.ch { color: #4070a0; } /* Char */
 code span.cn { color: #880000; } /* Constant */
@@ -105,7 +107,7 @@ code span.er { color: #ff0000; font-weight: bold; } /* Error */
 code span.ex { } /* Extension */
 code span.fl { color: #40a070; } /* Float */
 code span.fu { color: #06287e; } /* Function */
-code span.im { } /* Import */
+code span.im { color: #008000; font-weight: bold; } /* Import */
 code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
 code span.kw { color: #007020; font-weight: bold; } /* Keyword */
 code span.op { color: #666666; } /* Operator */
@@ -117,6 +119,33 @@ code span.st { color: #4070a0; } /* String */
 code span.va { color: #19177c; } /* Variable */
 code span.vs { color: #4070a0; } /* VerbatimString */
 code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+</style>
+
+<style type="text/css">
+  
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+</style>
+<style type="text/css">
+/* Used with Pandoc 2.11+ new --citeproc when CSL is used */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+}
+.hanging div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}
 </style>
 
 </head>
@@ -134,7 +163,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <li class="chapter" data-level="" data-path="index.html"><a href="index.html"><i class="fa fa-check"></i>What and why</a>
 <ul>
 <li class="chapter" data-level="" data-path="index.html"><a href="index.html#caution-work-in-progress"><i class="fa fa-check"></i>Caution: Work in progress</a></li>
-<li><a href="index.html#r-setup"><strong>R</strong> setup</a></li>
+<li class="chapter" data-level="" data-path="index.html"><a href="index.html#r-setup"><i class="fa fa-check"></i><strong>R</strong> setup</a></li>
 <li class="chapter" data-level="" data-path="index.html"><a href="index.html#license-and-citation"><i class="fa fa-check"></i>License and citation</a></li>
 </ul></li>
 <li class="chapter" data-level="1" data-path="a-framework-for-investigating-change-over-time.html"><a href="a-framework-for-investigating-change-over-time.html"><i class="fa fa-check"></i><b>1</b> A Framework for Investigating Change over Time</a>
@@ -302,6 +331,24 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 </ul></li>
 <li class="chapter" data-level="7" data-path="examining-the-multilevel-models-error-covariance-structure.html"><a href="examining-the-multilevel-models-error-covariance-structure.html"><i class="fa fa-check"></i><b>7</b> Examining the Multilevel Model’s Error Covariance Structure</a>
 <ul>
+<li class="chapter" data-level="7.1" data-path="examining-the-multilevel-models-error-covariance-structure.html"><a href="examining-the-multilevel-models-error-covariance-structure.html#the-standard-specification-of-the-multilevel-model-for-change"><i class="fa fa-check"></i><b>7.1</b> The “standard” specification of the multilevel model for change</a></li>
+<li class="chapter" data-level="7.2" data-path="examining-the-multilevel-models-error-covariance-structure.html"><a href="examining-the-multilevel-models-error-covariance-structure.html#using-the-composite-model-to-understand-assumptions-about-the-error-covariance-matrix"><i class="fa fa-check"></i><b>7.2</b> Using the composite model to understand assumptions about the error covariance matrix</a>
+<ul>
+<li class="chapter" data-level="7.2.1" data-path="examining-the-multilevel-models-error-covariance-structure.html"><a href="examining-the-multilevel-models-error-covariance-structure.html#variance-of-the-composite-residual."><i class="fa fa-check"></i><b>7.2.1</b> Variance of the composite residual.</a></li>
+<li class="chapter" data-level="7.2.2" data-path="examining-the-multilevel-models-error-covariance-structure.html"><a href="examining-the-multilevel-models-error-covariance-structure.html#covariance-of-the-composite-residuals."><i class="fa fa-check"></i><b>7.2.2</b> Covariance of the composite residuals.</a></li>
+<li class="chapter" data-level="7.2.3" data-path="examining-the-multilevel-models-error-covariance-structure.html"><a href="examining-the-multilevel-models-error-covariance-structure.html#autocorrelation-of-the-composite-residuals."><i class="fa fa-check"></i><b>7.2.3</b> Autocorrelation of the composite residuals.</a></li>
+</ul></li>
+<li class="chapter" data-level="7.3" data-path="examining-the-multilevel-models-error-covariance-structure.html"><a href="examining-the-multilevel-models-error-covariance-structure.html#postulating-an-alternative-error-covariance-structure"><i class="fa fa-check"></i><b>7.3</b> Postulating an alternative error covariance structure</a>
+<ul>
+<li class="chapter" data-level="7.3.1" data-path="examining-the-multilevel-models-error-covariance-structure.html"><a href="examining-the-multilevel-models-error-covariance-structure.html#unstructured-error-covariance-matrix."><i class="fa fa-check"></i><b>7.3.1</b> Unstructured error covariance matrix.</a></li>
+<li class="chapter" data-level="7.3.2" data-path="examining-the-multilevel-models-error-covariance-structure.html"><a href="examining-the-multilevel-models-error-covariance-structure.html#compound-symmetric-error-covariance-matrix."><i class="fa fa-check"></i><b>7.3.2</b> Compound symmetric error covariance matrix.</a></li>
+<li class="chapter" data-level="7.3.3" data-path="examining-the-multilevel-models-error-covariance-structure.html"><a href="examining-the-multilevel-models-error-covariance-structure.html#heterogeneous-compound-symmetric-error-covariance-matrix-."><i class="fa fa-check"></i><b>7.3.3</b> Heterogeneous compound symmetric error covariance matrix .</a></li>
+<li class="chapter" data-level="7.3.4" data-path="examining-the-multilevel-models-error-covariance-structure.html"><a href="examining-the-multilevel-models-error-covariance-structure.html#autoregressive-error-covariance-matrix."><i class="fa fa-check"></i><b>7.3.4</b> Autoregressive error covariance matrix.</a></li>
+<li class="chapter" data-level="7.3.5" data-path="examining-the-multilevel-models-error-covariance-structure.html"><a href="examining-the-multilevel-models-error-covariance-structure.html#heterogeneous-autoregressive-error-covariance-matrix."><i class="fa fa-check"></i><b>7.3.5</b> Heterogeneous autoregressive error covariance matrix.</a></li>
+<li class="chapter" data-level="7.3.6" data-path="examining-the-multilevel-models-error-covariance-structure.html"><a href="examining-the-multilevel-models-error-covariance-structure.html#toeplitz-error-covariance-matrix."><i class="fa fa-check"></i><b>7.3.6</b> Toeplitz error covariance matrix.</a></li>
+<li class="chapter" data-level="7.3.7" data-path="examining-the-multilevel-models-error-covariance-structure.html"><a href="examining-the-multilevel-models-error-covariance-structure.html#does-choosing-the-correct-error-covariance-structure-really-matter"><i class="fa fa-check"></i><b>7.3.7</b> Does choosing the “correct” error covariance structure really matter?</a></li>
+<li class="chapter" data-level="7.3.8" data-path="examining-the-multilevel-models-error-covariance-structure.html"><a href="examining-the-multilevel-models-error-covariance-structure.html#bonus-did-we-trade-multilevel-for-multivariate"><i class="fa fa-check"></i><b>7.3.8</b> Bonus: Did we trade multilevel for multivariate?</a></li>
+</ul></li>
 <li class="chapter" data-level="" data-path="examining-the-multilevel-models-error-covariance-structure.html"><a href="examining-the-multilevel-models-error-covariance-structure.html#session-info-6"><i class="fa fa-check"></i>Session info</a></li>
 </ul></li>
 <li class="chapter" data-level="8" data-path="modeling-change-using-covariance-structure-analysis.html"><a href="modeling-change-using-covariance-structure-analysis.html"><i class="fa fa-check"></i><b>8</b> Modeling Change Using Covariance Structure Analysis</a>
@@ -486,17 +533,17 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
           <div class="page-inner">
 
             <section class="normal" id="section-">
-<div id="a-framework-for-investigating-change-over-time" class="section level1" number="1">
-<h1><span class="header-section-number">1</span> A Framework for Investigating Change over Time</h1>
+<div id="a-framework-for-investigating-change-over-time" class="section level1 hasAnchor" number="1">
+<h1><span class="header-section-number">1</span> A Framework for Investigating Change over Time<a href="a-framework-for-investigating-change-over-time.html#a-framework-for-investigating-change-over-time" class="anchor-section" aria-label="Anchor link to header"></a></h1>
 <blockquote>
-<p>It is possible to measure change, and to do it well, <em>if you have longitudinal data</em> <span class="citation">(<a href="references.html#ref-rogosaGrowthCurveApproach1982" role="doc-biblioref">D. Rogosa et al., 1982</a>; <a href="references.html#ref-willettResultsReliabilityLongitudinal1989" role="doc-biblioref">Willett, 1989</a>)</span>. Cross-sectional data–so easy to collect and so widely available–will not suffice. In this chapter, we describe why longitudinal data are necessary for studying change. <span class="citation">(<a href="references.html#ref-singerAppliedLongitudinalData2003" role="doc-biblioref">Singer &amp; Willett, 2003, p. 3</a>, <em>emphasis</em> in the original)</span></p>
+<p>It is possible to measure change, and to do it well, <em>if you have longitudinal data</em> <span class="citation">(<a href="#ref-rogosaGrowthCurveApproach1982" role="doc-biblioref">D. Rogosa et al., 1982</a>; <a href="#ref-willettResultsReliabilityLongitudinal1989" role="doc-biblioref">Willett, 1989</a>)</span>. Cross-sectional data–so easy to collect and so widely available–will not suffice. In this chapter, we describe why longitudinal data are necessary for studying change. <span class="citation">(<a href="#ref-singerAppliedLongitudinalData2003" role="doc-biblioref">Singer &amp; Willett, 2003, p. 3</a>, <em>emphasis</em> in the original)</span></p>
 </blockquote>
-<div id="when-might-you-study-change-over-time" class="section level2" number="1.1">
-<h2><span class="header-section-number">1.1</span> When might you study change over time?</h2>
+<div id="when-might-you-study-change-over-time" class="section level2 hasAnchor" number="1.1">
+<h2><span class="header-section-number">1.1</span> When might you study change over time?<a href="a-framework-for-investigating-change-over-time.html#when-might-you-study-change-over-time" class="anchor-section" aria-label="Anchor link to header"></a></h2>
 <p>Perhaps a better question is: <em>When wouldn’t you?</em></p>
 </div>
-<div id="distinguishing-between-two-types-of-questions-about-change" class="section level2" number="1.2">
-<h2><span class="header-section-number">1.2</span> Distinguishing between two types of questions about change</h2>
+<div id="distinguishing-between-two-types-of-questions-about-change" class="section level2 hasAnchor" number="1.2">
+<h2><span class="header-section-number">1.2</span> Distinguishing between two types of questions about change<a href="a-framework-for-investigating-change-over-time.html#distinguishing-between-two-types-of-questions-about-change" class="anchor-section" aria-label="Anchor link to header"></a></h2>
 <p>On page 8, Singer and Willett proposed there are two fundamental questions for longitudinal data analysis:</p>
 <ol style="list-style-type: decimal">
 <li>“How does the outcome change over time?” and</li>
@@ -508,23 +555,23 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <p>In the second stage of an analysis of change, known as <em>level-2</em>, we ask about <em>interindividual differences in change</em>… The goal of a level-2 analysis is to detect heterogeneity in change across individuals and to determine the <em>relationship</em> between predictors and the <em>shape</em> of each person’s individual growth trajectory. (p. 8, <em>emphasis</em> in the original)</p>
 </blockquote>
 </div>
-<div id="three-important-features-of-a-study-of-change" class="section level2" number="1.3">
-<h2><span class="header-section-number">1.3</span> Three important features of a study of change</h2>
+<div id="three-important-features-of-a-study-of-change" class="section level2 hasAnchor" number="1.3">
+<h2><span class="header-section-number">1.3</span> Three important features of a study of change<a href="a-framework-for-investigating-change-over-time.html#three-important-features-of-a-study-of-change" class="anchor-section" aria-label="Anchor link to header"></a></h2>
 <ul>
 <li>Three or more waves of data</li>
 <li>An outcome whose values change systematically over time</li>
 <li>A sensible metric for clocking time</li>
 </ul>
-<div id="multiple-waves-of-data." class="section level3" number="1.3.1">
-<h3><span class="header-section-number">1.3.1</span> Multiple waves of data.</h3>
+<div id="multiple-waves-of-data." class="section level3 hasAnchor" number="1.3.1">
+<h3><span class="header-section-number">1.3.1</span> Multiple waves of data.<a href="a-framework-for-investigating-change-over-time.html#multiple-waves-of-data." class="anchor-section" aria-label="Anchor link to header"></a></h3>
 <p>Singer and Willett criticized two-waves data on two grounds.</p>
 <blockquote>
-<p>First, it cannot tell us about the <em>shape</em> of each person’s individual growth trajectory, the focus of our level-1 question. Did all the change occur immediately after the first assessment? Was progress steady or delayed? Second, it cannot distinguish true change from measurement error. If measurement error renders pretest scores too low and posttest scores too high, you might conclude erroneously that scores increase over time when a longer temporal view would suggest the opposite. In statistical terms, two-waves studies cannot describe individual trajectories of change and they confound true change with measurement error <span class="citation">(see <a href="references.html#ref-rogosaGrowthCurveApproach1982" role="doc-biblioref">D. Rogosa et al., 1982</a>)</span>. (p. 10, <em>emphasis</em> in the original)</p>
+<p>First, it cannot tell us about the <em>shape</em> of each person’s individual growth trajectory, the focus of our level-1 question. Did all the change occur immediately after the first assessment? Was progress steady or delayed? Second, it cannot distinguish true change from measurement error. If measurement error renders pretest scores too low and posttest scores too high, you might conclude erroneously that scores increase over time when a longer temporal view would suggest the opposite. In statistical terms, two-waves studies cannot describe individual trajectories of change and they confound true change with measurement error <span class="citation">(see <a href="#ref-rogosaGrowthCurveApproach1982" role="doc-biblioref">D. Rogosa et al., 1982</a>)</span>. (p. 10, <em>emphasis</em> in the original)</p>
 </blockquote>
-<p>I am not a fan of this ‘true change/measurement error’ way of speaking and would rather speak in terms of systemic and [seemingly] un-systemic changes among means and variances. Otherwise put, I’d rather speak in terms of trait and state. Two waves of data do not allow us to disentangle systemic mean differences from stable means and substantial variances for those means. Two waves of data do not allow us to disentangle changes in traits from stable traits but important differences in states. For an introduction to this way of thinking, check out Nezlek’s <span class="citation">(<a href="references.html#ref-nezlekMultilevelFrameworkUnderstanding2007" role="doc-biblioref">2007</a>)</span> <a href="https://www.researchgate.net/publication/228079300_A_Multilevel_Framework_for_Understanding_Relationships_Among_Traits_States_Situations_and_Behaviours"><em>A multilevel framework for understanding relationships among traits, states, situations and behaviors</em></a>.</p>
+<p>I am not a fan of this ‘true change/measurement error’ way of speaking and would rather speak in terms of systemic and [seemingly] un-systemic changes among means and variances. Otherwise put, I’d rather speak in terms of trait and state. Two waves of data do not allow us to disentangle systemic mean differences from stable means and substantial variances for those means. Two waves of data do not allow us to disentangle changes in traits from stable traits but important differences in states. For an introduction to this way of thinking, check out Nezlek’s <span class="citation">(<a href="#ref-nezlekMultilevelFrameworkUnderstanding2007" role="doc-biblioref">2007</a>)</span> <a href="https://www.researchgate.net/publication/228079300_A_Multilevel_Framework_for_Understanding_Relationships_Among_Traits_States_Situations_and_Behaviours"><em>A multilevel framework for understanding relationships among traits, states, situations and behaviors</em></a>.</p>
 </div>
-<div id="a-sensible-metric-for-time." class="section level3" number="1.3.2">
-<h3><span class="header-section-number">1.3.2</span> A sensible metric for time.</h3>
+<div id="a-sensible-metric-for-time." class="section level3 hasAnchor" number="1.3.2">
+<h3><span class="header-section-number">1.3.2</span> A sensible metric for time.<a href="a-framework-for-investigating-change-over-time.html#a-sensible-metric-for-time." class="anchor-section" aria-label="Anchor link to header"></a></h3>
 <blockquote>
 <p>Choice of a time metric affects several interrelated decisions about the number and spacing of data collection waves….</p>
 <p>Our overarching point is that there is no single answer to the seemingly simple question about the most sensible metric for time. You should adopt whatever scale makes most sense for your outcomes and your research question….</p>
@@ -532,38 +579,60 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 </blockquote>
 <p>Data collection waves can be evenly spaced or not. E.g., if you anticipate a time period of rapid nonlinear change, it might be helpful to increase the density of assessments during that period. Everyone does not have to have the same assessment schedule. If all are assessed on the same schedule, we describe the data as <em>time-structured</em>. When assessment schedules vary across participants, the data are termed <em>time-unstructured</em>. The data are <em>balanced</em> if all participants have the same number of waves. Issues like attrition and so on lead to <em>unbalanced</em> data. Though they may have some pedagogical use, I have not found these terms useful in practice.</p>
 </div>
-<div id="a-continuous-outcome-that-changes-systematically-over-time." class="section level3" number="1.3.3">
-<h3><span class="header-section-number">1.3.3</span> A continuous outcome that changes systematically over time.</h3>
+<div id="a-continuous-outcome-that-changes-systematically-over-time." class="section level3 hasAnchor" number="1.3.3">
+<h3><span class="header-section-number">1.3.3</span> A continuous outcome that changes systematically over time.<a href="a-framework-for-investigating-change-over-time.html#a-continuous-outcome-that-changes-systematically-over-time." class="anchor-section" aria-label="Anchor link to header"></a></h3>
 <p>To my eye, the most interesting part of this section is the discussion of measurement validity over time. E.g.,</p>
 <blockquote>
 <p>when we say the metric in which the outcome is measured must be preserved across time, we mean that the outcome scores must be equatable over time–a given value of the outcome on any occasion must represent the same “amount” of the outcome on every occasion. Outcome equatability is easiest to ensure when you use the identical instrument for measurement repeatedly over time. (p. 13)</p>
 </blockquote>
-<p>This isn’t as simple as is sounds. Though it’s beyond the scope of this project, you might learn more about this from a study of the longitudinal measurement invariance literature. To dive in, see the first couple chapters in Newsom’s <span class="citation">(<a href="references.html#ref-newsom2015longitudinal" role="doc-biblioref">2015</a>)</span> text, <a href="http://www.longitudinalsem.com/"><em>Longitudinal structural equation modeling: A comprehensive introduction</em></a>.</p>
+<p>This isn’t as simple as is sounds. Though it’s beyond the scope of this project, you might learn more about this from a study of the longitudinal measurement invariance literature. To dive in, see the first couple chapters in Newsom’s <span class="citation">(<a href="#ref-newsom2015longitudinal" role="doc-biblioref">2015</a>)</span> text, <a href="http://www.longitudinalsem.com/"><em>Longitudinal structural equation modeling: A comprehensive introduction</em></a>.</p>
 </div>
 </div>
-<div id="session-info" class="section level2 unnumbered">
-<h2>Session info</h2>
+<div id="session-info" class="section level2 unnumbered hasAnchor">
+<h2>Session info<a href="a-framework-for-investigating-change-over-time.html#session-info" class="anchor-section" aria-label="Anchor link to header"></a></h2>
 <div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="a-framework-for-investigating-change-over-time.html#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span></code></pre></div>
-<pre><code>## R version 4.0.4 (2021-02-15)
-## Platform: x86_64-apple-darwin17.0 (64-bit)
-## Running under: macOS Catalina 10.15.7
+<pre><code>## R version 4.3.0 (2023-04-21)
+## Platform: x86_64-apple-darwin20 (64-bit)
+## Running under: macOS Monterey 12.4
 ## 
 ## Matrix products: default
-## BLAS:   /Library/Frameworks/R.framework/Versions/4.0/Resources/lib/libRblas.dylib
-## LAPACK: /Library/Frameworks/R.framework/Versions/4.0/Resources/lib/libRlapack.dylib
+## BLAS:   /Library/Frameworks/R.framework/Versions/4.3-x86_64/Resources/lib/libRblas.0.dylib 
+## LAPACK: /Library/Frameworks/R.framework/Versions/4.3-x86_64/Resources/lib/libRlapack.dylib;  LAPACK version 3.11.0
 ## 
 ## locale:
 ## [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
+## 
+## time zone: America/Chicago
+## tzcode source: internal
 ## 
 ## attached base packages:
 ## [1] stats     graphics  grDevices utils     datasets  methods   base     
 ## 
 ## loaded via a namespace (and not attached):
-##  [1] compiler_4.0.4    magrittr_2.0.1    bookdown_0.21     htmltools_0.5.1.1
-##  [5] tools_4.0.4       stringi_1.5.3     rmarkdown_2.7     knitr_1.31       
-##  [9] stringr_1.4.0     digest_0.6.27     xfun_0.22         rlang_0.4.10     
-## [13] evaluate_0.14</code></pre>
+##  [1] digest_0.6.31   R6_2.5.1        bookdown_0.34   fastmap_1.1.1  
+##  [5] xfun_0.39       cachem_1.0.8    knitr_1.42      htmltools_0.5.5
+##  [9] rmarkdown_2.21  cli_3.6.1       sass_0.4.6      jquerylib_0.1.4
+## [13] compiler_4.3.0  rstudioapi_0.14 tools_4.3.0     evaluate_0.21  
+## [17] bslib_0.4.2     rlang_1.1.1     jsonlite_1.8.4</code></pre>
 
+</div>
+</div>
+<h3>References<a href="references.html#references" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<div id="refs" class="references csl-bib-body hanging-indent" line-spacing="2">
+<div id="ref-newsom2015longitudinal" class="csl-entry">
+Newsom, J. T. (2015). <em>Longitudinal structural equation modeling: <span>A</span> comprehensive introduction</em>. <span>Routledge</span>. <a href="http://www.longitudinalsem.com/">http://www.longitudinalsem.com/</a>
+</div>
+<div id="ref-nezlekMultilevelFrameworkUnderstanding2007" class="csl-entry">
+Nezlek, J. B. (2007). A multilevel framework for understanding relationships among traits, states, situations and behaviours. <em>European Journal of Personality</em>, <em>21</em>(6), 789–810. <a href="https://doi.org/10.1002/per.640">https://doi.org/10.1002/per.640</a>
+</div>
+<div id="ref-rogosaGrowthCurveApproach1982" class="csl-entry">
+Rogosa, D., Brandt, D., &amp; Zimowski, M. (1982). A growth curve approach to the measurement of change. <em>Psychological Bulletin</em>, <em>92</em>(3), 726–748. <a href="https://doi.org/10.1037/0033-2909.92.3.726">https://doi.org/10.1037/0033-2909.92.3.726</a>
+</div>
+<div id="ref-singerAppliedLongitudinalData2003" class="csl-entry">
+Singer, J. D., &amp; Willett, J. B. (2003). <em>Applied longitudinal data analysis: <span>Modeling</span> change and event occurrence</em>. <span>Oxford University Press, USA</span>. <a href="https://oxford.universitypressscholarship.com/view/10.1093/acprof:oso/9780195152968.001.0001/acprof-9780195152968">https://oxford.universitypressscholarship.com/view/10.1093/acprof:oso/9780195152968.001.0001/acprof-9780195152968</a>
+</div>
+<div id="ref-willettResultsReliabilityLongitudinal1989" class="csl-entry">
+Willett, J. B. (1989). Some results on reliability for the longitudinal measurement of change: <span>Implications</span> for the design of studies of individual growth. <em>Educational and Psychological Measurement</em>, <em>49</em>(3), 587–602. <a href="https://doi.org/10.1177/001316448904900309">https://doi.org/10.1177/001316448904900309</a>
 </div>
 </div>
             </section>
@@ -576,7 +645,6 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
     </div>
   </div>
 <script src="libs/gitbook-2.6.7/js/app.min.js"></script>
-<script src="libs/gitbook-2.6.7/js/lunr.js"></script>
 <script src="libs/gitbook-2.6.7/js/clipboard.min.js"></script>
 <script src="libs/gitbook-2.6.7/js/plugin-search.js"></script>
 <script src="libs/gitbook-2.6.7/js/plugin-sharing.js"></script>
@@ -595,6 +663,7 @@ gitbook.start({
 "weibo": false,
 "instapaper": false,
 "vk": false,
+"whatsapp": false,
 "all": ["facebook", "twitter", "linkedin", "weibo", "instapaper"]
 },
 "fontsettings": {
@@ -615,6 +684,10 @@ gitbook.start({
 "text": null
 },
 "download": null,
+"search": {
+"engine": "fuse",
+"options": null
+},
 "toc": {
 "collapse": "subsection"
 }
@@ -628,7 +701,7 @@ gitbook.start({
     var script = document.createElement("script");
     script.type = "text/javascript";
     var src = "true";
-    if (src === "" || src === "true") src = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML";
+    if (src === "" || src === "true") src = "https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.9/latest.js?config=TeX-MML-AM_CHTML";
     if (location.protocol !== "file:")
       if (/^https?:/.test(src))
         src = src.replace(/^https?:/, '');
