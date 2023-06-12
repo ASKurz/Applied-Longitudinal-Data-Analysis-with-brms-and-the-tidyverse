@@ -414,7 +414,7 @@ tibble(loo_difference = c(rnorm(n, mean = l1[2, 1] * -2, sd = l1[2, 2] * 2),
   labs(title = "LOO-difference simulations based on 1,000,000 draws",
        x = "difference distribution") +
   theme(panel.grid = element_blank()) +
-  facet_wrap(~models, scales = "free")
+  facet_wrap(~ models, scales = "free")
 ```
 
 The LOO difference for the linear and constant models is decisive. The difference for the quadratic and linear models is fairly large on the information-criteria scale, but the uncertainty in that distribution is fairly large relative to its location (i.e., its mean), which might temper overly-strong conclusions about how much better the quadratic was compared to the linear. The comparison between the quadratic and the general produced a simulation with a modest location and rather large uncertainty relative to the magnitude of that location. All in all, "all signs point to the superiority of the quadratic specification, which fits nearly as well as the general mode, but with fewer parameters" (p. 416).
@@ -918,7 +918,7 @@ pars %>%
   coord_flip() +
   theme(axis.text.y = element_text(hjust = 0),
         panel.grid = element_blank()) +
-  facet_wrap(~par, ncol = 1)
+  facet_wrap(~ par, ncol = 1)
 ```
 
 Instead of comparing them with deviance values, we will compare the two models using Bayesian information criteria. For simplicity, we'll focus on the LOO.
@@ -1256,7 +1256,7 @@ p2 <-
   scale_fill_viridis_d(NULL, option = "A", end = .6) &
   scale_color_viridis_d(NULL, option = "A", end = .6) &
   theme(panel.grid = element_blank()) &
-  facet_wrap(~sex)
+  facet_wrap(~ sex)
 ) +
   plot_layout(guides = "collect")
 ```
@@ -1353,7 +1353,7 @@ firstarrest_pp %>%
   scale_x_continuous("age", breaks = 7:19, limits = c(7, 19)) +
   scale_y_continuous("sample logit(hazard)", limits = c(-7, -2)) +
   theme(panel.grid = element_blank()) +
-  facet_wrap(~race)
+  facet_wrap(~ race)
 ```
 
 For kicks and giggles, it might informative to fit a series of subset Bayesian models to make similar versions of those sample hazard functions. Before we fit the models, let's make our lives easier and make a factor version of our time variable, `period`.
@@ -1433,7 +1433,7 @@ f %>%
   scale_x_continuous("age", breaks = 7:19, limits = c(7, 19)) +
   ylab("sample logit(hazard)") +
   theme(panel.grid = element_blank()) +
-  facet_wrap(~race)
+  facet_wrap(~ race)
 ```
 
 Notice how this looks different from the version of the plot, above, in that there are five points with very low values on the $y$-axis. Did you notice the `drop_na(event)` line in the code when we computed the sample logit(hazard) values by hand? Those points with missing values in the data are what caused those very low log(hazard) estimates in the models. Next we'll fit the primary statistical models with both `black` and `abused`, without and with their interaction term, based on the full data set. You'll see that when we use all cases, those odd low logit(hazard) values go away.
@@ -1483,7 +1483,7 @@ as_draws_df(fit12.23) %>%
   stat_halfeye(.width = .95, normalize = "panels") +
   scale_y_continuous(NULL, breaks = NULL) +
   theme(panel.grid = element_blank()) +
-  facet_grid(abused~black)
+  facet_grid(abused ~ black)
 ```
 
 Here's our version of the lower panel of Figure 12.6.
@@ -1511,7 +1511,7 @@ make_fitted(fit12.23, scale = "linear") %>%
   ylab("fitted logit(hazard)") +
   coord_cartesian(ylim = c(-8, -2)) +
   theme(panel.grid = element_blank()) +
-  facet_wrap(~sex)
+  facet_wrap(~ sex)
 ```
 
 ### Nonlinear effects.
@@ -1997,7 +1997,7 @@ as_draws_df(fit12.29) %>%
   scale_y_continuous(NULL, breaks = NULL) +
   xlab("the effects of female in two metrics") +
   theme(panel.grid = element_blank()) +
-  facet_wrap(~name, scales = "free")
+  facet_wrap(~ name, scales = "free")
 ```
 
 Now examine the odds ratio for three different educational periods.
@@ -2015,7 +2015,7 @@ as_draws_df(fit12.29) %>%
   labs(title = "The interaction effect in different periods",
        x = "odds ratio") +
   theme(panel.grid = element_blank()) +
-  facet_wrap(~name, scales = "free")
+  facet_wrap(~ name, scales = "free")
 ```
 
 ## The no unobserved heterogeneity assumption: No simple solution
@@ -2081,7 +2081,7 @@ residuals(fit11.10) %>%
   ylab("residual") +
   theme(legend.position = "top", 
         panel.grid = element_blank()) +
-  facet_wrap(~period, nrow = 1)
+  facet_wrap(~ period, nrow = 1)
 ```
 
 As is often the case in coefficient plots, the dots are the posterior means and the intersecting lines are the percentile-based 95% intervals. In the `sex_pp` data, the `event` variable encodes when participants experience the event within a given time range. Hopefully the color coding highlights how with hazard models, the residuals are always positive when the criterion variable is a 1 and always negative when the criterion is 0.
