@@ -1,0 +1,2021 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.7.32">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>3&nbsp; Introducing the Multilevel Model for Change – *Applied longitudinal data analysis* in brms and the tidyverse</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+  margin-bottom: 0em;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<link href="./04.html" rel="next">
+<link href="./02.html" rel="prev">
+<script src="site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-234273d1456647dabc34a594ac50e507.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap-7d082c015fa132ca880f975003d7bf2f.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN") {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<meta property="og:title" content="3&nbsp; Introducing the Multilevel Model for Change – Applied longitudinal data analysis in brms and the tidyverse">
+<meta property="og:description" content="">
+<meta property="og:image" content="https://solomon.quarto.pub/alda/03_files/figure-html/unnamed-chunk-4-1.png">
+<meta property="og:site_name" content="*Applied longitudinal data analysis* in brms and the tidyverse">
+<meta property="og:image:height" content="768">
+<meta property="og:image:width" content="1248">
+</head>
+
+<body class="nav-sidebar floating quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./03.html"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">Introducing the Multilevel Model for Change</span></a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+      <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+    <div class="sidebar-title mb-0 py-0">
+      <a href="./"><em>Applied longitudinal data analysis</em> in brms and the tidyverse</a> 
+        <div class="sidebar-tools-main">
+    <a href="https://github.com/ASKurz/Applied-Longitudinal-Data-Analysis-with-brms-and-the-tidyverse" title="Source Code" class="quarto-navigation-tool px-1" aria-label="Source Code"><i class="bi bi-github"></i></a>
+</div>
+    </div>
+      </div>
+        <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Search"></div>
+        </div>
+        </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">What and why</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./01.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">A Framework for Investigating Change over Time</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./02.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Exploring Longitudinal Data on Change</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./03.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">Introducing the Multilevel Model for Change</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./04.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">Doing Data Analysis with the Multilevel Model for Change</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./05.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Treating Time More Flexibly</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./06.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Modeling Discontinuous and Nonlinear Change</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./07.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">Examining the Multilevel Model’s Error Covariance Structure</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./08.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Modeling Change Using Covariance Structure Analysis</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./09.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">A Framework for Investigating Event Occurrence</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./10.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">Describing Discrete-Time Event Occurrence Data</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./11.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">Fitting Basic Discrete-Time Hazard Models</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./12.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">Extending the Discrete-Time Hazard Model</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./13.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">13</span>&nbsp; <span class="chapter-title">Describing Continuous-Time Event Occurrence Data</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./references.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">References</span></a>
+  </div>
+</li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#what-is-the-purpose-of-the-multilevel-model-for-change" id="toc-what-is-the-purpose-of-the-multilevel-model-for-change" class="nav-link active" data-scroll-target="#what-is-the-purpose-of-the-multilevel-model-for-change"><span class="header-section-number">3.1</span> What is the purpose of the multilevel model for change?</a></li>
+  <li><a href="#the-level-1-submodel-for-individual-change" id="toc-the-level-1-submodel-for-individual-change" class="nav-link" data-scroll-target="#the-level-1-submodel-for-individual-change"><span class="header-section-number">3.2</span> The level-1 submodel for individual change</a>
+  <ul>
+  <li><a href="#the-structural-part-of-the-level-1-submodel" id="toc-the-structural-part-of-the-level-1-submodel" class="nav-link" data-scroll-target="#the-structural-part-of-the-level-1-submodel"><span class="header-section-number">3.2.1</span> The structural part of the level-1 submodel</a></li>
+  <li><a href="#sec-The-stochastic-part-of-the-level-1-submodel" id="toc-sec-The-stochastic-part-of-the-level-1-submodel" class="nav-link" data-scroll-target="#sec-The-stochastic-part-of-the-level-1-submodel"><span class="header-section-number">3.2.2</span> The stochastic part of the level-1 submodel</a></li>
+  <li><a href="#relating-the-level-1-submodel-to-the-ols-exploratory-methods-of-chapter-2" id="toc-relating-the-level-1-submodel-to-the-ols-exploratory-methods-of-chapter-2" class="nav-link" data-scroll-target="#relating-the-level-1-submodel-to-the-ols-exploratory-methods-of-chapter-2"><span class="header-section-number">3.2.3</span> Relating the level-1 submodel to the OLS exploratory methods of chapter 2</a></li>
+  </ul></li>
+  <li><a href="#the-level-2-submodel-for-systematic-interindividual-differences-in-change" id="toc-the-level-2-submodel-for-systematic-interindividual-differences-in-change" class="nav-link" data-scroll-target="#the-level-2-submodel-for-systematic-interindividual-differences-in-change"><span class="header-section-number">3.3</span> The level-2 submodel for systematic interindividual differences in change</a>
+  <ul>
+  <li><a href="#structural-components-of-the-level-2-submodel" id="toc-structural-components-of-the-level-2-submodel" class="nav-link" data-scroll-target="#structural-components-of-the-level-2-submodel"><span class="header-section-number">3.3.1</span> Structural components of the level-2 submodel</a></li>
+  <li><a href="#stochastic-components-of-the-level-2-submodel" id="toc-stochastic-components-of-the-level-2-submodel" class="nav-link" data-scroll-target="#stochastic-components-of-the-level-2-submodel"><span class="header-section-number">3.3.2</span> Stochastic components of the level-2 submodel</a></li>
+  </ul></li>
+  <li><a href="#fitting-the-multilevel-model-for-change-to-data" id="toc-fitting-the-multilevel-model-for-change-to-data" class="nav-link" data-scroll-target="#fitting-the-multilevel-model-for-change-to-data"><span class="header-section-number">3.4</span> Fitting the multilevel model for change to data</a>
+  <ul>
+  <li><a href="#the-advantages-of-maximum-likelihood-bayesian-estimation" id="toc-the-advantages-of-maximum-likelihood-bayesian-estimation" class="nav-link" data-scroll-target="#the-advantages-of-maximum-likelihood-bayesian-estimation"><span class="header-section-number">3.4.1</span> The advantages of <del>maximum likelihood</del> Bayesian estimation</a></li>
+  <li><a href="#using-maximum-likelihood-modern-bayesian-methods-to-fit-a-multilevel-model" id="toc-using-maximum-likelihood-modern-bayesian-methods-to-fit-a-multilevel-model" class="nav-link" data-scroll-target="#using-maximum-likelihood-modern-bayesian-methods-to-fit-a-multilevel-model"><span class="header-section-number">3.4.2</span> Using <del>maximum likelihood</del> modern Bayesian methods to fit a multilevel model</a></li>
+  </ul></li>
+  <li><a href="#examining-estimated-fixed-effects" id="toc-examining-estimated-fixed-effects" class="nav-link" data-scroll-target="#examining-estimated-fixed-effects"><span class="header-section-number">3.5</span> Examining estimated fixed effects</a>
+  <ul>
+  <li><a href="#interpreting-estimated-fixed-effects" id="toc-interpreting-estimated-fixed-effects" class="nav-link" data-scroll-target="#interpreting-estimated-fixed-effects"><span class="header-section-number">3.5.1</span> Interpreting estimated fixed effects</a></li>
+  <li><a href="#single-parameter-tests-for-the-fixed-effects" id="toc-single-parameter-tests-for-the-fixed-effects" class="nav-link" data-scroll-target="#single-parameter-tests-for-the-fixed-effects"><span class="header-section-number">3.5.2</span> Single parameter tests for the fixed effects</a></li>
+  </ul></li>
+  <li><a href="#examining-estimated-variance-components" id="toc-examining-estimated-variance-components" class="nav-link" data-scroll-target="#examining-estimated-variance-components"><span class="header-section-number">3.6</span> Examining estimated variance components</a>
+  <ul>
+  <li><a href="#interpreting-the-estimated-variance-components" id="toc-interpreting-the-estimated-variance-components" class="nav-link" data-scroll-target="#interpreting-the-estimated-variance-components"><span class="header-section-number">3.6.1</span> Interpreting the estimated variance components</a></li>
+  <li><a href="#single-parameter-tests-for-the-variance-components" id="toc-single-parameter-tests-for-the-variance-components" class="nav-link" data-scroll-target="#single-parameter-tests-for-the-variance-components"><span class="header-section-number">3.6.2</span> Single parameter tests for the variance components</a></li>
+  </ul></li>
+  <li><a href="#bonus-how-did-you-simulate-that-data" id="toc-bonus-how-did-you-simulate-that-data" class="nav-link" data-scroll-target="#bonus-how-did-you-simulate-that-data"><span class="header-section-number">3.7</span> Bonus: How did you simulate that data?</a></li>
+  <li><a href="#session-info" id="toc-session-info" class="nav-link" data-scroll-target="#session-info">Session info</a></li>
+  <li><a href="#comments" id="toc-comments" class="nav-link" data-scroll-target="#comments">Comments</a></li>
+  </ul>
+<div class="toc-actions"><ul><li><a href="https://github.com/ASKurz/Applied-Longitudinal-Data-Analysis-with-brms-and-the-tidyverse/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div></nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">Introducing the Multilevel Model for Change</span></h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<blockquote class="blockquote">
+<p>In this chapter [Singer and Willett introduced] the multilevel model for change, demonstrating how it allows us to address within-person and between-person questions about change simultaneously. Although there are several ways of writing the statistical model, here we adopt a simple and common approach that has much substantive appeal. We specify the multilevel model for change by simultaneously postulating a pair of subsidiary models—a level-1 submodel that describes how each person changes over time, and a level-2 model that describes how these changes differ across people <span class="citation" data-cites="bryk1987application rogosaUnderstandingCorrelatesChange1985">(<a href="references.html#ref-bryk1987application" role="doc-biblioref">Bryk &amp; Raudenbush, 1987</a>; <a href="references.html#ref-rogosaUnderstandingCorrelatesChange1985" role="doc-biblioref">Rogosa &amp; Willett, 1985</a>)</span>. <span class="citation" data-cites="singerAppliedLongitudinalData2003">(<a href="references.html#ref-singerAppliedLongitudinalData2003" role="doc-biblioref">Singer &amp; Willett, 2003, p. 3</a>)</span></p>
+</blockquote>
+<section id="what-is-the-purpose-of-the-multilevel-model-for-change" class="level2" data-number="3.1">
+<h2 data-number="3.1" class="anchored" data-anchor-id="what-is-the-purpose-of-the-multilevel-model-for-change"><span class="header-section-number">3.1</span> What is the purpose of the multilevel model for change?</h2>
+<p>Unfortunately, we do not have access to the full data set Singer and Willett used in this chapter. For details, go <a href="https://stats.idre.ucla.edu/r/examples/alda/r-applied-longitudinal-data-analysis-ch-3/">here</a>. However, I was able to use the data provided in Table 3.1 and the model results in Table 3.3 to simulate data with similar characteristics as the original. To see how I did it, look at the section at the end of the chapter.</p>
+<p>Anyway, here are the data in Table 3.1.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>early_int <span class="ot">&lt;-</span> <span class="fu">tibble</span>(</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">id      =</span> <span class="fu">rep</span>(<span class="fu">c</span>(<span class="dv">68</span>, <span class="dv">70</span><span class="sc">:</span><span class="dv">72</span>, <span class="dv">902</span>, <span class="dv">904</span>, <span class="dv">906</span>, <span class="dv">908</span>), <span class="at">each =</span> <span class="dv">3</span>),</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">age     =</span> <span class="fu">rep</span>(<span class="fu">c</span>(<span class="dv">1</span>, <span class="fl">1.5</span>, <span class="dv">2</span>), <span class="at">times =</span> <span class="dv">8</span>),</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">cog     =</span> <span class="fu">c</span>(<span class="dv">103</span>, <span class="dv">119</span>, <span class="dv">96</span>, <span class="dv">106</span>, <span class="dv">107</span>, <span class="dv">96</span>, <span class="dv">112</span>, <span class="dv">86</span>, <span class="dv">73</span>, <span class="dv">100</span>, <span class="dv">93</span>, <span class="dv">87</span>, </span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>              <span class="dv">119</span>, <span class="dv">93</span>, <span class="dv">99</span>, <span class="dv">112</span>, <span class="dv">98</span>, <span class="dv">79</span>, <span class="dv">89</span>, <span class="dv">66</span>, <span class="dv">81</span>, <span class="dv">117</span>, <span class="dv">90</span>, <span class="dv">76</span>),</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">program =</span> <span class="fu">rep</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">0</span>, <span class="at">each =</span> <span class="dv">12</span>))</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(early_int)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 24 × 4
+      id   age   cog program
+   &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;   &lt;int&gt;
+ 1    68   1     103       1
+ 2    68   1.5   119       1
+ 3    68   2      96       1
+ 4    70   1     106       1
+ 5    70   1.5   107       1
+ 6    70   2      96       1
+ 7    71   1     112       1
+ 8    71   1.5    86       1
+ 9    71   2      73       1
+10    72   1     100       1
+# ℹ 14 more rows</code></pre>
+</div>
+</div>
+<p>Later on, we also fit models using <span class="math inline">\(age - 1\)</span>. Here we’ll compute that and save it as <code>age_c</code>.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>early_int <span class="ot">&lt;-</span> early_int <span class="sc">%&gt;%</span> </span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">age_c =</span> age <span class="sc">-</span> <span class="dv">1</span>)</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(early_int)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 6 × 5
+     id   age   cog program age_c
+  &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;   &lt;int&gt; &lt;dbl&gt;
+1    68   1     103       1   0  
+2    68   1.5   119       1   0.5
+3    68   2      96       1   1  
+4    70   1     106       1   0  
+5    70   1.5   107       1   0.5
+6    70   2      96       1   1  </code></pre>
+</div>
+</div>
+<p>Here we’ll load our simulation of the full <span class="math inline">\(n = 103\)</span> data set.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">load</span>(<span class="st">"data/early_int_sim.rda"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="the-level-1-submodel-for-individual-change" class="level2" data-number="3.2">
+<h2 data-number="3.2" class="anchored" data-anchor-id="the-level-1-submodel-for-individual-change"><span class="header-section-number">3.2</span> The level-1 submodel for individual change</h2>
+<p>This part of the model is also called the <em>individual growth model</em>. Remember how in last chapter we fit a series of participant-specific models? That’s the essence of this part of the model.</p>
+<p>Here’s our version of Figure 3.1. Note that here we’re being lazy and just using OLS estimates.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>early_int <span class="sc">%&gt;%</span> </span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> age, <span class="at">y =</span> cog)) <span class="sc">+</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stat_smooth</span>(<span class="at">method =</span> <span class="st">"lm"</span>, <span class="at">se =</span> F) <span class="sc">+</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>() <span class="sc">+</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_continuous</span>(<span class="at">breaks =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="fl">1.5</span>, <span class="dv">2</span>)) <span class="sc">+</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ylim</span>(<span class="dv">50</span>, <span class="dv">150</span>) <span class="sc">+</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">panel.grid =</span> <span class="fu">element_blank</span>()) <span class="sc">+</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(<span class="sc">~</span> id, <span class="at">ncol =</span> <span class="dv">4</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="03_files/figure-html/unnamed-chunk-4-1.png" class="img-fluid figure-img" width="624"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Based on these data, we postulate our level-1 submodel to be</p>
+<p><span class="math display">\[
+\text{cog}_{ij} = [ \pi_{0i} + \pi_{1i} (\text{age}_{ij} - 1) ] + [\epsilon_{ij}].
+\]</span></p>
+<section id="the-structural-part-of-the-level-1-submodel" class="level3" data-number="3.2.1">
+<h3 data-number="3.2.1" class="anchored" data-anchor-id="the-structural-part-of-the-level-1-submodel"><span class="header-section-number">3.2.1</span> The structural part of the level-1 submodel</h3>
+<p>As far as I can tell, the data for Figure 3.2 are something like this.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>d <span class="ot">&lt;-</span> <span class="fu">tibble</span>(<span class="at">id  =</span> <span class="st">"i"</span>,</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>            <span class="at">age =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="fl">1.5</span>, <span class="dv">2</span>),</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>            <span class="at">cog =</span> <span class="fu">c</span>(<span class="dv">95</span>, <span class="dv">100</span>, <span class="dv">135</span>))</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>d</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 3 × 3
+  id      age   cog
+  &lt;chr&gt; &lt;dbl&gt; &lt;dbl&gt;
+1 i       1      95
+2 i       1.5   100
+3 i       2     135</code></pre>
+</div>
+</div>
+<p>To add in the horizontal dashed lines in Figure 3.2, we’ll need to fit a model. Let’s be lazy and use OLS. Don’t worry, we’ll use Bayes in a bit.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>fit3<span class="fl">.1</span> <span class="ot">&lt;-</span> <span class="fu">lm</span>(</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> d,</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>  cog <span class="sc">~</span> age)</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(fit3<span class="fl">.1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Call:
+lm(formula = cog ~ age, data = d)
+
+Residuals:
+  1   2   3 
+  5 -10   5 
+
+Coefficients:
+            Estimate Std. Error t value Pr(&gt;|t|)
+(Intercept)    50.00      26.93   1.857    0.314
+age            40.00      17.32   2.309    0.260
+
+Residual standard error: 12.25 on 1 degrees of freedom
+Multiple R-squared:  0.8421,    Adjusted R-squared:  0.6842 
+F-statistic: 5.333 on 1 and 1 DF,  p-value: 0.2601</code></pre>
+</div>
+</div>
+<p>We can use the <code>fitted()</code> function to compute the model-implied fitted values for <code>cog</code> based on the <code>age</code> values in the data. We’ll then save those in a sensibly-named vector which we’ll attach to the rest of the data.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>f <span class="ot">&lt;-</span> <span class="fu">fitted</span>(fit3<span class="fl">.1</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">data.frame</span>() <span class="sc">%&gt;%</span> </span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">set_names</span>(<span class="st">"fitted"</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">bind_cols</span>(d)</span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(f)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  fitted id age cog
+1     90  i 1.0  95
+2    110  i 1.5 100
+3    130  i 2.0 135</code></pre>
+</div>
+</div>
+<p>To make all the dashed lines and arrows in the figure, we’ll want a few specialty tibbles.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>path <span class="ot">&lt;-</span> <span class="fu">tibble</span>(<span class="at">age =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">2</span>),</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>               <span class="at">cog =</span> <span class="fu">c</span>(<span class="dv">90</span>, <span class="dv">90</span>, <span class="dv">130</span>))</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>text <span class="ot">&lt;-</span> <span class="fu">tibble</span>(</span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">age   =</span> <span class="fu">c</span>(<span class="fl">1.2</span>, <span class="fl">1.65</span>, <span class="fl">2.15</span>, <span class="fl">1.125</span>, <span class="fl">2.075</span>),</span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">cog   =</span> <span class="fu">c</span>(<span class="dv">105</span>, <span class="dv">101</span>, <span class="dv">137</span>, <span class="dv">75</span>, <span class="dv">110</span>),</span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">label =</span> <span class="fu">c</span>(<span class="st">"epsilon[italic(i)][1]"</span>, <span class="st">"epsilon[italic(i)][2]"</span>, </span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>            <span class="st">"epsilon[italic(i)][3]"</span>, <span class="st">"pi[0][italic(i)]"</span>, <span class="st">"pi[1][italic(i)]"</span>))</span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>arrow <span class="ot">&lt;-</span> <span class="fu">tibble</span>(</span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>  <span class="at">age  =</span> <span class="fu">c</span>(<span class="fl">1.15</span>, <span class="fl">1.6</span>, <span class="fl">2.1</span>, <span class="fl">1.1</span>),</span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>  <span class="at">xend =</span> <span class="fu">c</span>(<span class="fl">1.01</span>, <span class="fl">1.51</span>, <span class="fl">2.01</span>, <span class="fl">1.01</span>),</span>
+<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a>  <span class="at">cog  =</span> <span class="fu">c</span>(<span class="dv">103</span>, <span class="dv">101</span>, <span class="dv">137</span>, <span class="dv">78</span>),</span>
+<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a>  <span class="at">yend =</span> <span class="fu">c</span>(<span class="fl">92.5</span>, <span class="dv">105</span>, <span class="fl">132.5</span>, <span class="dv">89</span>))</span>
+<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a><span class="co"># we're finally ready to plot!</span></span>
+<span id="cb13-17"><a href="#cb13-17" aria-hidden="true" tabindex="-1"></a>f <span class="sc">%&gt;%</span> </span>
+<span id="cb13-18"><a href="#cb13-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> age, <span class="at">y =</span> cog)) <span class="sc">+</span></span>
+<span id="cb13-19"><a href="#cb13-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>() <span class="sc">+</span></span>
+<span id="cb13-20"><a href="#cb13-20" aria-hidden="true" tabindex="-1"></a>  <span class="co"># the main fitted trajectory</span></span>
+<span id="cb13-21"><a href="#cb13-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="fu">aes</span>(<span class="at">y =</span> fitted)) <span class="sc">+</span></span>
+<span id="cb13-22"><a href="#cb13-22" aria-hidden="true" tabindex="-1"></a>  <span class="co"># the thick dashed line bending upward at age == 2</span></span>
+<span id="cb13-23"><a href="#cb13-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_path</span>(<span class="at">data =</span> path,</span>
+<span id="cb13-24"><a href="#cb13-24" aria-hidden="true" tabindex="-1"></a>            <span class="at">linewidth =</span> <span class="dv">1</span><span class="sc">/</span><span class="dv">2</span>, <span class="at">linetype =</span> <span class="dv">2</span>) <span class="sc">+</span></span>
+<span id="cb13-25"><a href="#cb13-25" aria-hidden="true" tabindex="-1"></a>  <span class="co"># the thin dashed vertical lines extending from the data dots to the fitted line</span></span>
+<span id="cb13-26"><a href="#cb13-26" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_segment</span>(<span class="fu">aes</span>(<span class="at">xend =</span> age, <span class="at">y =</span> cog, <span class="at">yend =</span> fitted),</span>
+<span id="cb13-27"><a href="#cb13-27" aria-hidden="true" tabindex="-1"></a>               <span class="at">linetype =</span> <span class="dv">3</span>, <span class="at">linewidth =</span> <span class="dv">1</span><span class="sc">/</span><span class="dv">4</span>) <span class="sc">+</span></span>
+<span id="cb13-28"><a href="#cb13-28" aria-hidden="true" tabindex="-1"></a>  <span class="co"># the arrows</span></span>
+<span id="cb13-29"><a href="#cb13-29" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_segment</span>(<span class="at">data =</span> arrow,</span>
+<span id="cb13-30"><a href="#cb13-30" aria-hidden="true" tabindex="-1"></a>               <span class="fu">aes</span>(<span class="at">xend =</span> xend, <span class="at">yend =</span> yend),</span>
+<span id="cb13-31"><a href="#cb13-31" aria-hidden="true" tabindex="-1"></a>               <span class="at">arrow =</span> <span class="fu">arrow</span>(<span class="at">length =</span> <span class="fu">unit</span>(<span class="fl">0.1</span>, <span class="st">"cm"</span>)), <span class="at">linewidth =</span> <span class="dv">1</span><span class="sc">/</span><span class="dv">4</span>) <span class="sc">+</span></span>
+<span id="cb13-32"><a href="#cb13-32" aria-hidden="true" tabindex="-1"></a>  <span class="co"># the statistical notation</span></span>
+<span id="cb13-33"><a href="#cb13-33" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_text</span>(<span class="at">data =</span> text,</span>
+<span id="cb13-34"><a href="#cb13-34" aria-hidden="true" tabindex="-1"></a>            <span class="fu">aes</span>(<span class="at">label =</span> label),</span>
+<span id="cb13-35"><a href="#cb13-35" aria-hidden="true" tabindex="-1"></a>            <span class="at">size =</span> <span class="fu">c</span>(<span class="dv">4</span>, <span class="dv">4</span>, <span class="dv">4</span>, <span class="dv">5</span>, <span class="dv">5</span>), <span class="at">parse =</span> T) <span class="sc">+</span></span>
+<span id="cb13-36"><a href="#cb13-36" aria-hidden="true" tabindex="-1"></a>  <span class="co"># "1 year"</span></span>
+<span id="cb13-37"><a href="#cb13-37" aria-hidden="true" tabindex="-1"></a>  <span class="fu">annotate</span>(<span class="at">geom =</span> <span class="st">"text"</span>,</span>
+<span id="cb13-38"><a href="#cb13-38" aria-hidden="true" tabindex="-1"></a>           <span class="at">x =</span> <span class="fl">1.5</span>, <span class="at">y =</span> <span class="dv">86</span>, <span class="at">label =</span> <span class="st">"1 year"</span>) <span class="sc">+</span></span>
+<span id="cb13-39"><a href="#cb13-39" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_continuous</span>(<span class="at">breaks =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="fl">1.5</span>, <span class="dv">2</span>)) <span class="sc">+</span></span>
+<span id="cb13-40"><a href="#cb13-40" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ylim</span>(<span class="dv">50</span>, <span class="dv">150</span>) <span class="sc">+</span></span>
+<span id="cb13-41"><a href="#cb13-41" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">panel.grid =</span> <span class="fu">element_blank</span>())</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="03_files/figure-html/unnamed-chunk-8-1.png" class="img-fluid figure-img" width="312"></p>
+</figure>
+</div>
+</div>
+</div>
+<blockquote class="blockquote">
+<p>In-specifying a level-1 submodel that attempts to describe everyone (all the <span class="math inline">\(i\)</span>’s) in the population, we implicitly assume that all the true individual change trajectories have a common algebraic form. But we do not assume that everyone has the same exact trajectory. Because each person has his or her own individual growth parameters (intercepts and slopes), different people can have their own distinct change trajectories. (pp.&nbsp;53–54)</p>
+</blockquote>
+<p>In this way, the multilevel model’s level-1 submodel is much like an interaction/moderation model with interaction terms for each level of <span class="math inline">\(i\)</span>.</p>
+</section>
+<section id="sec-The-stochastic-part-of-the-level-1-submodel" class="level3" data-number="3.2.2">
+<h3 data-number="3.2.2" class="anchored" data-anchor-id="sec-The-stochastic-part-of-the-level-1-submodel"><span class="header-section-number">3.2.2</span> The stochastic part of the level-1 submodel</h3>
+<p>The last term in our level-1 equation from above was <span class="math inline">\([\epsilon_{ij}]\)</span>. This is the residual variance left in the criterion after accounting for the predictor(s) in the model. It is a mixture of systemic variation that could be accounted for by adding covariates to the model as well as measurement error. The typical assumption is</p>
+<p><span class="math display">\[
+\epsilon_{ij} \sim \operatorname{Normal} (0, \sigma_\epsilon^2).
+\]</span></p>
+<p>We should point out that another way to express this is</p>
+<p><span class="math display">\[\begin{align*}
+\text{cog} &amp; \sim \operatorname{Normal} (\mu_{ij}, \sigma_\epsilon^2) \\
+\mu_{ij}   &amp; = \pi_{0i} + \pi_{1i} (\text{age}_{ij} - 1).
+\end{align*}\]</span></p>
+<p>This won’t be a huge deal in the context of the models Singer and Willett presented in the initial chapters of the text but expressing the models this way can help one think in terms of likelihood functions. That’s a major advantage when you start working with data which are natural to model using other distributions (e.g., count data and the Poisson, binary data and the binomial). For more on this approach, check out either edition of McElreath’s <span class="citation" data-cites="mcelreathStatisticalRethinkingBayesian2015 mcelreathStatisticalRethinkingBayesian2020">(<a href="references.html#ref-mcelreathStatisticalRethinkingBayesian2015" role="doc-biblioref">2015</a>, <a href="references.html#ref-mcelreathStatisticalRethinkingBayesian2020" role="doc-biblioref">2020</a>)</span> <a href="https://xcelab.net/rm/statistical-rethinking/"><em>Statistical Rethinking</em></a> and my <span class="citation" data-cites="kurzStatisticalRethinking2026 kurzStatisticalRethinkingSecondEd2026">(<a href="references.html#ref-kurzStatisticalRethinking2026" role="doc-biblioref">2026b</a>, <a href="references.html#ref-kurzStatisticalRethinkingSecondEd2026" role="doc-biblioref">2026a</a>)</span> companion ebook(<a href="https://solomon.quarto.pub/sr/">here</a> and <a href="https://solomon.quarto.pub/sr2/">here</a>) translating his work into <strong>brms</strong> and <strong>tidyverse</strong> code. Also, thinking in terms of likelihoods will pay off starting around <a href="10.html" class="quarto-xref"><span>Chapter 10</span></a> when we start fitting discrete-time survival models.</p>
+</section>
+<section id="relating-the-level-1-submodel-to-the-ols-exploratory-methods-of-chapter-2" class="level3" data-number="3.2.3">
+<h3 data-number="3.2.3" class="anchored" data-anchor-id="relating-the-level-1-submodel-to-the-ols-exploratory-methods-of-chapter-2"><span class="header-section-number">3.2.3</span> Relating the level-1 submodel to the OLS exploratory methods of chapter 2</h3>
+<p>To get the top panel in Figure 3.3, we’ll use <code>stat_smooth()</code> to get the OLS trajectories.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>early_int_sim <span class="sc">%&gt;%</span> </span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> age, <span class="at">y =</span> cog)) <span class="sc">+</span></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stat_smooth</span>(<span class="fu">aes</span>(<span class="at">group =</span> id),</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>              <span class="at">method =</span> <span class="st">"lm"</span>, <span class="at">se =</span> F, <span class="at">size =</span> <span class="dv">1</span><span class="sc">/</span><span class="dv">6</span>) <span class="sc">+</span></span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stat_smooth</span>(<span class="at">method =</span> <span class="st">"lm"</span>, <span class="at">se =</span> F, <span class="at">size =</span> <span class="dv">2</span>) <span class="sc">+</span></span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_continuous</span>(<span class="at">breaks =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="fl">1.5</span>, <span class="dv">2</span>)) <span class="sc">+</span></span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ylim</span>(<span class="dv">50</span>, <span class="dv">150</span>) <span class="sc">+</span></span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">panel.grid =</span> <span class="fu">element_blank</span>())</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="03_files/figure-html/unnamed-chunk-9-1.png" class="img-fluid figure-img" width="288"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Note that now we’re working with our <code>early_int_sim</code> data, the one where we added the data of 95 simulated individuals to the real data of 8 <code>id</code> levels from Table 3.1. As such, our results will deviate a bit from those in the text.</p>
+<p>But anyways, here we go on to fit 103 individual OLS models, one for each of the <code>id</code> levels. Don’t worry; we’ll depart from this madness shortly.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>by_id <span class="ot">&lt;-</span> early_int_sim <span class="sc">%&gt;%</span> </span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">age_c =</span> age <span class="sc">-</span> <span class="dv">1</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(id) <span class="sc">%&gt;%</span> </span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">nest</span>() <span class="sc">%&gt;%</span> </span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">model =</span> <span class="fu">map</span>(data, <span class="sc">~</span><span class="fu">lm</span>(<span class="at">data =</span> ., cog <span class="sc">~</span> age_c)))</span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(by_id)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 6 × 3
+# Groups:   id [6]
+     id data             model 
+  &lt;dbl&gt; &lt;list&gt;           &lt;list&gt;
+1     1 &lt;tibble [3 × 4]&gt; &lt;lm&gt;  
+2     2 &lt;tibble [3 × 4]&gt; &lt;lm&gt;  
+3     3 &lt;tibble [3 × 4]&gt; &lt;lm&gt;  
+4     4 &lt;tibble [3 × 4]&gt; &lt;lm&gt;  
+5     5 &lt;tibble [3 × 4]&gt; &lt;lm&gt;  
+6     6 &lt;tibble [3 × 4]&gt; &lt;lm&gt;  </code></pre>
+</div>
+</div>
+<p>Now we’ll use the great helper functions from the <a href="https://cran.r-project.org/web/packages/broom/index.html"><strong>broom</strong> package</a> <span class="citation" data-cites="R-broom">(<a href="references.html#ref-R-broom" role="doc-biblioref">Robinson et al., 2022</a>)</span>, <code>tidy()</code> and <code>glance()</code>, to store the coefficient information and model fit information, respectively, in a tidy data format (see <a href="http://r4ds.had.co.nz/tidy-data.html">here</a> and also <a href="https://www.youtube.com/watch?v=rz3_FDVt9eg&amp;t=3458s">here</a>).</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="co"># install.packages("broom")</span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(broom)</span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>by_id <span class="ot">&lt;-</span> by_id <span class="sc">%&gt;%</span></span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">tidy   =</span> <span class="fu">map</span>(model, tidy),</span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>         <span class="at">glance =</span> <span class="fu">map</span>(model, glance))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Here’s what our <code>by_id</code> object now looks like:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>by_id <span class="sc">%&gt;%</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">head</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 6 × 5
+# Groups:   id [6]
+     id data             model  tidy             glance           
+  &lt;dbl&gt; &lt;list&gt;           &lt;list&gt; &lt;list&gt;           &lt;list&gt;           
+1     1 &lt;tibble [3 × 4]&gt; &lt;lm&gt;   &lt;tibble [2 × 5]&gt; &lt;tibble [1 × 12]&gt;
+2     2 &lt;tibble [3 × 4]&gt; &lt;lm&gt;   &lt;tibble [2 × 5]&gt; &lt;tibble [1 × 12]&gt;
+3     3 &lt;tibble [3 × 4]&gt; &lt;lm&gt;   &lt;tibble [2 × 5]&gt; &lt;tibble [1 × 12]&gt;
+4     4 &lt;tibble [3 × 4]&gt; &lt;lm&gt;   &lt;tibble [2 × 5]&gt; &lt;tibble [1 × 12]&gt;
+5     5 &lt;tibble [3 × 4]&gt; &lt;lm&gt;   &lt;tibble [2 × 5]&gt; &lt;tibble [1 × 12]&gt;
+6     6 &lt;tibble [3 × 4]&gt; &lt;lm&gt;   &lt;tibble [2 × 5]&gt; &lt;tibble [1 × 12]&gt;</code></pre>
+</div>
+</div>
+<p>If you want to extract the intercepts from the <code>tidy</code> column, you might execute code like this.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="fu">unnest</span>(by_id, tidy) <span class="sc">%&gt;%</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(term <span class="sc">==</span> <span class="st">"(Intercept)"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 103 × 9
+# Groups:   id [103]
+      id data             model  term        estimate std.error statistic  p.value glance           
+   &lt;dbl&gt; &lt;list&gt;           &lt;list&gt; &lt;chr&gt;          &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;    &lt;dbl&gt; &lt;list&gt;           
+ 1     1 &lt;tibble [3 × 4]&gt; &lt;lm&gt;   (Intercept)     117   2.31e-14   5.07e15 1.26e-16 &lt;tibble [1 × 12]&gt;
+ 2     2 &lt;tibble [3 × 4]&gt; &lt;lm&gt;   (Intercept)     110.  5.22e+ 0   2.11e 1 3.01e- 2 &lt;tibble [1 × 12]&gt;
+ 3     3 &lt;tibble [3 × 4]&gt; &lt;lm&gt;   (Intercept)     117.  1.08e+ 1   1.08e 1 5.87e- 2 &lt;tibble [1 × 12]&gt;
+ 4     4 &lt;tibble [3 × 4]&gt; &lt;lm&gt;   (Intercept)     136.  5.59e+ 0   2.42e 1 2.62e- 2 &lt;tibble [1 × 12]&gt;
+ 5     5 &lt;tibble [3 × 4]&gt; &lt;lm&gt;   (Intercept)     108.  3.35e+ 0   3.21e 1 1.99e- 2 &lt;tibble [1 × 12]&gt;
+ 6     6 &lt;tibble [3 × 4]&gt; &lt;lm&gt;   (Intercept)     110.  2.61e+ 0   4.21e 1 1.51e- 2 &lt;tibble [1 × 12]&gt;
+ 7     7 &lt;tibble [3 × 4]&gt; &lt;lm&gt;   (Intercept)     124.  7.45e- 1   1.66e 2 3.84e- 3 &lt;tibble [1 × 12]&gt;
+ 8     8 &lt;tibble [3 × 4]&gt; &lt;lm&gt;   (Intercept)      97   6.71e+ 0   1.45e 1 4.40e- 2 &lt;tibble [1 × 12]&gt;
+ 9     9 &lt;tibble [3 × 4]&gt; &lt;lm&gt;   (Intercept)     121.  7.08e+ 0   1.71e 1 3.73e- 2 &lt;tibble [1 × 12]&gt;
+10    10 &lt;tibble [3 × 4]&gt; &lt;lm&gt;   (Intercept)     109.  3.73e- 1   2.92e 2 2.18e- 3 &lt;tibble [1 × 12]&gt;
+# ℹ 93 more rows</code></pre>
+</div>
+</div>
+<p>This first line took the model coefficients and their respective statistics (e.g., standard errors) and unnested them (i.e., took them out of the list of data frames and converted the data to a longer structure). The second line filtered out any coefficients that were not the intercept. In this case, there are just two coefficients, the intercept and the slope for <code>age_c</code>.</p>
+<p>With that, we can make the leftmost stem and leaf plot from Figure 3.3.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="fu">unnest</span>(by_id, tidy) <span class="sc">%&gt;%</span></span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(term <span class="sc">==</span> <span class="st">"(Intercept)"</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pull</span>(estimate) <span class="sc">%&gt;%</span> </span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stem</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+  The decimal point is 1 digit(s) to the right of the |
+
+   8 | 3
+   8 | 5
+   9 | 000124
+   9 | 5666677779999
+  10 | 001111223334444
+  10 | 555677888889
+  11 | 00000223444
+  11 | 55667777788
+  12 | 001112222344
+  12 | 556666889
+  13 | 011223444
+  13 | 56
+  14 | 
+  14 | 8</code></pre>
+</div>
+</div>
+<p>Here’s the stem and leaf plot in the middle.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="fu">unnest</span>(by_id, tidy) <span class="sc">%&gt;%</span></span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(term <span class="sc">==</span> <span class="st">"age_c"</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pull</span>(estimate) <span class="sc">%&gt;%</span> </span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stem</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+  The decimal point is 1 digit(s) to the right of the |
+
+  -4 | 7
+  -4 | 111
+  -3 | 9886666655
+  -3 | 322111000
+  -2 | 9877776666555
+  -2 | 44443321111110000
+  -1 | 999999888665
+  -1 | 433322211100000
+  -0 | 988877776
+  -0 | 33211
+   0 | 124
+   0 | 57
+   1 | 1113</code></pre>
+</div>
+</div>
+<p>If you want the residual variances (i.e., <span class="math inline">\(\sigma_\epsilon^2\)</span>), you’d <code>unnest()</code> the <code>glance</code> column. They’ll be listed in the <code>sigma</code> column.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="fu">unnest</span>(by_id, glance) <span class="sc">%&gt;%</span> </span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pull</span>(sigma) <span class="sc">%&gt;%</span> </span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stem</span>(<span class="at">scale =</span> <span class="dv">1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+  The decimal point is at the |
+
+   0 | 0044444488888
+   1 | 22
+   2 | 000000444499999
+   3 | 3377777
+   4 | 11111599999
+   5 | 33377777
+   6 | 111111559
+   7 | 3333888
+   8 | 26
+   9 | 0004488
+  10 | 22
+  11 | 0088
+  12 | 777
+  13 | 115
+  14 | 3
+  15 | 59
+  16 | 3
+  17 | 16
+  18 | 0
+  19 | 
+  20 | 
+  21 | 266</code></pre>
+</div>
+</div>
+</section>
+</section>
+<section id="the-level-2-submodel-for-systematic-interindividual-differences-in-change" class="level2" data-number="3.3">
+<h2 data-number="3.3" class="anchored" data-anchor-id="the-level-2-submodel-for-systematic-interindividual-differences-in-change"><span class="header-section-number">3.3</span> The level-2 submodel for systematic interindividual differences in change</h2>
+<p>Here are the top panels of Figure 3.4.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>early_int_sim <span class="ot">&lt;-</span> early_int_sim <span class="sc">%&gt;%</span> </span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">label =</span> <span class="fu">str_c</span>(<span class="st">"program = "</span>, program)) </span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a>early_int_sim <span class="sc">%&gt;%</span> </span>
+<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> age, <span class="at">y =</span> cog, <span class="at">color =</span> label)) <span class="sc">+</span></span>
+<span id="cb28-6"><a href="#cb28-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stat_smooth</span>(<span class="fu">aes</span>(<span class="at">group =</span> id),</span>
+<span id="cb28-7"><a href="#cb28-7" aria-hidden="true" tabindex="-1"></a>              <span class="at">method =</span> <span class="st">"lm"</span>, <span class="at">se =</span> F, <span class="at">size =</span> <span class="dv">1</span><span class="sc">/</span><span class="dv">6</span>) <span class="sc">+</span></span>
+<span id="cb28-8"><a href="#cb28-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stat_smooth</span>(<span class="at">method =</span> <span class="st">"lm"</span>, <span class="at">se =</span> F, <span class="at">size =</span> <span class="dv">2</span>) <span class="sc">+</span></span>
+<span id="cb28-9"><a href="#cb28-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_color_viridis_d</span>(<span class="at">option =</span> <span class="st">"B"</span>, <span class="at">begin =</span> <span class="fl">0.33</span>, <span class="at">end =</span> <span class="fl">0.67</span>) <span class="sc">+</span></span>
+<span id="cb28-10"><a href="#cb28-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_continuous</span>(<span class="at">breaks =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="fl">1.5</span>, <span class="dv">2</span>)) <span class="sc">+</span></span>
+<span id="cb28-11"><a href="#cb28-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ylim</span>(<span class="dv">50</span>, <span class="dv">150</span>) <span class="sc">+</span></span>
+<span id="cb28-12"><a href="#cb28-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">"none"</span>,</span>
+<span id="cb28-13"><a href="#cb28-13" aria-hidden="true" tabindex="-1"></a>        <span class="at">panel.grid =</span> <span class="fu">element_blank</span>()) <span class="sc">+</span></span>
+<span id="cb28-14"><a href="#cb28-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(<span class="sc">~</span> label)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="03_files/figure-html/unnamed-chunk-17-1.png" class="img-fluid figure-img" width="576"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Given the simplicity of the shapes, the bottom panels of Figure 3.4 will take a bit of preparatory work. First, we’ll need to wrangle the data a bit to get the necessary points. If we were working with a Bayesian model fit with <strong>brms</strong>, we’d use the <code>fitted()</code> function. But since we’re working with models fit with base <strong>R</strong>’s OLS estimator, <code>lm()</code>, we’ll use <code>predict()</code>, which accommodates a <code>newdata</code> argument. That’ll be crucial because in order to get the shapes correct, we’ll need to evaluate the minimum and maximum values across the fitted lines across a densely-packed sequence of <code>age_c</code> values.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="co"># how may `age_c` values do we need?</span></span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>n <span class="ot">&lt;-</span> <span class="dv">30</span></span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a><span class="co"># define the specific `age_c` values</span></span>
+<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a>nd <span class="ot">&lt;-</span> <span class="fu">tibble</span>(<span class="at">age_c =</span> <span class="fu">seq</span>(<span class="at">from =</span> <span class="dv">0</span>, <span class="at">to =</span> <span class="dv">1</span>, <span class="at">length.out =</span> n))</span>
+<span id="cb29-6"><a href="#cb29-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-7"><a href="#cb29-7" aria-hidden="true" tabindex="-1"></a><span class="co"># wrangle</span></span>
+<span id="cb29-8"><a href="#cb29-8" aria-hidden="true" tabindex="-1"></a>p <span class="ot">&lt;-</span> by_id <span class="sc">%&gt;%</span></span>
+<span id="cb29-9"><a href="#cb29-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">fitted  =</span> <span class="fu">map</span>(model, <span class="sc">~</span><span class="fu">predict</span>(., <span class="at">newdata =</span> nd))) <span class="sc">%&gt;%</span> </span>
+<span id="cb29-10"><a href="#cb29-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">unnest</span>(fitted) <span class="sc">%&gt;%</span> </span>
+<span id="cb29-11"><a href="#cb29-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">age     =</span> <span class="fu">seq</span>(<span class="at">from =</span> <span class="dv">1</span>, <span class="at">to =</span> <span class="dv">2</span>, <span class="at">length.out =</span> n),</span>
+<span id="cb29-12"><a href="#cb29-12" aria-hidden="true" tabindex="-1"></a>         <span class="at">program =</span> <span class="fu">ifelse</span>(id <span class="sc">&lt;</span> <span class="dv">900</span>, <span class="dv">1</span>, <span class="dv">0</span>)) <span class="sc">%&gt;%</span> </span>
+<span id="cb29-13"><a href="#cb29-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(program, age) <span class="sc">%&gt;%</span> </span>
+<span id="cb29-14"><a href="#cb29-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">min =</span> <span class="fu">min</span>(fitted),</span>
+<span id="cb29-15"><a href="#cb29-15" aria-hidden="true" tabindex="-1"></a>            <span class="at">max =</span> <span class="fu">max</span>(fitted)) <span class="sc">%&gt;%</span></span>
+<span id="cb29-16"><a href="#cb29-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">label =</span> <span class="fu">str_c</span>(<span class="st">"program = "</span>, program))</span>
+<span id="cb29-17"><a href="#cb29-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-18"><a href="#cb29-18" aria-hidden="true" tabindex="-1"></a><span class="co"># what did we do?</span></span>
+<span id="cb29-19"><a href="#cb29-19" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(p)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 6 × 5
+# Groups:   program [1]
+  program   age   min   max label      
+    &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;chr&gt;      
+1       0  1     82.7  133. program = 0
+2       0  1.03  82.4  132. program = 0
+3       0  1.07  82.1  131. program = 0
+4       0  1.10  81.8  131. program = 0
+5       0  1.14  81.6  130. program = 0
+6       0  1.17  81.3  129. program = 0</code></pre>
+</div>
+</div>
+<p>Before we plot, we’ll need a couple tibbles for the annotation.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>text <span class="ot">&lt;-</span> <span class="fu">tibble</span>(</span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">age   =</span> <span class="fl">1.01</span>,</span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">cog   =</span> <span class="fu">c</span>(<span class="fl">101.5</span>, <span class="dv">110</span>),</span>
+<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">label =</span> <span class="fu">c</span>(<span class="st">"program = 0"</span>, <span class="st">"program = 1"</span>),</span>
+<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">text  =</span> <span class="fu">c</span>(<span class="st">"Average population trajectory,"</span>, <span class="st">"Average population trajectory,"</span>),</span>
+<span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">angle =</span> <span class="fu">c</span>(<span class="fl">345.7</span>, <span class="dv">349</span>))</span>
+<span id="cb31-7"><a href="#cb31-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-8"><a href="#cb31-8" aria-hidden="true" tabindex="-1"></a>math <span class="ot">&lt;-</span> <span class="fu">tibble</span>(</span>
+<span id="cb31-9"><a href="#cb31-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">age   =</span> <span class="fl">1.01</span>,</span>
+<span id="cb31-10"><a href="#cb31-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">cog   =</span> <span class="fu">c</span>(<span class="fl">94.5</span>, <span class="dv">103</span>),</span>
+<span id="cb31-11"><a href="#cb31-11" aria-hidden="true" tabindex="-1"></a>  <span class="at">label =</span> <span class="fu">c</span>(<span class="st">"program = 0"</span>, <span class="st">"program = 1"</span>),</span>
+<span id="cb31-12"><a href="#cb31-12" aria-hidden="true" tabindex="-1"></a>  <span class="at">text  =</span> <span class="fu">c</span>(<span class="st">"gamma[0][0] + gamma[10](italic(age) - 1)"</span>, <span class="st">"(gamma[0][0] + gamma[10]) + (gamma[10] + gamma[11]) (italic(age) - 1)"</span>),</span>
+<span id="cb31-13"><a href="#cb31-13" aria-hidden="true" tabindex="-1"></a>  <span class="at">angle =</span> <span class="fu">c</span>(<span class="fl">345.7</span>, <span class="dv">349</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Finally, we’re ready for the bottom panels of Figure 3.4.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb32"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>p <span class="sc">%&gt;%</span></span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> age)) <span class="sc">+</span></span>
+<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_ribbon</span>(<span class="fu">aes</span>(<span class="at">ymin =</span> min, <span class="at">ymax =</span> max, <span class="at">fill =</span> label),</span>
+<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a>              <span class="at">alpha =</span> <span class="dv">1</span><span class="sc">/</span><span class="dv">3</span>) <span class="sc">+</span></span>
+<span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stat_smooth</span>(<span class="at">data =</span> early_int_sim,</span>
+<span id="cb32-6"><a href="#cb32-6" aria-hidden="true" tabindex="-1"></a>              <span class="fu">aes</span>(<span class="at">y =</span> cog, <span class="at">color =</span> label),</span>
+<span id="cb32-7"><a href="#cb32-7" aria-hidden="true" tabindex="-1"></a>              <span class="at">method =</span> <span class="st">"lm"</span>, <span class="at">se =</span> F, <span class="at">size =</span> <span class="dv">1</span>) <span class="sc">+</span></span>
+<span id="cb32-8"><a href="#cb32-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_text</span>(<span class="at">data =</span> text,</span>
+<span id="cb32-9"><a href="#cb32-9" aria-hidden="true" tabindex="-1"></a>            <span class="fu">aes</span>(<span class="at">y =</span> cog, <span class="at">label =</span> text, <span class="at">angle =</span> angle),</span>
+<span id="cb32-10"><a href="#cb32-10" aria-hidden="true" tabindex="-1"></a>            <span class="at">hjust =</span> <span class="dv">0</span>) <span class="sc">+</span></span>
+<span id="cb32-11"><a href="#cb32-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_text</span>(<span class="at">data =</span> math,</span>
+<span id="cb32-12"><a href="#cb32-12" aria-hidden="true" tabindex="-1"></a>            <span class="fu">aes</span>(<span class="at">y =</span> cog, <span class="at">label =</span> text, <span class="at">angle =</span> angle),</span>
+<span id="cb32-13"><a href="#cb32-13" aria-hidden="true" tabindex="-1"></a>            <span class="at">hjust =</span> <span class="dv">0</span>, <span class="at">parse =</span> T) <span class="sc">+</span></span>
+<span id="cb32-14"><a href="#cb32-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_fill_viridis_d</span>(<span class="at">option =</span> <span class="st">"B"</span>, <span class="at">begin =</span> <span class="fl">0.33</span>, <span class="at">end =</span> <span class="fl">0.67</span>) <span class="sc">+</span></span>
+<span id="cb32-15"><a href="#cb32-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_color_viridis_d</span>(<span class="at">option =</span> <span class="st">"B"</span>, <span class="at">begin =</span> <span class="fl">0.33</span>, <span class="at">end =</span> <span class="fl">0.67</span>) <span class="sc">+</span></span>
+<span id="cb32-16"><a href="#cb32-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_continuous</span>(<span class="at">breaks =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="fl">1.5</span>, <span class="dv">2</span>)) <span class="sc">+</span></span>
+<span id="cb32-17"><a href="#cb32-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_continuous</span>(<span class="st">"cog"</span>, <span class="at">limits =</span> <span class="fu">c</span>(<span class="dv">50</span>, <span class="dv">150</span>)) <span class="sc">+</span></span>
+<span id="cb32-18"><a href="#cb32-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">"none"</span>,</span>
+<span id="cb32-19"><a href="#cb32-19" aria-hidden="true" tabindex="-1"></a>        <span class="at">panel.grid =</span> <span class="fu">element_blank</span>()) <span class="sc">+</span></span>
+<span id="cb32-20"><a href="#cb32-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(<span class="sc">~</span> label)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="03_files/figure-html/unnamed-chunk-20-1.png" class="img-fluid figure-img" width="576"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Returning to the text (p.&nbsp;58), Singer and Willett asked: “What kind [of] population model might have given rise to these patterns?” Their answer is the level-2 model should have 4 specific features:</p>
+<ol type="1">
+<li>“Its outcomes must be the individual growth parameters.”</li>
+<li>“The level-2 submodel must be written in separate parts, one for each level-1 growth parameter.”</li>
+<li>“Each part must specify a relationship between an individual growth parameter and the predictor.”</li>
+<li>“Each model must allow individuals who share common predictor values to vary in their individual change trajectories.”</li>
+</ol>
+<p>Given the current model, the level-2 submodel of change may be expressed as</p>
+<p><span class="math display">\[\begin{align*}
+\pi_{0i} &amp; = \gamma_{00} + \gamma_{01} \text{program} + \zeta_{0i} \\
+\pi_{1i} &amp; = \gamma_{10} + \gamma_{11} \text{program} + \zeta_{1i}.
+\end{align*}\]</span></p>
+<p>We’ll discuss the details about the <span class="math inline">\(\zeta\)</span> terms in a bit.</p>
+<section id="structural-components-of-the-level-2-submodel" class="level3" data-number="3.3.1">
+<h3 data-number="3.3.1" class="anchored" data-anchor-id="structural-components-of-the-level-2-submodel"><span class="header-section-number">3.3.1</span> Structural components of the level-2 submodel</h3>
+<blockquote class="blockquote">
+<p>The structural parts of the level-2 submodel contain four level-2 parameters–<span class="math inline">\(\gamma_{00}\)</span>, <span class="math inline">\(\gamma_{01}\)</span>, <span class="math inline">\(\gamma_{10}\)</span>, and <span class="math inline">\(\gamma_{11}\)</span>–known collectively as the <em>fixed effects</em>. The fixed effects capture systematic interindividual differences in change trajectory according to values of the level-2 predictors. (p.&nbsp;60, <em>emphasis</em> in the original)</p>
+</blockquote>
+</section>
+<section id="stochastic-components-of-the-level-2-submodel" class="level3" data-number="3.3.2">
+<h3 data-number="3.3.2" class="anchored" data-anchor-id="stochastic-components-of-the-level-2-submodel"><span class="header-section-number">3.3.2</span> Stochastic components of the level-2 submodel</h3>
+<blockquote class="blockquote">
+<p>Each part of the level-2 submodel contains a residual that allows the value of each person’s growth parameters to be scattered around the relevant population averages. These residuals, <span class="math inline">\(\zeta_{0i}\)</span> and <span class="math inline">\(\zeta_{1i}\)</span> in [the] equation [above], represent those portions of the level-2 outcomes–the individual growth parameters–that remain unexplained by the level-2 predictor(s). (p.&nbsp;61)</p>
+</blockquote>
+<p>We often summarize the <span class="math inline">\(\zeta_{0i}\)</span> and <span class="math inline">\(\zeta_{1i}\)</span> deviations as <span class="math inline">\(\sigma_0^2\)</span> and <span class="math inline">\(\sigma_1^2\)</span>, respectively. And importantly, these variance parameters have a covariance <span class="math inline">\(\sigma_{01}\)</span>. However, <em>and this next part is quite important</em>, <strong>brms</strong> users should know that unlike the convention in many frequentist software packages <span class="citation" data-cites="R-lme4 batesFittingLinearMixedeffects2015">(<a href="references.html#ref-batesFittingLinearMixedeffects2015" role="doc-biblioref">Bates et al., 2015</a>; e.g., <strong>lme4</strong>, <a href="references.html#ref-R-lme4" role="doc-biblioref">Bates et al., 2022</a>)</span> and in the text, <strong>brms</strong> parameterizes these in the standard-deviation metric. That is, in <strong>brms</strong>, these are expressed as <span class="math inline">\(\sigma_0\)</span> and <span class="math inline">\(\sigma_1\)</span>. Similarly, the <span class="math inline">\(\sigma_{01}\)</span> presented in <strong>brms</strong> output is in a correlation metric, rather than a covariance. There are technical reasons for this are outside of the scope of the present situation <span class="citation" data-cites="burknerBrmsPackageBayesian2017">(see <a href="references.html#ref-burknerBrmsPackageBayesian2017" role="doc-biblioref">Bürkner, 2017</a>)</span>. The consequences is that we’ll make frequent use of squares and square roots in this project when comparing our <code>brms::brm()</code> results to those in the text.</p>
+<p>As on page 63 of the text, the typical way to express the multivariate distribution of the <span class="math inline">\(\zeta\)</span> parameters would be</p>
+<p><span class="math display">\[\begin{align*}
+\begin{bmatrix} \zeta_{0i} \\ \zeta_{1i} \end{bmatrix} &amp;
+\sim \operatorname{N}
+\begin{pmatrix}
+\begin{bmatrix} 0 \\ 0 \end{bmatrix},  
+\begin{bmatrix} \sigma_0^2 &amp; \sigma_{01}\\ \sigma_{01} &amp; \sigma_1^2 \end{bmatrix}
+\end{pmatrix},
+\end{align*}\]</span></p>
+<p>where the bracketed matrix on the right part of the equation is the variance/covariance matrix. If we summarize the vector of <span class="math inline">\(\zeta\)</span> terms as <span class="math inline">\(u\)</span> and so on, we can re-express the above equation as</p>
+<p><span class="math display">\[
+u \sim \operatorname N (\mathbf 0, \mathbf \Sigma),
+\]</span></p>
+<p>where <span class="math inline">\(\mathbf 0\)</span> is the vector of 0 means and <span class="math inline">\(\mathbf \Sigma\)</span> is the variance/covariance matrix. In Stan, and thus <strong>brms</strong>, we typically decompose <span class="math inline">\(\mathbf \Sigma\)</span> as</p>
+<p><span class="math display">\[\begin{align*}
+\mathbf \Sigma &amp; = \mathbf D \mathbf \Omega \mathbf D, \text{where} \\
+\mathbf D      &amp; = \begin{bmatrix} \sigma_0 &amp; 0 \\ 0 &amp; \sigma_1 \end{bmatrix} \text{and} \\
+\mathbf \Omega &amp; = \begin{bmatrix} 1 &amp; \rho \\ \rho &amp; 1 \end{bmatrix}.
+\end{align*}\]</span></p>
+<p>Thus <span class="math inline">\(\mathbf D\)</span> is the diagonal matrix of standard deviations and <span class="math inline">\(\mathbf \Omega\)</span> is the correlation matrix.</p>
+</section>
+</section>
+<section id="fitting-the-multilevel-model-for-change-to-data" class="level2" data-number="3.4">
+<h2 data-number="3.4" class="anchored" data-anchor-id="fitting-the-multilevel-model-for-change-to-data"><span class="header-section-number">3.4</span> Fitting the multilevel model for change to data</h2>
+<p>Singer and Willett discussed how in the 90s, we saw a bloom of software for fitting multilevel models. Very notably, they mentioned BUGS <span class="citation" data-cites="gilksMCMCinPractice1995">(<a href="references.html#ref-gilksMCMCinPractice1995" role="doc-biblioref">Gilks et al., 1995</a>)</span> which stands for ‘Bayesian inference using Gibbs sampling’ and was a major advance in Bayesian software. As we learn in <span class="citation" data-cites="kruschkeDoingBayesianData2015">Kruschke (<a href="references.html#ref-kruschkeDoingBayesianData2015" role="doc-biblioref">2015</a>)</span>:</p>
+<blockquote class="blockquote">
+<p>In 1997, BUGS had a Windows-only version called WinBUGS, and later it was reimplemented in OpenBUGS which also runs best on Windows operating systems. JAGS <span class="citation" data-cites="plummer2003jags plummer2012jags">(<a href="references.html#ref-plummer2003jags" role="doc-biblioref">Plummer, 2003</a>, <a href="references.html#ref-plummer2012jags" role="doc-biblioref">2012</a>)</span> retained many of the design features of BUGS, but with different samplers under the hood and better usability across different computer-operating systems (Windows, MacOS, and other forms of Linux/Unix). (pp.&nbsp;193–194)</p>
+</blockquote>
+<p>There’s also Stan. From their homepage, <a href="https://mc-stan.org">https://mc-stan.org</a>, we read “Stan is a state-of-the-art platform for statistical modeling and high-performance statistical computation.” Stan is free and open-source and you can find links to various documentation resources, such as the current <em>Stan user’s guide</em> <span class="citation" data-cites="standevelopmentteamStanUserGuide2021">(<a href="references.html#ref-standevelopmentteamStanUserGuide2021" role="doc-biblioref">Stan Development Team, 2021b</a>)</span> and <em>Stan reference manual</em> <span class="citation" data-cites="standevelopmentteamStanReferenceManual2021">(<a href="references.html#ref-standevelopmentteamStanReferenceManual2021" role="doc-biblioref">Stan Development Team, 2021a</a>)</span>, at <a href="https://mc-stan.org/users/documentation/">https://mc-stan.org/users/documentation/</a>. Unlike BUGS and JAGS, Stan samples from the posterior via Hamiltonian Monte Carlo, which tends to scale particularly well for complex multilevel models. However, in this project we won’t be working with Stan directly. Rather, we’ll interface with it indirectly through <a href="https://github.com/paul-buerkner/brms"><strong>brms</strong></a>. To my knowledge, <strong>brms</strong> is the most flexible and user-friendly interface for Stan within the <strong>R</strong> ecosystem.</p>
+<p>Talking about the various software options, Singer and Willett wrote:</p>
+<blockquote class="blockquote">
+<p>All have their strengths, and we use many of them in our research and in this book. At their core, each program does the same job; it fits the multilevel model for change to data and provides parameter estimates, measures of precision, diagnostics, and so on. There is also some evidence that all the different packages produce the same, or similar, answers to a given problem <span class="citation" data-cites="kreftComparingFourDifferent1990">(<a href="references.html#ref-kreftComparingFourDifferent1990" role="doc-biblioref">Kreft &amp; de Leeuw, 1990</a>)</span>. So, in one sense, it does not matter which program you choose. (p.&nbsp;64)</p>
+</blockquote>
+<p>But importantly, in the next paragraph the authors clarified their text focused on “one particular method of estimation–<em>maximum likelihood</em>” (p.&nbsp;64, <em>emphasis</em> in the original). This is quite important because, whereas we might expect various maximum-likelihood-based packages to yield the same or similar results, this will not necessarily hold when working with Bayesian software which, in addition to point estimates and expressions of uncertainty, yields an entire posterior distribution as a consequence of Bayes’ theorem,</p>
+<p><span class="math display">\[
+p(\theta \mid d) = \frac{p(d \mid \theta)\ p(\theta)}{p(d)},
+\]</span></p>
+<p>where <span class="math inline">\(p(\theta \mid d)\)</span> is the posterior distribution, <span class="math inline">\(p(d \mid \theta)\)</span> is the likelihood (i.e., the star of maximum likelihood), <span class="math inline">\(p(\theta)\)</span> are the priors, and <span class="math inline">\(p(d)\)</span> is the normalizing constant, the probability of the data which transforms the numerator to a probability metric.</p>
+<p>Given that multilevel models are a fairly advanced topic, it is not my goal in this project to offer a tutorial on the foundations of applied Bayesian statistics. I’m taking it for granted you are familiar with the basics. But if you’re very ambitious and this is new or if you’re just rusty, I recommend you back up and lean the ropes with <a href="https://twitter.com/rlmcelreath">Richard McElreath</a>’s excellent introductory text, <a href="http://xcelab.net/rm/statistical-rethinking/"><em>Statistical Rethinking</em></a>. He has great <a href="https://www.youtube.com/channel/UCNJK6_DZvcMqNSzQdEkzvzA/playlists">freely-available lectures</a> that augment the text and I also have ebooks (<a href="https://bookdown.org/content/3890/">here</a> and <a href="https://bookdown.org/content/4857/">here</a>) translating both editions of his text into <strong>brms</strong> and <strong>tidyverse</strong>-style code.</p>
+<section id="the-advantages-of-maximum-likelihood-bayesian-estimation" class="level3" data-number="3.4.1">
+<h3 data-number="3.4.1" class="anchored" data-anchor-id="the-advantages-of-maximum-likelihood-bayesian-estimation"><span class="header-section-number">3.4.1</span> The advantages of <del>maximum likelihood</del> Bayesian estimation</h3>
+<p>I just don’t think I have the strength to evangelize Bayes, at the moment. McElreath covered that a little bit in <a href="http://xcelab.net/rm/statistical-rethinking/"><em>Statistical Rethinking</em></a>, but he mainly took it for granted. Kruschke has been more of a Bayesian evangelist, examples of which are his <a href="http://www.indiana.edu/~kruschke/DoingBayesianDataAnalysis/">2015 text</a> or his <span class="citation" data-cites="kruschkeBayesianNewStatistics2018">(<a href="references.html#ref-kruschkeBayesianNewStatistics2018" role="doc-biblioref">2018</a>)</span> coauthored paper with Torrin Liddell, <a href="https://link.springer.com/article/10.3758/s13423-016-1221-4"><em>The Bayesian New Statistics: Hypothesis testing, estimation, meta-analysis, and power analysis from a Bayesian perspective</em></a>. My assumption is if you’re reading this, you’re already interested.</p>
+</section>
+<section id="using-maximum-likelihood-modern-bayesian-methods-to-fit-a-multilevel-model" class="level3" data-number="3.4.2">
+<h3 data-number="3.4.2" class="anchored" data-anchor-id="using-maximum-likelihood-modern-bayesian-methods-to-fit-a-multilevel-model"><span class="header-section-number">3.4.2</span> Using <del>maximum likelihood</del> modern Bayesian methods to fit a multilevel model</h3>
+<p>Just as with maximum likelihood, you have to specify a likelihood function with Bayes, too. The likelihood, <span class="math inline">\(p(d \mid \theta)\)</span>, is half of the numerator of Bayes’ theorem and its meaning in Bayes is that same as with maximum likelihood estimation. The likelihood “describes the probability of observing the sample data as a function of the model’s unknown parameters” (p.&nbsp;66). But unlike with maximum likelihood, we multiply the likelihood with the prior(s) and normalize the results so they’re in a probability metric.</p>
+</section>
+</section>
+<section id="examining-estimated-fixed-effects" class="level2" data-number="3.5">
+<h2 data-number="3.5" class="anchored" data-anchor-id="examining-estimated-fixed-effects"><span class="header-section-number">3.5</span> Examining estimated fixed effects</h2>
+<p>Singer and Willett discussed hypothesis testing in this section. The Bayesian paradigm can be used for hypothesis testing. For an introduction to this approach, check out Chapters 11 and 12 of Kruschke’s (2015) text. This will not be our approach in this project. My perspective on Bayesian modeling is more influenced by McElreath’s text and by <a href="http://www.stat.columbia.edu/~gelman/">Andrew Gelman</a>’s various works. I like fitting models, inspecting their parameters, interpreting them from an effect-size perspective, and considering posterior predictions. You’ll see plenty of examples of this approach in the examples to come.</p>
+<section id="interpreting-estimated-fixed-effects" class="level3" data-number="3.5.1">
+<h3 data-number="3.5.1" class="anchored" data-anchor-id="interpreting-estimated-fixed-effects"><span class="header-section-number">3.5.1</span> Interpreting estimated fixed effects</h3>
+<p>Singer and Willett presented the maximum likelihood results of our multilevel model in Table 3.3. Before we present ours, we’ll need to fit our corresponding Bayesian model. Let’s fire up <strong>brms</strong>.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(brms)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Just like we did with the single-level models in the last chapter, we’ll fit our Bayesian multilevel models with the <code>brm()</code> function.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb34"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a>fit3<span class="fl">.2</span> <span class="ot">&lt;-</span> <span class="fu">brm</span>(</span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> early_int_sim,</span>
+<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">family =</span> gaussian,</span>
+<span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">formula =</span> cog <span class="sc">~</span> <span class="dv">0</span> <span class="sc">+</span> Intercept <span class="sc">+</span> age_c <span class="sc">+</span> program <span class="sc">+</span> age_c<span class="sc">:</span>program <span class="sc">+</span> (<span class="dv">1</span> <span class="sc">+</span> age_c <span class="sc">|</span> id),</span>
+<span id="cb34-5"><a href="#cb34-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">iter =</span> <span class="dv">2000</span>, <span class="at">warmup =</span> <span class="dv">1000</span>, <span class="at">chains =</span> <span class="dv">4</span>, <span class="at">cores =</span> <span class="dv">4</span>,</span>
+<span id="cb34-6"><a href="#cb34-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">control =</span> <span class="fu">list</span>(<span class="at">adapt_delta =</span> <span class="fl">0.99</span>),</span>
+<span id="cb34-7"><a href="#cb34-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">seed =</span> <span class="dv">3</span>,</span>
+<span id="cb34-8"><a href="#cb34-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">file =</span> <span class="st">"fits/fit03.02"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Compared to last chapter, we’ve added a few arguments. Notice the second line, <code>family = gaussian</code>. Remember all that likelihood talk from the last few sections? Well, with <code>family = gaussian</code> we’ve indicated we want to use the Gaussian likelihood function. As this is the <strong>brms</strong> default, we didn’t actually need to type out the argument. But we’ll follow this convention for the remainder of the text for two reasons. First, I hope it’s pedagogically useful to remind you of what likelihood you’re working with. Second, I think it’s generally a good idea to explicate your likelihood. In the context of the initial chapters of this text, this might seem unnecessary. We’ll constantly be using the Gaussian. But that’s largely a pedagogical decision made by the authors. There are lots of every-day applications for multilevel models with other likelihood functions, such as those suited for discrete data. And when the day comes you’ll need to fit a multilevel logistic regression model, you’ll need to use a different setting in the <code>family</code> argument. Plus, we will have some practice using other likelihood functions in the survival chapters later in the text.</p>
+<p>Here’s the big new thing: our <code>formula</code> line specified a multilevel model! Check out the <code>(1 + age_c | id)</code> syntax on the right. This syntax is designed to be similar to the that of the widely-used frequentist <strong>lme4</strong> package. In the <a href="https://CRAN.R-project.org/package=brms/brms.pdf"><strong>brms</strong> reference manual</a> <span class="citation" data-cites="brms2021RM">(<a href="references.html#ref-brms2021RM" role="doc-biblioref">Bürkner, 2021a</a>)</span>, we lean this syntax follows the generic form <code>(gterms | group)</code> where “the optional <code>gterms</code> part may contain effects that are assumed to vary across grouping variables specified in <code>group</code>. We call them ‘group-level’ or ‘varying’ effects, or (adopting frequentist vocabulary) ‘random’ effects, although the latter name is misleading in a Bayesian context” (p.&nbsp;35). And like with base <strong>R</strong>’s <code>lm()</code> function or with <strong>lme4</strong>, the <code>1</code> portion is a stand-in for the intercept. Thus, with <code>1 + age_c</code>, we indicated we wanted the intercept and <code>age_c</code> slope to vary across groups. On the right side of the <code>|</code>, we defined our grouping variable as <code>id</code>.</p>
+<p>Another important part of the <code>formula</code> syntax concerns the intercept for the fixed effects. See the <code>0 + Intercept</code> part? Here’s the deal: If we were using default behavior, we’d have coded either <code>1 + ...</code> or just left that part out entirely. Both would have estimated the fixed intercept according to <strong>brms</strong> default behavior. But that’s the issue. By default, <code>brms::brm()</code> presumes your predictors are mean centered. This is critical because the default priors set by <code>brms::brm()</code> are also set based on this assumption. As it turns out, neither our <code>age_c</code> nor <code>program</code> variables are centered that way. <code>program</code> is a dummy variable and <code>age_c</code> is centered on 1, not the mean. Now since the <code>brm()</code> default priors are rather broad and uninformative, This probably wouldn’t have made much of a difference, here. However, we may as well address this issue now and avoid bad practices. So, with our <code>0 + Intercept</code> solution, we told <code>brm()</code> to suppress the default intercept and replace it with our smartly-named <code>Intercept</code> parameter. This is our fixed effect for the population intercept and, importantly, <code>brms()</code> will assign default priors to it based on the data themselves without assumptions about centering.</p>
+<p>I’d like to acknowledge at this point that if <strong>brms</strong> and/or the multilevel model are new to you, this can be disorienting and confusing. I’m sorry. The world is unfair and Singer and Willett didn’t write their text with <strong>brms</strong> in mind. Had they done so, they’d have used mean-centered predictors for the first few models to put off this technical issue until later chapters. Yet here we are. So if you’re feeling frustrated, that mainly just means you’re paying attention. Good job! Forge on, friends. It’ll get better.</p>
+<p>The line starting with <code>iter</code> largely explicates <code>brms::brm()</code> default settings. The only change from the defaults is <code>cores = 4</code>, which allow you to sample from all four <code>chains</code> simultaneously.</p>
+<p>The <code>control</code> line opens up a can of worms I just don’t want to address at this point in the text. It’s a technical setting that helped us do a better job sampling form the posterior. We’ll have more opportunities to talk about it later. For now, know that the default setting for <code>adapt_delta</code> is <code>0.8</code>. The value ranges from 0 to 1.</p>
+<p>The last line of interest is <code>seed = 3</code>. Markov chain Monte Carlo methods use pseudo-random number generators to sample from the posterior. To make the results of a pseudo-random process reproducible, you set the seed. There’s nothing special about setting it to 3. I just did so because that’s the chapter we’re on. Play around with other values and see what happens.</p>
+<p>Okay, that’s a lot of boring technical talk. Let’s use <code>print()</code> to see what we did!</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(fit3<span class="fl">.2</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code> Family: gaussian 
+  Links: mu = identity 
+Formula: cog ~ 0 + Intercept + age_c + program + age_c:program + (1 + age_c | id) 
+   Data: early_int_sim (Number of observations: 309) 
+  Draws: 4 chains, each with iter = 2000; warmup = 1000; thin = 1;
+         total post-warmup draws = 4000
+
+Multilevel Hyperparameters:
+~id (Number of levels: 103) 
+                     Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+sd(Intercept)            9.61      1.18     7.50    12.07 1.01      645     1850
+sd(age_c)                3.80      2.37     0.18     8.60 1.02      288      861
+cor(Intercept,age_c)    -0.46      0.37    -0.95     0.62 1.01     1683     1325
+
+Regression Coefficients:
+              Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+Intercept       106.72      1.87   103.06   110.47 1.00      846     1437
+age_c           -20.60      1.98   -24.49   -16.84 1.00     1936     2757
+program           8.98      2.48     4.21    13.97 1.00      886     1594
+age_c:program     3.30      2.62    -1.75     8.31 1.00     1792     2358
+
+Further Distributional Parameters:
+      Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+sigma     8.59      0.50     7.62     9.64 1.01      754     1246
+
+Draws were sampled using sampling(NUTS). For each parameter, Bulk_ESS
+and Tail_ESS are effective sample size measures, and Rhat is the potential
+scale reduction factor on split chains (at convergence, Rhat = 1).</code></pre>
+</div>
+</div>
+<p>Now we’re in multilevel-model land, we have three main sections in the output. Let’s start in the middle. The ‘Population-Level Effects:’ section contains our <strong>brms</strong> analogues to the “Fixed Effects” portion of Singer and Willett’s Table 3.3. These are our <span class="math inline">\(\gamma\)</span> parameter summaries. Like we briefly covered in the last chapter, <strong>brms</strong> does not give <span class="math inline">\(z\)</span>- or <span class="math inline">\(p\)</span>-values. But we do get high-quality percentile-based Bayesian 95% intervals. Perhaps somewhat frustratingly, our ‘Estimate’ values are a little different from those in the text. In this instance, this is more due to us not having access to the original data than differences between Bayesian and maximum likelihood estimation. They’ll be closer in many other examples.</p>
+<p>The bottom section, ‘Family Specific Parameters:’, is our analogue to the first line in Table 3.3’s “Variance Components” section. What Singer and Willett referred to as <span class="math inline">\(\epsilon_{ij}\)</span>, the <strong>brms</strong> package calls <code>sigma</code>. But importantly, do recall that Stan and <strong>brms</strong> parameterize variance components in the standard-deviation metric. You’d have to square our <code>sigma</code> to put it in a similar metric to the estimate in the text. This will be the case throughout this project. But why call this section ‘Family Specific Parameters’? Well, not all likelihoods have a <span class="math inline">\(\sigma\)</span> parameter. In the Poisson likelihood, for example, the mean and variance scale together as one parameter called <span class="math inline">\(\lambda\)</span>. Since <strong>brms</strong> is designed to handle a whole slew of likelihood functions <span class="citation" data-cites="Bürkner2021Parameterization">(see the <a href="https://cran.r-project.org/web/packages/brms/vignettes/brms_families.html"><em>Parameterization of response distributions in brms</em></a> vignette, <a href="references.html#ref-Bürkner2021Parameterization" role="doc-biblioref">Bürkner, 2021b</a>)</span> it behooved <a href="https://twitter.com/paulbuerkner">Bürkner</a> to give this section a generic name.</p>
+<p>Now we’re ready to draw our attention to the topmost section. The ‘Group-Level Effects:’ are our <strong>brms</strong> variants of the Level 2 section of Singer and Willett’s “Variance Components” section in Table 3.3. Our <code>sd(Intercept)</code> corresponds to their <span class="math inline">\(\sigma_0^2\)</span> and our <code>sd(age_c)</code> corresponds to their <span class="math inline">\(\sigma_1^2\)</span>. But recall, ours are in a standard-deviation metric. The estimates in the book are expressed as variances. Finally, our <code>cor(Intercept,age_c)</code> parameter is a correlation among the varying-effects, whereas Singer and Willett’s <span class="math inline">\(\sigma_{01}\)</span> is a covariance.</p>
+<p>In addition to <code>print()</code>, a handy way to pull the fixed effects from a <code>brm()</code> model is with the <code>fixef()</code> function.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb37"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="fu">fixef</span>(fit3<span class="fl">.2</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>                Estimate Est.Error       Q2.5     Q97.5
+Intercept     106.722531  1.874381 103.055303 110.46952
+age_c         -20.598997  1.976751 -24.485154 -16.83980
+program         8.981118  2.481598   4.214897  13.97079
+age_c:program   3.301134  2.617679  -1.754186   8.31457</code></pre>
+</div>
+</div>
+<p>You can subset its components with <code>[]</code> syntax. E.g., here we’ll pull the posterior mean for the overall intercept and round to two decimal places.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb39"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="fu">fixef</span>(fit3<span class="fl">.2</span>)[<span class="dv">1</span>, <span class="dv">1</span>] <span class="sc">%&gt;%</span> </span>
+<span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">round</span>(<span class="at">digits =</span> <span class="dv">2</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 106.72</code></pre>
+</div>
+</div>
+<p>Thus, we can write our version of the equations atop page 70 as</p>
+<ul>
+<li><span class="math inline">\(\hat{\pi}_{0i} =\)</span> 106.72 <span class="math inline">\(+\)</span> 8.98<span class="math inline">\(\text{program}_i\)</span> and</li>
+<li><span class="math inline">\(\hat{\pi}_{1i} =\)</span> -20.6 <span class="math inline">\(+\)</span> 3.3<span class="math inline">\(\text{program}_i\)</span>.</li>
+</ul>
+<p>Again, our results differ largely because they’re based on simulated data rather than the real data in the text. We’ll be able to work with the original data in the later chapters. Anyway, here are the results of those two equations.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb41"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="fu">fixef</span>(fit3<span class="fl">.2</span>)[<span class="dv">1</span>, <span class="dv">1</span>] <span class="sc">+</span> <span class="fu">fixef</span>(fit3<span class="fl">.2</span>)[<span class="dv">3</span>, <span class="dv">1</span>]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 115.7036</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb43"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a><span class="fu">fixef</span>(fit3<span class="fl">.2</span>)[<span class="dv">2</span>, <span class="dv">1</span>] <span class="sc">+</span> <span class="fu">fixef</span>(fit3<span class="fl">.2</span>)[<span class="dv">4</span>, <span class="dv">1</span>]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] -17.29786</code></pre>
+</div>
+</div>
+<p>Here’s how to get our estimates corresponding to the values at the bottom of page 70.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb45"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a><span class="co"># when `program` is 0</span></span>
+<span id="cb45-2"><a href="#cb45-2" aria-hidden="true" tabindex="-1"></a><span class="fu">fixef</span>(fit3<span class="fl">.2</span>)[<span class="dv">1</span>, <span class="dv">1</span>] <span class="sc">+</span> <span class="fu">fixef</span>(fit3<span class="fl">.2</span>)[<span class="dv">3</span>, <span class="dv">1</span>] <span class="sc">*</span> <span class="dv">0</span> </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 106.7225</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb47"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a><span class="fu">fixef</span>(fit3<span class="fl">.2</span>)[<span class="dv">2</span>, <span class="dv">1</span>] <span class="sc">*</span> <span class="dv">1</span> <span class="sc">+</span> <span class="fu">fixef</span>(fit3<span class="fl">.2</span>)[<span class="dv">4</span>, <span class="dv">1</span>] <span class="sc">*</span> <span class="dv">1</span> <span class="sc">*</span> <span class="dv">0</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] -20.599</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb49"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a><span class="co"># when `program` is 1</span></span>
+<span id="cb49-2"><a href="#cb49-2" aria-hidden="true" tabindex="-1"></a><span class="fu">fixef</span>(fit3<span class="fl">.2</span>)[<span class="dv">1</span>, <span class="dv">1</span>] <span class="sc">+</span> <span class="fu">fixef</span>(fit3<span class="fl">.2</span>)[<span class="dv">3</span>, <span class="dv">1</span>] <span class="sc">*</span> <span class="dv">1</span> </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 115.7036</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb51"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb51-1"><a href="#cb51-1" aria-hidden="true" tabindex="-1"></a><span class="fu">fixef</span>(fit3<span class="fl">.2</span>)[<span class="dv">2</span>, <span class="dv">1</span>] <span class="sc">*</span> <span class="dv">1</span> <span class="sc">+</span> <span class="fu">fixef</span>(fit3<span class="fl">.2</span>)[<span class="dv">4</span>, <span class="dv">1</span>] <span class="sc">*</span> <span class="dv">1</span> <span class="sc">*</span> <span class="dv">1</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] -17.29786</code></pre>
+</div>
+</div>
+<p>To make our version of Figure 3.5, we’ll pump the necessary <code>age_c</code> and <code>program</code> values into the full formula of the fixed effects.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb53"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb53-1"><a href="#cb53-1" aria-hidden="true" tabindex="-1"></a><span class="co"># specify the values for our covariates `age_c` and `program`</span></span>
+<span id="cb53-2"><a href="#cb53-2" aria-hidden="true" tabindex="-1"></a><span class="fu">crossing</span>(<span class="at">age_c   =</span> <span class="dv">0</span><span class="sc">:</span><span class="dv">1</span>,</span>
+<span id="cb53-3"><a href="#cb53-3" aria-hidden="true" tabindex="-1"></a>         <span class="at">program =</span> <span class="dv">0</span><span class="sc">:</span><span class="dv">1</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb53-4"><a href="#cb53-4" aria-hidden="true" tabindex="-1"></a>  <span class="co"># push those values through the fixed effects</span></span>
+<span id="cb53-5"><a href="#cb53-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">cog =</span> <span class="fu">fixef</span>(fit3<span class="fl">.2</span>)[<span class="dv">1</span>, <span class="dv">1</span>] <span class="sc">+</span> <span class="fu">fixef</span>(fit3<span class="fl">.2</span>)[<span class="dv">2</span>, <span class="dv">1</span>] <span class="sc">*</span> age_c <span class="sc">+</span> <span class="fu">fixef</span>(fit3<span class="fl">.2</span>)[<span class="dv">3</span>, <span class="dv">1</span>] <span class="sc">*</span> program <span class="sc">+</span> <span class="fu">fixef</span>(fit3<span class="fl">.2</span>)[<span class="dv">4</span>, <span class="dv">1</span>] <span class="sc">*</span> age_c <span class="sc">*</span> program,</span>
+<span id="cb53-6"><a href="#cb53-6" aria-hidden="true" tabindex="-1"></a>         <span class="co"># wrangle a bit</span></span>
+<span id="cb53-7"><a href="#cb53-7" aria-hidden="true" tabindex="-1"></a>         <span class="at">age     =</span> age_c <span class="sc">+</span> <span class="dv">1</span>,</span>
+<span id="cb53-8"><a href="#cb53-8" aria-hidden="true" tabindex="-1"></a>         <span class="at">size    =</span> <span class="fu">ifelse</span>(program <span class="sc">==</span> <span class="dv">1</span>, <span class="dv">1</span><span class="sc">/</span><span class="dv">5</span>, <span class="dv">3</span>),</span>
+<span id="cb53-9"><a href="#cb53-9" aria-hidden="true" tabindex="-1"></a>         <span class="at">program =</span> <span class="fu">factor</span>(program, <span class="at">levels =</span> <span class="fu">c</span>(<span class="st">"0"</span>, <span class="st">"1"</span>))) <span class="sc">%&gt;%</span> </span>
+<span id="cb53-10"><a href="#cb53-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb53-11"><a href="#cb53-11" aria-hidden="true" tabindex="-1"></a>  <span class="co"># plot!</span></span>
+<span id="cb53-12"><a href="#cb53-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> age, <span class="at">y =</span> cog, <span class="at">group =</span> program)) <span class="sc">+</span></span>
+<span id="cb53-13"><a href="#cb53-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="fu">aes</span>(<span class="at">size =</span> program)) <span class="sc">+</span></span>
+<span id="cb53-14"><a href="#cb53-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_size_manual</span>(<span class="at">values =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">1</span><span class="sc">/</span><span class="dv">2</span>)) <span class="sc">+</span></span>
+<span id="cb53-15"><a href="#cb53-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_continuous</span>(<span class="at">breaks =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="fl">1.5</span>, <span class="dv">2</span>)) <span class="sc">+</span></span>
+<span id="cb53-16"><a href="#cb53-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ylim</span>(<span class="dv">50</span>, <span class="dv">150</span>) <span class="sc">+</span></span>
+<span id="cb53-17"><a href="#cb53-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">"none"</span>,</span>
+<span id="cb53-18"><a href="#cb53-18" aria-hidden="true" tabindex="-1"></a>        <span class="at">panel.grid =</span> <span class="fu">element_blank</span>())</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="03_files/figure-html/unnamed-chunk-27-1.png" class="img-fluid figure-img" width="288"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="single-parameter-tests-for-the-fixed-effects" class="level3" data-number="3.5.2">
+<h3 data-number="3.5.2" class="anchored" data-anchor-id="single-parameter-tests-for-the-fixed-effects"><span class="header-section-number">3.5.2</span> Single parameter tests for the fixed effects</h3>
+<blockquote class="blockquote">
+<p>As in regular regression, you can conduct a hypothesis test on each fixed effect (each <span class="math inline">\(\gamma\)</span>) using a single parameter text. Although you can equate the parameter value to any pre-specified value in your hypothesis text, most commonly you examine the null hypothesis that, controlling for all other predictors in the model, the population value of the parameter is 0, <span class="math inline">\(H_0: \gamma = 0\)</span>, against the two-sided alternative that it is not, <span class="math inline">\(H_1: \gamma \neq 0\)</span>. (p.&nbsp;71)</p>
+</blockquote>
+<p>You can do this with <strong>brms</strong> with the <code>hypothesis()</code> function. I’m not a fan of this method and am not going to showcase it in this ebook If you insist on the NHST paradigm, you’ll have to go that alone.</p>
+<p>Within the Bayesian paradigm, we have an entire posterior distribution. So let’s just look at that. Recall that in the <code>print()</code> and <code>fixef()</code> outputs, we get the parameter estimates for our <span class="math inline">\(\gamma\)</span>’s summarized in terms of the posterior mean (i.e., ‘Estimate’), the posterior standard deviation (i.e., ‘Est.error’), and the percentile-based 95% credible intervals (i.e., ‘Q2.5’ and ‘Q97.5’). But we can get much richer output with the <code>as_draws_df()</code> function.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb54"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb54-1"><a href="#cb54-1" aria-hidden="true" tabindex="-1"></a>draws <span class="ot">&lt;-</span> <span class="fu">as_draws_df</span>(fit3<span class="fl">.2</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Here’s a look at the first 10 columns.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb55"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb55-1"><a href="#cb55-1" aria-hidden="true" tabindex="-1"></a>draws[, <span class="dv">1</span><span class="sc">:</span><span class="dv">10</span>] <span class="sc">%&gt;%</span></span>
+<span id="cb55-2"><a href="#cb55-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">glimpse</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: Dropping 'draws_df' class as required metadata was removed.</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Rows: 4,000
+Columns: 10
+$ b_Intercept              &lt;dbl&gt; 108.0618, 107.2084, 109.1522, 106.4010, 107.3905, 107.2919, 106.0169, 108.7411, 104.9963, 104.7…
+$ b_age_c                  &lt;dbl&gt; -23.50480, -18.62689, -25.27896, -21.78287, -20.97538, -21.27200, -18.34308, -22.61039, -19.641…
+$ b_program                &lt;dbl&gt; 7.237718, 5.465535, 5.877555, 8.384501, 7.767299, 9.631066, 9.390404, 9.625814, 14.050277, 9.44…
+$ `b_age_c:program`        &lt;dbl&gt; 5.57015707, 4.59582937, 8.03606790, 2.85711876, 1.38155175, 1.14612760, 3.25427893, 2.80812054,…
+$ sd_id__Intercept         &lt;dbl&gt; 9.576004, 9.140204, 7.546825, 8.363722, 8.200802, 8.482164, 9.351426, 8.111708, 6.697821, 7.986…
+$ sd_id__age_c             &lt;dbl&gt; 1.848329916, 3.318119224, 0.274335138, 1.024330616, 0.754860893, 1.415988154, 0.601034200, 0.36…
+$ cor_id__Intercept__age_c &lt;dbl&gt; -0.36934536, -0.60400186, -0.39142979, 0.75791077, 0.62513115, -0.04495901, -0.70390683, -0.727…
+$ sigma                    &lt;dbl&gt; 8.524191, 8.746213, 8.705385, 8.643440, 8.958219, 8.622695, 8.441646, 8.001595, 8.679356, 9.423…
+$ `r_id[1,Intercept]`      &lt;dbl&gt; 5.8731365, 9.5448881, 1.7200079, 10.0495574, 11.5061132, 13.6526215, 4.9137664, 5.4256201, -0.8…
+$ `r_id[2,Intercept]`      &lt;dbl&gt; 8.5201226, 2.7280508, -1.8207925, 6.6334510, 3.5402767, 1.7699966, -1.6385070, 1.7369407, -4.32…</code></pre>
+</div>
+</div>
+<p>Note the warning message. The <code>as_draws_df()</code> function returns a special kind of data frame, which includes 3 metadata columns, which are typically hidden from view. Sometimes we want those metadata columns, sometimes we don’t. You’ll see. Anyway, here are the dimensions of our <code>draws</code> data frame.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb58"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb58-1"><a href="#cb58-1" aria-hidden="true" tabindex="-1"></a>draws <span class="sc">%&gt;%</span> </span>
+<span id="cb58-2"><a href="#cb58-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">dim</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 4000  219</code></pre>
+</div>
+</div>
+<p>We saved our results as <code>draws</code>, which is a data frame with 4,000 rows (i.e., 1,000 post-warmup posterior draws times 4 chains) and columns depicting the model parameters, as well as the metadata values. With <strong>brms</strong>, the <span class="math inline">\(\gamma\)</span> parameters (i.e., the fixed effects or population parameters) get <code>b_</code> prefixes in the <code>as_draws_df()</code> output. So we can isolate them like so.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb60"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb60-1"><a href="#cb60-1" aria-hidden="true" tabindex="-1"></a>draws <span class="sc">%&gt;%</span> </span>
+<span id="cb60-2"><a href="#cb60-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="fu">starts_with</span>(<span class="st">"b_"</span>)) <span class="sc">%&gt;%</span> </span>
+<span id="cb60-3"><a href="#cb60-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">head</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 6 × 4
+  b_Intercept b_age_c b_program `b_age_c:program`
+        &lt;dbl&gt;   &lt;dbl&gt;     &lt;dbl&gt;             &lt;dbl&gt;
+1        108.   -23.5      7.24              5.57
+2        107.   -18.6      5.47              4.60
+3        109.   -25.3      5.88              8.04
+4        106.   -21.8      8.38              2.86
+5        107.   -21.0      7.77              1.38
+6        107.   -21.3      9.63              1.15</code></pre>
+</div>
+</div>
+<p>Just a little more data wrangling will put <code>draws</code> in a format suitable for plotting.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb62"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb62-1"><a href="#cb62-1" aria-hidden="true" tabindex="-1"></a>draws <span class="sc">%&gt;%</span> </span>
+<span id="cb62-2"><a href="#cb62-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_longer</span>(<span class="fu">starts_with</span>(<span class="st">"b_"</span>)) <span class="sc">%&gt;%</span> </span>
+<span id="cb62-3"><a href="#cb62-3" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb62-4"><a href="#cb62-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> value)) <span class="sc">+</span></span>
+<span id="cb62-5"><a href="#cb62-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_density</span>(<span class="at">color =</span> <span class="st">"transparent"</span>, <span class="at">fill =</span> <span class="st">"grey25"</span>) <span class="sc">+</span></span>
+<span id="cb62-6"><a href="#cb62-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_continuous</span>(<span class="cn">NULL</span>, <span class="at">breaks =</span> <span class="cn">NULL</span>) <span class="sc">+</span></span>
+<span id="cb62-7"><a href="#cb62-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">panel.grid =</span> <span class="fu">element_blank</span>()) <span class="sc">+</span></span>
+<span id="cb62-8"><a href="#cb62-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(<span class="sc">~</span> name, <span class="at">scales =</span> <span class="st">"free"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="03_files/figure-html/unnamed-chunk-32-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Sure, you could fixate on zero if you wanted to. But of more interest is the overall shape of each parameter’s posterior distribution. Look at the central tendency and spread for each. Look at where each is in the parameter space. To my mind, that story is so much richer than fixating on zero.</p>
+<p>We’ll have more to say along these lines in subsequent chapters.</p>
+</section>
+</section>
+<section id="examining-estimated-variance-components" class="level2" data-number="3.6">
+<h2 data-number="3.6" class="anchored" data-anchor-id="examining-estimated-variance-components"><span class="header-section-number">3.6</span> Examining estimated variance components</h2>
+<blockquote class="blockquote">
+<p>Estimated variance and covariance components are trickier to interpret as their numeric values have little absolute meaning and there are no graphic aids to fall back on. Interpretation for a single fitted model is especially difficult as you lack benchmarks for evaluating the components’ magnitudes. This increases the utility of hypothesis testing, for at least the tests provide some benchmark (against the null value of 0) for comparison. (p.&nbsp;72)</p>
+</blockquote>
+<p>No, no, no! I do protest. No!</p>
+<p>As I hope to demonstrate, our Bayesian <strong>brms</strong> paradigm offers rich and informative alternatives to the glib picture Singer and Willett painted back in 2003. Nowadays, we have full Bayesian estimation with Stan. Rejoice, friends. Rejoice.</p>
+<section id="interpreting-the-estimated-variance-components" class="level3" data-number="3.6.1">
+<h3 data-number="3.6.1" class="anchored" data-anchor-id="interpreting-the-estimated-variance-components"><span class="header-section-number">3.6.1</span> Interpreting the estimated variance components</h3>
+<p>To extract just the variance components of a <code>brm()</code> model, use the <code>VarCorr()</code> function.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb63"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb63-1"><a href="#cb63-1" aria-hidden="true" tabindex="-1"></a><span class="fu">VarCorr</span>(fit3<span class="fl">.2</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>$id
+$id$sd
+          Estimate Est.Error      Q2.5     Q97.5
+Intercept 9.606573  1.176684 7.4998925 12.072630
+age_c     3.795158  2.366547 0.1823513  8.595911
+
+$id$cor
+, , Intercept
+
+            Estimate Est.Error       Q2.5     Q97.5
+Intercept  1.0000000 0.0000000  1.0000000 1.0000000
+age_c     -0.4615782 0.3736345 -0.9520766 0.6173991
+
+, , age_c
+
+            Estimate Est.Error       Q2.5     Q97.5
+Intercept -0.4615782 0.3736345 -0.9520766 0.6173991
+age_c      1.0000000 0.0000000  1.0000000 1.0000000
+
+
+$id$cov
+, , Intercept
+
+           Estimate Est.Error      Q2.5      Q97.5
+Intercept  93.67049  23.18788  56.24839 145.748403
+age_c     -20.51951  18.70078 -63.58490   5.023044
+
+, , age_c
+
+           Estimate Est.Error         Q2.5     Q97.5
+Intercept -20.51951  18.70078 -63.58490466  5.023044
+age_c      20.00237  21.03167   0.03325202 73.889680
+
+
+
+$residual__
+$residual__$sd
+ Estimate Est.Error     Q2.5    Q97.5
+ 8.594205 0.5049914 7.615114 9.637543</code></pre>
+</div>
+</div>
+<p>In case that output is confusing, <code>VarCorr()</code> returned a 2-element list of lists. We can use the <code>[[]]</code> subsetting syntax to isolate the first list of lists.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb65"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb65-1"><a href="#cb65-1" aria-hidden="true" tabindex="-1"></a><span class="fu">VarCorr</span>(fit3<span class="fl">.2</span>)[[<span class="dv">1</span>]] <span class="sc">%&gt;%</span> <span class="fu">str</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>List of 3
+ $ sd : num [1:2, 1:4] 9.61 3.8 1.18 2.37 7.5 ...
+  ..- attr(*, "dimnames")=List of 2
+  .. ..$ : chr [1:2] "Intercept" "age_c"
+  .. ..$ : chr [1:4] "Estimate" "Est.Error" "Q2.5" "Q97.5"
+ $ cor: num [1:2, 1:4, 1:2] 1 -0.462 0 0.374 1 ...
+  ..- attr(*, "dimnames")=List of 3
+  .. ..$ : chr [1:2] "Intercept" "age_c"
+  .. ..$ : chr [1:4] "Estimate" "Est.Error" "Q2.5" "Q97.5"
+  .. ..$ : chr [1:2] "Intercept" "age_c"
+ $ cov: num [1:2, 1:4, 1:2] 93.7 -20.5 23.2 18.7 56.2 ...
+  ..- attr(*, "dimnames")=List of 3
+  .. ..$ : chr [1:2] "Intercept" "age_c"
+  .. ..$ : chr [1:4] "Estimate" "Est.Error" "Q2.5" "Q97.5"
+  .. ..$ : chr [1:2] "Intercept" "age_c"</code></pre>
+</div>
+</div>
+<p>If you just want the <span class="math inline">\(\zeta\)</span>’s, subset the first list of the first list.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb67"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb67-1"><a href="#cb67-1" aria-hidden="true" tabindex="-1"></a><span class="fu">VarCorr</span>(fit3<span class="fl">.2</span>)[[<span class="dv">1</span>]][[<span class="dv">1</span>]]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>          Estimate Est.Error      Q2.5     Q97.5
+Intercept 9.606573  1.176684 7.4998925 12.072630
+age_c     3.795158  2.366547 0.1823513  8.595911</code></pre>
+</div>
+</div>
+<p>Here’s how to get their correlation matrix.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb69"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb69-1"><a href="#cb69-1" aria-hidden="true" tabindex="-1"></a><span class="fu">VarCorr</span>(fit3<span class="fl">.2</span>)[[<span class="dv">1</span>]][[<span class="dv">2</span>]]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>, , Intercept
+
+            Estimate Est.Error       Q2.5     Q97.5
+Intercept  1.0000000 0.0000000  1.0000000 1.0000000
+age_c     -0.4615782 0.3736345 -0.9520766 0.6173991
+
+, , age_c
+
+            Estimate Est.Error       Q2.5     Q97.5
+Intercept -0.4615782 0.3736345 -0.9520766 0.6173991
+age_c      1.0000000 0.0000000  1.0000000 1.0000000</code></pre>
+</div>
+</div>
+<p>And perhaps of great interest, here’s how to get their variance/covariance matrix.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb71"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb71-1"><a href="#cb71-1" aria-hidden="true" tabindex="-1"></a><span class="fu">VarCorr</span>(fit3<span class="fl">.2</span>)[[<span class="dv">1</span>]][[<span class="dv">3</span>]]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>, , Intercept
+
+           Estimate Est.Error      Q2.5      Q97.5
+Intercept  93.67049  23.18788  56.24839 145.748403
+age_c     -20.51951  18.70078 -63.58490   5.023044
+
+, , age_c
+
+           Estimate Est.Error         Q2.5     Q97.5
+Intercept -20.51951  18.70078 -63.58490466  5.023044
+age_c      20.00237  21.03167   0.03325202 73.889680</code></pre>
+</div>
+</div>
+<p>You can also use the appropriate algebraic operations to transform some of the columns in the <code>as_draws_df()</code> output into the variance metric used in the text. Here we’ll do so for the elements in the variance/covariance matrix and <span class="math inline">\(\sigma_\epsilon^2\)</span>, too.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb73"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb73-1"><a href="#cb73-1" aria-hidden="true" tabindex="-1"></a><span class="fu">as_draws_df</span>(fit3<span class="fl">.2</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb73-2"><a href="#cb73-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="st">`</span><span class="at">sigma[0]^2</span><span class="st">`</span>       <span class="ot">=</span> sd_id__Intercept<span class="sc">^</span><span class="dv">2</span>,</span>
+<span id="cb73-3"><a href="#cb73-3" aria-hidden="true" tabindex="-1"></a>         <span class="st">`</span><span class="at">sigma[1]^2</span><span class="st">`</span>       <span class="ot">=</span> sd_id__age_c<span class="sc">^</span><span class="dv">2</span>,</span>
+<span id="cb73-4"><a href="#cb73-4" aria-hidden="true" tabindex="-1"></a>         <span class="st">`</span><span class="at">sigma[0][1]</span><span class="st">`</span>      <span class="ot">=</span> sd_id__Intercept <span class="sc">*</span> cor_id__Intercept__age_c <span class="sc">*</span> sd_id__age_c,</span>
+<span id="cb73-5"><a href="#cb73-5" aria-hidden="true" tabindex="-1"></a>         <span class="st">`</span><span class="at">sigma[epsilon]^2</span><span class="st">`</span> <span class="ot">=</span> sigma<span class="sc">^</span><span class="dv">2</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb73-6"><a href="#cb73-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_longer</span>(<span class="fu">starts_with</span>(<span class="st">"sigma["</span>),</span>
+<span id="cb73-7"><a href="#cb73-7" aria-hidden="true" tabindex="-1"></a>               <span class="at">values_to =</span> <span class="st">"posterior"</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb73-8"><a href="#cb73-8" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb73-9"><a href="#cb73-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> posterior)) <span class="sc">+</span></span>
+<span id="cb73-10"><a href="#cb73-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_density</span>(<span class="at">color =</span> <span class="st">"transparent"</span>, <span class="at">fill =</span> <span class="st">"grey33"</span>) <span class="sc">+</span></span>
+<span id="cb73-11"><a href="#cb73-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_continuous</span>(<span class="cn">NULL</span>, <span class="at">breaks =</span> <span class="cn">NULL</span>) <span class="sc">+</span></span>
+<span id="cb73-12"><a href="#cb73-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">panel.grid =</span> <span class="fu">element_blank</span>(),</span>
+<span id="cb73-13"><a href="#cb73-13" aria-hidden="true" tabindex="-1"></a>        <span class="at">strip.text =</span> <span class="fu">element_text</span>(<span class="at">size =</span> <span class="dv">12</span>)) <span class="sc">+</span></span>
+<span id="cb73-14"><a href="#cb73-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(<span class="sc">~</span> name, <span class="at">scales =</span> <span class="st">"free"</span>, <span class="at">labeller =</span> label_parsed) </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="03_files/figure-html/unnamed-chunk-38-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>As it turns out, the multilevel variance components are often markedly non-Gaussian. This is important for the next section.</p>
+</section>
+<section id="single-parameter-tests-for-the-variance-components" class="level3" data-number="3.6.2">
+<h3 data-number="3.6.2" class="anchored" data-anchor-id="single-parameter-tests-for-the-variance-components"><span class="header-section-number">3.6.2</span> Single parameter tests for the variance components</h3>
+<blockquote class="blockquote">
+<p>Statisticians disagree as to the nature, form, and effectiveness of these tests. <span class="citation" data-cites="millerBeyondANOVA1997">Rupert G. Miller (<a href="references.html#ref-millerBeyondANOVA1997" role="doc-biblioref">1997</a>)</span>, <span class="citation" data-cites="raudenbushHLM2002">Raudenbush &amp; Bryk (<a href="references.html#ref-raudenbushHLM2002" role="doc-biblioref">2002</a>)</span>, and others have long questioned their utility because of their sensitivity to departures from normality. Longford (1999) describes their sensitivity to sample size and imbalance (unequal numbers of observations per person) and argues that they are so misleading that they should be abandoned completely. (p.&nbsp;73)</p>
+</blockquote>
+<p>This reminds me of parts from Gelman and Hill’s <span class="citation" data-cites="gelmanDataAnalysisUsing2006">(<a href="references.html#ref-gelmanDataAnalysisUsing2006" role="doc-biblioref">2006</a>)</span> <a href="http://www.stat.columbia.edu/~gelman/arm/">text on multilevel models</a>. In Section 12.7 on the topic of model building and statistical significance, they wrote:</p>
+<blockquote class="blockquote">
+<p>It is <em>not</em> appropriate to use statistical significance as a criterion for including particular group indicators in a multilevel model….</p>
+</blockquote>
+<p>[They went on to discuss a particular example from the text, regarding radon levels in housed in various counties.]</p>
+<blockquote class="blockquote">
+<p>However, we should include all 85 counties in the model, and nothing is lost by doing so. The purpose of the multilevel model is not to use whether radon levels in county 1 are statistically significantly different from those in county 2, or from the Minnesota average. Rather, we seek the best possible estimate in each county, with appropriate accounting for uncertainty. Rather that make some significance threshold, we allow all the intercepts to vary and recognize that we may not have much precision in many of the individual groups….</p>
+<p>The same principle holds for the models discussed in the following chapters, which include varying slopes, non-nested levels, discrete data, and other complexities. Once we have included a source of variation, we do not use statistical significance to pick and choose indicators to include or exclude from the model.</p>
+<p>In practice, our biggest constraints–the main reasons we do not use extremely elaborate models in which all coefficients can vary with respect to all grouping factors–are fitting and understanding complex models. The <code>lmer()</code> function works well when it works, but it can break down for models with many groping factors. (p.&nbsp;272, <em>emphasis</em> in the original)</p>
+</blockquote>
+<p>For context, <code>lmer()</code> is the primary function in the frequentist <strong>lme4</strong> package. After pointing out difficulties with <code>lmer()</code>, they went on to point out how the Bayesian Bugs software can often overcome limitations in frequentist packages. We now have the benefit of Stan and <strong>brms</strong>. My general recommendation is if your theory suggests there should be group-level variability and you’ve collected the necessary data to fit that model, fit the full model.</p>
+</section>
+</section>
+<section id="bonus-how-did-you-simulate-that-data" class="level2" data-number="3.7">
+<h2 data-number="3.7" class="anchored" data-anchor-id="bonus-how-did-you-simulate-that-data"><span class="header-section-number">3.7</span> Bonus: How did you simulate that data?</h2>
+<p>What makes our task difficult is the multilevel model we’d like to simulate our data for has both varying intercepts and slopes. And worst yet, those varying intercepts and slopes have a correlation structure. Also of note, Singer and Willett presented their summary statistics in the form of a variance/covariance matrix in Table 3.3.</p>
+<p>As it turns out, the <code>mvnorm()</code> function from the <a href="https://cran.r-project.org/package=MASS"><strong>MASS</strong> package</a> <span class="citation" data-cites="R-MASS MASS2002">(<a href="references.html#ref-R-MASS" role="doc-biblioref">Ripley, 2022</a>; <a href="references.html#ref-MASS2002" role="doc-biblioref">Venables &amp; Ripley, 2002</a>)</span> will allow us to simulate multivariate normal data from a given mean structure and variance/covariance matrix. So our first step in simulating our data is to simulate the <span class="math inline">\(103 – 8 = 95\)</span> <span class="math inline">\(\zeta\)</span> values. We’ll name the results <code>z</code>.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb74"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb74-1"><a href="#cb74-1" aria-hidden="true" tabindex="-1"></a><span class="co"># how many people are we simulating?</span></span>
+<span id="cb74-2"><a href="#cb74-2" aria-hidden="true" tabindex="-1"></a>n <span class="ot">&lt;-</span> <span class="dv">103</span> <span class="sc">-</span> <span class="dv">8</span></span>
+<span id="cb74-3"><a href="#cb74-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb74-4"><a href="#cb74-4" aria-hidden="true" tabindex="-1"></a><span class="co"># what's the variance/covariance matrix?</span></span>
+<span id="cb74-5"><a href="#cb74-5" aria-hidden="true" tabindex="-1"></a>sigma <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="fu">c</span>(<span class="fl">124.64</span>, <span class="sc">-</span><span class="fl">36.41</span>,</span>
+<span id="cb74-6"><a href="#cb74-6" aria-hidden="true" tabindex="-1"></a>                  <span class="sc">-</span><span class="fl">36.41</span>, <span class="fl">12.29</span>),</span>
+<span id="cb74-7"><a href="#cb74-7" aria-hidden="true" tabindex="-1"></a>                <span class="at">ncol =</span> <span class="dv">2</span>)</span>
+<span id="cb74-8"><a href="#cb74-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb74-9"><a href="#cb74-9" aria-hidden="true" tabindex="-1"></a><span class="co"># what's our mean structure?</span></span>
+<span id="cb74-10"><a href="#cb74-10" aria-hidden="true" tabindex="-1"></a>mu <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">0</span>)</span>
+<span id="cb74-11"><a href="#cb74-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb74-12"><a href="#cb74-12" aria-hidden="true" tabindex="-1"></a><span class="co"># set the seed and simulate!</span></span>
+<span id="cb74-13"><a href="#cb74-13" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">3</span>)</span>
+<span id="cb74-14"><a href="#cb74-14" aria-hidden="true" tabindex="-1"></a>z <span class="ot">&lt;-</span> MASS<span class="sc">::</span><span class="fu">mvrnorm</span>(<span class="at">n =</span> n, <span class="at">mu =</span> mu, <span class="at">Sigma =</span> sigma) <span class="sc">%&gt;%</span> </span>
+<span id="cb74-15"><a href="#cb74-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">data.frame</span>() <span class="sc">%&gt;%</span> </span>
+<span id="cb74-16"><a href="#cb74-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">set_names</span>(<span class="st">"zeta_0"</span>, <span class="st">"zeta_1"</span>)</span>
+<span id="cb74-17"><a href="#cb74-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb74-18"><a href="#cb74-18" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(z)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>      zeta_0     zeta_1
+1 10.7586672 -3.0908765
+2  3.4258938 -0.4186497
+3 -3.0770183  0.2140130
+4 12.5303603 -4.9043416
+5 -2.1114641  0.8936950
+6 -0.5521597 -0.6310265</code></pre>
+</div>
+</div>
+<p>For our next step, we’ll define our <span class="math inline">\(\gamma\)</span> parameters. These are also taken from Table 3.3.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb76"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb76-1"><a href="#cb76-1" aria-hidden="true" tabindex="-1"></a>g <span class="ot">&lt;-</span> <span class="fu">tibble</span>(<span class="at">id       =</span> <span class="dv">1</span><span class="sc">:</span>n,</span>
+<span id="cb76-2"><a href="#cb76-2" aria-hidden="true" tabindex="-1"></a>            <span class="at">gamma_00 =</span> <span class="fl">107.84</span>,</span>
+<span id="cb76-3"><a href="#cb76-3" aria-hidden="true" tabindex="-1"></a>            <span class="at">gamma_01 =</span> <span class="fl">6.85</span>,</span>
+<span id="cb76-4"><a href="#cb76-4" aria-hidden="true" tabindex="-1"></a>            <span class="at">gamma_10 =</span> <span class="sc">-</span><span class="fl">21.13</span>,</span>
+<span id="cb76-5"><a href="#cb76-5" aria-hidden="true" tabindex="-1"></a>            <span class="at">gamma_11 =</span> <span class="fl">5.27</span>)</span>
+<span id="cb76-6"><a href="#cb76-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb76-7"><a href="#cb76-7" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(g)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 6 × 5
+     id gamma_00 gamma_01 gamma_10 gamma_11
+  &lt;int&gt;    &lt;dbl&gt;    &lt;dbl&gt;    &lt;dbl&gt;    &lt;dbl&gt;
+1     1     108.     6.85    -21.1     5.27
+2     2     108.     6.85    -21.1     5.27
+3     3     108.     6.85    -21.1     5.27
+4     4     108.     6.85    -21.1     5.27
+5     5     108.     6.85    -21.1     5.27
+6     6     108.     6.85    -21.1     5.27</code></pre>
+</div>
+</div>
+<p>Note how they’re the same for each row. That’s the essence of the meaning of a fixed effect.</p>
+<p>Anyway, this next block is a big one. After we combine <code>g</code> and <code>z</code>, we add in the appropriate <code>program</code> and <code>age_c</code> values. You can figure out those from pages 46 and 47. We then insert our final model parameter, <span class="math inline">\(\epsilon\)</span>, and combine the <span class="math inline">\(\gamma\)</span>’s and <span class="math inline">\(\zeta\)</span>’s to make our two <span class="math inline">\(\pi\)</span> parameters (see page 60). Once that’s all in place, we’re ready to use the model formula to calculate the expected <code>cog</code> values from the <span class="math inline">\(\pi\)</span>’s, <code>age_c</code>, and <span class="math inline">\(\epsilon\)</span>.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb78"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb78-1"><a href="#cb78-1" aria-hidden="true" tabindex="-1"></a><span class="co"># set the seed for the second `mutate()` line</span></span>
+<span id="cb78-2"><a href="#cb78-2" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">3</span>)</span>
+<span id="cb78-3"><a href="#cb78-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb78-4"><a href="#cb78-4" aria-hidden="true" tabindex="-1"></a>early_int_sim <span class="ot">&lt;-</span> <span class="fu">bind_cols</span>(g, z) <span class="sc">%&gt;%</span> </span>
+<span id="cb78-5"><a href="#cb78-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">program =</span> <span class="fu">rep</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">0</span>, <span class="at">times =</span> <span class="fu">c</span>(<span class="dv">54</span>, <span class="dv">41</span>))) <span class="sc">%&gt;%</span> </span>
+<span id="cb78-6"><a href="#cb78-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">expand</span>(<span class="fu">nesting</span>(id, gamma_00, gamma_01, gamma_10, gamma_11, zeta_0, zeta_1, program),</span>
+<span id="cb78-7"><a href="#cb78-7" aria-hidden="true" tabindex="-1"></a>         <span class="at">age_c =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="fl">0.5</span>, <span class="dv">1</span>)) <span class="sc">%&gt;%</span> </span>
+<span id="cb78-8"><a href="#cb78-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">epsilon =</span> <span class="fu">rnorm</span>(<span class="fu">n</span>(), <span class="at">mean =</span> <span class="dv">0</span>, <span class="at">sd =</span> <span class="fu">sqrt</span>(<span class="fl">74.24</span>))) <span class="sc">%&gt;%</span> </span>
+<span id="cb78-9"><a href="#cb78-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">pi_0 =</span> gamma_00 <span class="sc">+</span> gamma_01 <span class="sc">*</span> program <span class="sc">+</span> zeta_0,</span>
+<span id="cb78-10"><a href="#cb78-10" aria-hidden="true" tabindex="-1"></a>         <span class="at">pi_1 =</span> gamma_10 <span class="sc">+</span> gamma_11 <span class="sc">*</span> program <span class="sc">+</span> zeta_1) <span class="sc">%&gt;%</span> </span>
+<span id="cb78-11"><a href="#cb78-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">cog =</span> pi_0 <span class="sc">+</span> pi_1 <span class="sc">*</span> age_c <span class="sc">+</span> epsilon)</span>
+<span id="cb78-12"><a href="#cb78-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb78-13"><a href="#cb78-13" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(early_int_sim)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 6 × 13
+     id gamma_00 gamma_01 gamma_10 gamma_11 zeta_0 zeta_1 program age_c epsilon  pi_0  pi_1   cog
+  &lt;int&gt;    &lt;dbl&gt;    &lt;dbl&gt;    &lt;dbl&gt;    &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt;   &lt;int&gt; &lt;dbl&gt;   &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;
+1     1     108.     6.85    -21.1     5.27  10.8  -3.09        1   0    -8.29   125. -19.0  117.
+2     1     108.     6.85    -21.1     5.27  10.8  -3.09        1   0.5  -2.52   125. -19.0  113.
+3     1     108.     6.85    -21.1     5.27  10.8  -3.09        1   1     2.23   125. -19.0  109.
+4     2     108.     6.85    -21.1     5.27   3.43 -0.419       1   0    -9.93   118. -16.3  108.
+5     2     108.     6.85    -21.1     5.27   3.43 -0.419       1   0.5   1.69   118. -16.3  112.
+6     2     108.     6.85    -21.1     5.27   3.43 -0.419       1   1     0.260  118. -16.3  102.</code></pre>
+</div>
+</div>
+<p>But before we do, we’ll want to wrangle a little. We need an <code>age</code> column. If you look closely at Table 3.3, you’ll see all the <code>cog</code> values are integers. So we’ll round ours to match. Finally, we’ll want to renumber our <code>id</code> values to match up better with those in Table 3.3.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb80"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb80-1"><a href="#cb80-1" aria-hidden="true" tabindex="-1"></a>early_int_sim <span class="ot">&lt;-</span> early_int_sim <span class="sc">%&gt;%</span> </span>
+<span id="cb80-2"><a href="#cb80-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">age =</span> age_c <span class="sc">+</span> <span class="dv">1</span>,</span>
+<span id="cb80-3"><a href="#cb80-3" aria-hidden="true" tabindex="-1"></a>         <span class="at">cog =</span> <span class="fu">round</span>(cog, <span class="at">digits =</span> <span class="dv">0</span>),</span>
+<span id="cb80-4"><a href="#cb80-4" aria-hidden="true" tabindex="-1"></a>         <span class="at">id  =</span> <span class="fu">ifelse</span>(id <span class="sc">&gt;</span> <span class="dv">54</span>, id <span class="sc">+</span> <span class="dv">900</span>, id))</span>
+<span id="cb80-5"><a href="#cb80-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb80-6"><a href="#cb80-6" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(early_int_sim)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 6 × 14
+     id gamma_00 gamma_01 gamma_10 gamma_11 zeta_0 zeta_1 program age_c epsilon  pi_0  pi_1   cog   age
+  &lt;dbl&gt;    &lt;dbl&gt;    &lt;dbl&gt;    &lt;dbl&gt;    &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt;   &lt;int&gt; &lt;dbl&gt;   &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;
+1     1     108.     6.85    -21.1     5.27  10.8  -3.09        1   0    -8.29   125. -19.0   117   1  
+2     1     108.     6.85    -21.1     5.27  10.8  -3.09        1   0.5  -2.52   125. -19.0   113   1.5
+3     1     108.     6.85    -21.1     5.27  10.8  -3.09        1   1     2.23   125. -19.0   109   2  
+4     2     108.     6.85    -21.1     5.27   3.43 -0.419       1   0    -9.93   118. -16.3   108   1  
+5     2     108.     6.85    -21.1     5.27   3.43 -0.419       1   0.5   1.69   118. -16.3   112   1.5
+6     2     108.     6.85    -21.1     5.27   3.43 -0.419       1   1     0.260  118. -16.3   102   2  </code></pre>
+</div>
+</div>
+<p>Finally, now we just need to prune the columns with the model parameters, rearrange the order of the columns we’d like to keep, and join these data with those from Table 3.3.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb82"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb82-1"><a href="#cb82-1" aria-hidden="true" tabindex="-1"></a>early_int_sim <span class="ot">&lt;-</span> early_int_sim <span class="sc">%&gt;%</span> </span>
+<span id="cb82-2"><a href="#cb82-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(id, age, cog, program, age_c) <span class="sc">%&gt;%</span> </span>
+<span id="cb82-3"><a href="#cb82-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">full_join</span>(early_int,</span>
+<span id="cb82-4"><a href="#cb82-4" aria-hidden="true" tabindex="-1"></a>            <span class="at">by =</span> <span class="fu">c</span>(<span class="st">"id"</span>, <span class="st">"age"</span>, <span class="st">"cog"</span>, <span class="st">"program"</span>, <span class="st">"age_c"</span>)) <span class="sc">%&gt;%</span> </span>
+<span id="cb82-5"><a href="#cb82-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(id, age)</span>
+<span id="cb82-6"><a href="#cb82-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb82-7"><a href="#cb82-7" aria-hidden="true" tabindex="-1"></a><span class="fu">glimpse</span>(early_int_sim)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Rows: 309
+Columns: 5
+$ id      &lt;dbl&gt; 1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4, 5, 5, 5, 6, 6, 6, 7, 7, 7, 8, 8, 8, 9, 9, 9, 10, 10, 10, 11, 11, 11, 12, 12,…
+$ age     &lt;dbl&gt; 1.0, 1.5, 2.0, 1.0, 1.5, 2.0, 1.0, 1.5, 2.0, 1.0, 1.5, 2.0, 1.0, 1.5, 2.0, 1.0, 1.5, 2.0, 1.0, 1.5, 2.0, 1.0, 1.…
+$ cog     &lt;dbl&gt; 117, 113, 109, 108, 112, 102, 112, 113, 85, 138, 110, 97, 106, 107, 99, 111, 98, 92, 124, 108, 94, 94, 93, 74, 1…
+$ program &lt;int&gt; 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1…
+$ age_c   &lt;dbl&gt; 0.0, 0.5, 1.0, 0.0, 0.5, 1.0, 0.0, 0.5, 1.0, 0.0, 0.5, 1.0, 0.0, 0.5, 1.0, 0.0, 0.5, 1.0, 0.0, 0.5, 1.0, 0.0, 0.…</code></pre>
+</div>
+</div>
+<p>Here we save our results in an external file for use later.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb84"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb84-1"><a href="#cb84-1" aria-hidden="true" tabindex="-1"></a><span class="fu">save</span>(early_int_sim,</span>
+<span id="cb84-2"><a href="#cb84-2" aria-hidden="true" tabindex="-1"></a>     <span class="at">file =</span> <span class="st">"data/early_int_sim.rda"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="session-info" class="level2 unnumbered">
+<h2 class="unnumbered anchored" data-anchor-id="session-info">Session info</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb85"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb85-1"><a href="#cb85-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>R version 4.5.1 (2025-06-13)
+Platform: aarch64-apple-darwin20
+Running under: macOS Ventura 13.4
+
+Matrix products: default
+BLAS:   /Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/lib/libRblas.0.dylib 
+LAPACK: /Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/lib/libRlapack.dylib;  LAPACK version 3.12.1
+
+locale:
+[1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
+
+time zone: America/Chicago
+tzcode source: internal
+
+attached base packages:
+[1] stats     graphics  grDevices utils     datasets  methods   base     
+
+other attached packages:
+ [1] brms_2.23.0     Rcpp_1.1.0      broom_1.0.10    lubridate_1.9.4 forcats_1.0.1   stringr_1.6.0   dplyr_1.1.4    
+ [8] purrr_1.2.1     readr_2.1.5     tidyr_1.3.2     tibble_3.3.1    ggplot2_4.0.1   tidyverse_2.0.0
+
+loaded via a namespace (and not attached):
+ [1] tidyselect_1.2.1        viridisLite_0.4.2       farver_2.1.2            loo_2.9.0.9000          S7_0.2.1               
+ [6] fastmap_1.2.0           TH.data_1.1-4           tensorA_0.36.2.1        digest_0.6.39           timechange_0.3.0       
+[11] estimability_1.5.1      lifecycle_1.0.5         StanHeaders_2.36.0.9000 survival_3.8-3          magrittr_2.0.4         
+[16] posterior_1.6.1.9000    compiler_4.5.1          rlang_1.1.7             tools_4.5.1             utf8_1.2.6             
+[21] knitr_1.51              labeling_0.4.3          bridgesampling_1.2-1    htmlwidgets_1.6.4       curl_7.0.0             
+[26] pkgbuild_1.4.8          plyr_1.8.9              RColorBrewer_1.1-3      abind_1.4-8             multcomp_1.4-29        
+[31] withr_3.0.2             grid_4.5.1              stats4_4.5.1            xtable_1.8-4            inline_0.3.21          
+[36] emmeans_1.11.2-8        scales_1.4.0            MASS_7.3-65             cli_3.6.5               mvtnorm_1.3-3          
+[41] rmarkdown_2.30          generics_0.1.4          RcppParallel_5.1.11-1   rstudioapi_0.17.1       reshape2_1.4.5         
+[46] tzdb_0.5.0              rstan_2.36.0.9000       splines_4.5.1           bayesplot_1.15.0.9000   parallel_4.5.1         
+[51] matrixStats_1.5.0       vctrs_0.6.5             V8_8.0.1                Matrix_1.7-3            sandwich_3.1-1         
+[56] jsonlite_2.0.0          hms_1.1.4               glue_1.8.0              codetools_0.2-20        distributional_0.5.0   
+[61] stringi_1.8.7           gtable_0.3.6            QuickJSR_1.8.1          pillar_1.11.1           htmltools_0.5.9        
+[66] Brobdingnag_1.2-9       R6_2.6.1                evaluate_1.0.5          lattice_0.22-7          backports_1.5.0        
+[71] rstantools_2.5.0.9000   gridExtra_2.3           coda_0.19-4.1           nlme_3.1-168            checkmate_2.3.3        
+[76] mgcv_1.9-3              xfun_0.55               zoo_1.8-14              pkgconfig_2.0.3        </code></pre>
+</div>
+</div>
+</section>
+<section id="comments" class="level2 unnumbered">
+<h2 class="unnumbered anchored" data-anchor-id="comments">Comments</h2>
+
+
+<div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" data-line-spacing="2" role="list" style="display: none">
+<div id="ref-batesFittingLinearMixedeffects2015" class="csl-entry" role="listitem">
+Bates, D., Mächler, M., Bolker, B., &amp; Walker, S. (2015). Fitting linear mixed-effects models using <span class="nocase">lme4</span>. <em>Journal of Statistical Software</em>, <em>67</em>(1), 1–48. <a href="https://doi.org/10.18637/jss.v067.i01">https://doi.org/10.18637/jss.v067.i01</a>
+</div>
+<div id="ref-R-lme4" class="csl-entry" role="listitem">
+Bates, D., Maechler, M., Bolker, B., &amp; Steven Walker. (2022). <em><span class="nocase">lme4</span>: <span>Linear</span> mixed-effects models using <span>Eigen</span>’ and <span>S4</span></em>. <a href="https://CRAN.R-project.org/package=lme4">https://CRAN.R-project.org/package=lme4</a>
+</div>
+<div id="ref-bryk1987application" class="csl-entry" role="listitem">
+Bryk, A. S., &amp; Raudenbush, S. W. (1987). Application of hierarchical linear models to assessing change. <em>Psychological Bulletin</em>, <em>101</em>(1), 147. <a href="https://doi.org/10.1037/0033-2909.101.1.147">https://doi.org/10.1037/0033-2909.101.1.147</a>
+</div>
+<div id="ref-burknerBrmsPackageBayesian2017" class="csl-entry" role="listitem">
+Bürkner, P.-C. (2017). <span class="nocase">brms</span>: <span>An R</span> package for <span>Bayesian</span> multilevel models using <span>Stan</span>. <em>Journal of Statistical Software</em>, <em>80</em>(1), 1–28. <a href="https://doi.org/10.18637/jss.v080.i01">https://doi.org/10.18637/jss.v080.i01</a>
+</div>
+<div id="ref-brms2021RM" class="csl-entry" role="listitem">
+Bürkner, P.-C. (2021a). <em><span class="nocase">brms</span> reference manual, <span>Version</span> 2.15.0</em>. <a href="https://CRAN.R-project.org/package=brms/brms.pdf">https://CRAN.R-project.org/package=brms/brms.pdf</a>
+</div>
+<div id="ref-Bürkner2021Parameterization" class="csl-entry" role="listitem">
+Bürkner, P.-C. (2021b). <em>Parameterization of response distributions in brms</em>. <a href="https://CRAN.R-project.org/package=brms/vignettes/brms_families.html">https://CRAN.R-project.org/package=brms/vignettes/brms_families.html</a>
+</div>
+<div id="ref-gelmanDataAnalysisUsing2006" class="csl-entry" role="listitem">
+Gelman, A., &amp; Hill, J. (2006). <em>Data analysis using regression and multilevel/hierarchical models</em>. Cambridge University Press. <a href="https://doi.org/10.1017/CBO9780511790942">https://doi.org/10.1017/CBO9780511790942</a>
+</div>
+<div id="ref-gilksMCMCinPractice1995" class="csl-entry" role="listitem">
+Gilks, W. R., Richardson, S., &amp; Spiegelhalter, D. (1995). <em>Markov chain <span>Monte Carlo</span> in practice</em>. <span>Chapman and Hall/CRC</span>. <a href="https://www.routledge.com/Markov-Chain-Monte-Carlo-in-Practice/Gilks-Richardson-Spiegelhalter/p/book/9780412055515">https://www.routledge.com/Markov-Chain-Monte-Carlo-in-Practice/Gilks-Richardson-Spiegelhalter/p/book/9780412055515</a>
+</div>
+<div id="ref-kreftComparingFourDifferent1990" class="csl-entry" role="listitem">
+Kreft, I. G. G., &amp; de Leeuw, J. (1990). <em>Comparing four different statistical packages for hierarchical linear regression: <span>GENMOD</span>, <span>HLM</span>, <span>ML2</span>, and <span>VARCL</span></em>. CSE Dissemination Office, UCLA Graduate School of Education, 405 Hilgard Avenue, Los Angeles, CA 90024-1521. <a href="https://files.eric.ed.gov/fulltext/ED340731.pdf">https://files.eric.ed.gov/fulltext/ED340731.pdf</a>
+</div>
+<div id="ref-kruschkeDoingBayesianData2015" class="csl-entry" role="listitem">
+Kruschke, J. K. (2015). <em>Doing <span>Bayesian</span> data analysis: <span>A</span> tutorial with <span>R</span>, <span>JAGS</span>, and <span>Stan</span></em>. Academic Press. <a href="https://sites.google.com/site/doingbayesiandataanalysis/">https://sites.google.com/site/doingbayesiandataanalysis/</a>
+</div>
+<div id="ref-kruschkeBayesianNewStatistics2018" class="csl-entry" role="listitem">
+Kruschke, J. K., &amp; Liddell, T. M. (2018). The <span>Bayesian New Statistics</span>: <span>Hypothesis</span> testing, estimation, meta-analysis, and power analysis from a <span>Bayesian</span> perspective. <em>Psychonomic Bulletin &amp; Review</em>, <em>25</em>(1), 178–206. <a href="https://doi.org/10.3758/s13423-016-1221-4">https://doi.org/10.3758/s13423-016-1221-4</a>
+</div>
+<div id="ref-kurzStatisticalRethinkingSecondEd2026" class="csl-entry" role="listitem">
+Kurz, A. S. (2026a). <em>Statistical rethinking 2 with brms and the tidyverse</em> (version 0.5.0). <a href="https://solomon.quarto.pub/sr2/">https://solomon.quarto.pub/sr2/</a>
+</div>
+<div id="ref-kurzStatisticalRethinking2026" class="csl-entry" role="listitem">
+Kurz, A. S. (2026b). <em>Statistical rethinking with brms, <span class="nocase">ggplot2</span>, and the tidyverse</em> (version 1.4.0). <a href="https://solomon.quarto.pub/sr/">https://solomon.quarto.pub/sr/</a>
+</div>
+<div id="ref-mcelreathStatisticalRethinkingBayesian2015" class="csl-entry" role="listitem">
+McElreath, R. (2015). <em>Statistical rethinking: <span>A Bayesian</span> course with examples in <span>R</span> and <span>Stan</span></em>. CRC press. <a href="https://xcelab.net/rm/statistical-rethinking/">https://xcelab.net/rm/statistical-rethinking/</a>
+</div>
+<div id="ref-mcelreathStatisticalRethinkingBayesian2020" class="csl-entry" role="listitem">
+McElreath, R. (2020). <em>Statistical rethinking: <span>A Bayesian</span> course with examples in <span>R</span> and <span>Stan</span></em> (Second Edition). CRC Press. <a href="https://xcelab.net/rm/statistical-rethinking/">https://xcelab.net/rm/statistical-rethinking/</a>
+</div>
+<div id="ref-plummer2003jags" class="csl-entry" role="listitem">
+Plummer, M. (2003). <span>JAGS</span>: <span>A</span> program for analysis of <span>Bayesian</span> graphical models using <span>Gibbs</span> sampling. <em>Proceedings of the 3rd International Workshop on Distributed Statistical Computing</em>, <em>124</em>, 1–10. <a href="http://www.ci.tuwien.ac.at/Conferences/DSC-2003/Drafts/Plummer.pdf">http://www.ci.tuwien.ac.at/Conferences/DSC-2003/Drafts/Plummer.pdf</a>
+</div>
+<div id="ref-plummer2012jags" class="csl-entry" role="listitem">
+Plummer, M. (2012). <em><span>JAGS Version</span> 3.3.0 user manual</em>. <a href="http://www.stat.cmu.edu/~brian/463-663/week10/articles,%20manuals/jags_user_manual.pdf">http://www.stat.cmu.edu/~brian/463-663/week10/articles,%20manuals/jags_user_manual.pdf</a>
+</div>
+<div id="ref-raudenbushHLM2002" class="csl-entry" role="listitem">
+Raudenbush, S. W., &amp; Bryk, A. S. (2002). <em>Hierarchical linear models: <span>Applications</span> and data analysis methods</em> (Second Edition). SAGE Publications, Inc. <a href="https://us.sagepub.com/en-us/nam/hierarchical-linear-models/book9230">https://us.sagepub.com/en-us/nam/hierarchical-linear-models/book9230</a>
+</div>
+<div id="ref-R-MASS" class="csl-entry" role="listitem">
+Ripley, B. (2022). <em><span>MASS</span>: <span>Support</span> functions and datasets for venables and <span>Ripley</span>’s <span>MASS</span></em>. <a href="https://CRAN.R-project.org/package=MASS">https://CRAN.R-project.org/package=MASS</a>
+</div>
+<div id="ref-R-broom" class="csl-entry" role="listitem">
+Robinson, D., Hayes, A., &amp; Couch, S. (2022). <em><span class="nocase">broom</span>: <span>Convert</span> statistical objects into tidy tibbles</em> [Manual]. <a href="https://CRAN.R-project.org/package=broom">https://CRAN.R-project.org/package=broom</a>
+</div>
+<div id="ref-rogosaUnderstandingCorrelatesChange1985" class="csl-entry" role="listitem">
+Rogosa, D. R., &amp; Willett, J. B. (1985). Understanding correlates of change by modeling individual differences in growth. <em>Psychometrika</em>, <em>50</em>(2), 203–228. <a href="https://doi.org/10.1007/BF02294247">https://doi.org/10.1007/BF02294247</a>
+</div>
+<div id="ref-millerBeyondANOVA1997" class="csl-entry" role="listitem">
+Rupert G. Miller, Jr. (1997). <em>Beyond <span>ANOVA</span>: <span>Basics</span> of applied statistics</em>. <span>Chapman and Hall/CRC</span>. <a href="https://www.routledge.com/Beyond-ANOVA-Basics-of-Applied-Statistics/Jr/p/book/9780412070112">https://www.routledge.com/Beyond-ANOVA-Basics-of-Applied-Statistics/Jr/p/book/9780412070112</a>
+</div>
+<div id="ref-singerAppliedLongitudinalData2003" class="csl-entry" role="listitem">
+Singer, J. D., &amp; Willett, J. B. (2003). <em>Applied longitudinal data analysis: <span>Modeling</span> change and event occurrence</em>. Oxford University Press, USA. <a href="https://oxford.universitypressscholarship.com/view/10.1093/acprof:oso/9780195152968.001.0001/acprof-9780195152968">https://oxford.universitypressscholarship.com/view/10.1093/acprof:oso/9780195152968.001.0001/acprof-9780195152968</a>
+</div>
+<div id="ref-standevelopmentteamStanReferenceManual2021" class="csl-entry" role="listitem">
+Stan Development Team. (2021a). <em>Stan reference manual, <span>Version</span> 2.27</em>. <a href="https://mc-stan.org/docs/2_27/reference-manual/">https://mc-stan.org/docs/2_27/reference-manual/</a>
+</div>
+<div id="ref-standevelopmentteamStanUserGuide2021" class="csl-entry" role="listitem">
+Stan Development Team. (2021b). <em>Stan user’s guide, <span>Version</span> 2.26</em>. <a href="https://mc-stan.org/docs/2_26/stan-users-guide/index.html">https://mc-stan.org/docs/2_26/stan-users-guide/index.html</a>
+</div>
+<div id="ref-MASS2002" class="csl-entry" role="listitem">
+Venables, W. N., &amp; Ripley, B. D. (2002). <em>Modern applied statistics with <span>S</span></em> (Fourth Edition). Springer. <a href="http://www.stats.ox.ac.uk/pub/MASS4">http://www.stats.ox.ac.uk/pub/MASS4</a>
+</div>
+</div>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+        const codeEl = trigger.previousElementSibling.cloneNode(true);
+        for (const childEl of codeEl.children) {
+          if (isCodeAnnotation(childEl)) {
+            childEl.remove();
+          }
+        }
+        return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/solomon\.quarto\.pub\/alda\/");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<input type="hidden" id="giscus-base-theme" value="light">
+<input type="hidden" id="giscus-alt-theme" value="dark">
+<script>
+  function loadGiscus() {
+    // Function to get the theme based on body class
+    const getTheme = () => {
+      let baseTheme = document.getElementById('giscus-base-theme').value;
+      let altTheme = document.getElementById('giscus-alt-theme').value;
+      return document.body.classList.contains('quarto-dark') ? altTheme : baseTheme;
+    };
+    const script = document.createElement("script");
+    script.src = "https://giscus.app/client.js";
+    script.async = true;
+    script.dataset.repo = "ASKurz/Applied-Longitudinal-Data-Analysis-with-brms-and-the-tidyverse";
+    script.dataset.repoId = "";
+    script.dataset.category = "General";
+    script.dataset.categoryId = "";
+    script.dataset.mapping = "title";
+    script.dataset.reactionsEnabled = "1";
+    script.dataset.emitMetadata = "0";
+    script.dataset.inputPosition = "top";
+    script.dataset.theme = getTheme();
+    script.dataset.lang = "en";
+    script.crossOrigin = "anonymous";
+    // Append the script to the desired div instead of at the end of the body
+    document.getElementById("quarto-content").appendChild(script);
+  }
+  loadGiscus();
+</script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="./02.html" class="pagination-link" aria-label="Exploring Longitudinal Data on Change">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Exploring Longitudinal Data on Change</span></span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="./04.html" class="pagination-link" aria-label="Doing Data Analysis with the Multilevel Model for Change">
+        <span class="nav-page-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">Doing Data Analysis with the Multilevel Model for Change</span></span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+
+
+
+
+<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/ASKurz/Applied-Longitudinal-Data-Analysis-with-brms-and-the-tidyverse/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div></div></div></footer></body></html>
