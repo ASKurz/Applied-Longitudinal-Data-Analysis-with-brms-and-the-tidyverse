@@ -1,0 +1,12 @@
+# Modeling Change Using Covariance Structure Analysis
+
+To be fleshed out later
+
+## Session info {-}
+
+```{r}
+sessionInfo()
+```
+
+## Comments {-}
+

@@ -1,0 +1,1583 @@
+# Describing Continuous-Time Event Occurrence Data
+
+> In this chapter, we present strategies for describing continuous-time event data. Although survivor and hazard functions continue to form the cornerstone of our work, the challenge in the time scale from discrete to continuous demands that we revise our fundamental definitions and modify estimation strategies....
+>
+> In the [second half of the chapter], we offer solutions to the core conundrum embedded in contentious-time event data: our inability to estimate the hazard function well. This is a concern as it leads some researchers to conclude that they should not even *try* to ascertain the pattern of risk over time. [@singerAppliedLongitudinalData2003, pp, 468--469, *emphasis* in the original]
+
+## A framework for characterizing the distribution of continuous-time event data
+
+> Variables measured with greater precision contain more information than those measured with less precision… Finer distinctions, as long as they can be made reliably, lead to more subtle interpretations and more powerful analyses. 
+>
+> Unfortunately, a switch from discrete- to continuous-time survival analysis is not as trivial as you might hope. In discrete time, the definition of the hazard function is intuitive, its values are easily estimated, and simple graphic displays can illuminate its behavior. In continuous time, although the survivor function is easily defined and estimated, the hazard function is not. As explained below, we must revise its definition and develop new methods for its estimation and exploration. (p. 469)
+
+### Salient features of continuous-time event occurrence data
+
+> Because continuous time is infinitely divisible, the distribution of event times displays two highly salient properties:
+>
+> * *The probability of observing* any particular event time *is infinitesimally small*. In continuous time, the probability that an event will occur *at any specific instant* approaches 0. The probability may nor reach 0, but as time’s divisions become finer and finer, it becomes smaller and smaller.
+> * *The probability that two or more individuals will share the same event time is also infinitesimally small*. If the probability of event occurrence at each instant is infinitesimally small, the probability of *co*occurrence (a tie) must be smaller still. (p. 470, *emphasis* in the original)
+
+Load the horn honking data from Diekmann, Jungbauer-Gans, Krassing, and Lorenz [-@diekmann1996social].
+
+```{r, warning = F, message = F}
+library(tidyverse)
+
+honking <- read_csv("data/honking.csv") %>%
+  # make all names lower case
+  rename_all(str_to_lower) %>% 
+  mutate(censor_1 = abs(censor - 1))
+
+glimpse(honking)
+```
+
+Here's a quick way to arrange the `seconds` values and `censor` status of each case in a similar way to how they appear in Table 13.1.
+
+```{r}
+honking %>% 
+  arrange(seconds) %>% 
+  transmute(seconds = ifelse(censor == 0, seconds, str_c(seconds, "*")))
+```
+
+For kicks, here's a tile-plot version of Table 13.1.
+
+```{r, fig.width = 6, fig.height = 3}
+honking %>% 
+  arrange(seconds) %>% 
+  # `formatC()` allows us to retain the trailing zeros when converting the numbers to text
+  mutate(text = formatC(seconds, digits = 2, format = "f")) %>% 
+  mutate(time = ifelse(censor == 0, text, str_c(text, "*")),
+         row  = c(rep(1:6, times = 9), 1:3),
+         col  = rep(1:10, times = c(rep(6, times = 9), 3))) %>% 
+  
+  ggplot(aes(x = col, y = row)) +
+  geom_tile(aes(fill = seconds)) +
+  geom_text(aes(label = time, color = seconds < 10)) +
+  scale_fill_viridis_c(option = "B", limits = c(0, NA)) +
+  scale_color_manual(values = c("black", "white")) +
+  scale_y_reverse() +
+  labs(subtitle = "Table 13.1: Known and censored (*) event times for 57 motorists blocked by another\nautomobile (reaction times are recorded to the nearest hundredth of a second)") +
+  theme_void() +
+  theme(legend.position = "none")
+```
+
+### The survivor function
+
+"In continuous time, the survival probability for individual $i$ at time $t_j$ is the probability that his or her event time, $T_i$ will exceed $t_j$" (p. 472). This follows the equation
+
+$$S(t_{ij}) = \Pr [T_i > t_j].$$
+
+Heads up: When Singer and Willett "do not distinguish individuals on the basis of predictors, [they] remove the subscript $i$, letting $S(t_j)$ represent the survivor function for a randomly selected member of the population" (p. 472).
+
+### The hazard function
+
+> The hazard function assesses the *risk*--at a particular moment--that an individual who has not yet done so will experience the target event. In discrete time, the moments are time periods, which allows us to express hazard as a conditional probability. In continuous time, the moments are the infinite numbers of infinitesimally small instants of time that exist within any finite time period, a change that requires us to alter our definition. (pp. 472--473, *emphasis* in the original)
+
+Singer and Willett the went on to demonstrate the notion of "infinitesimally small instants of time" by dividing a year into days, hours, minutes, and seconds. Here's how we might use **R** to practice dividing up a year into smaller and smaller units.
+
+```{r}
+year    <- 1
+days    <- 365
+hours   <- 24
+minutes <- 60
+seconds <- 60
+
+year * days
+year * days * hours
+year * days * hours * minutes
+year * days * hours * minutes * seconds
+```
+
+Building, we define the continuous-time hazard function as
+
+$$h(t_{ij}) = \text{limit as } \Delta t \rightarrow 0 \left \{ \frac{\Pr[T_i \text{ is in the interval } (t_j, t_j + \Delta t) | T_i \geq t_j]}{\Delta t} \right \},$$
+
+where $[t_j, t_j + \Delta t)$ is the $j$th time interval and "the opening phrase '$\text{limit as } \Delta t \rightarrow 0$' indicates that we evaluate the conditional probability in brackets as the interval width modes closer and closer to 0" (p. 474).
+
+> Because the definitions of hazard differ in continuous and discrete time, their interpretations differ as well. Most important, *continuous-time hazard is not a probability*. Instead, it is a *rate*, assessing the conditional probability of event occurrence *per unit of time*. No matter how tempted you might be to use the nomenclature of probability to describe rates in continuous time, please resist the urge. Rates and probabilities are not the same, and so the interpretive language is not interchangeable. (p. 474, *emphasis* in the original)
+
+Closing out this section, we read:
+
+> An important difference between continuous-time hazard rates and discrete-time hazard probabilities is that rates are not bounded from above. Although neither can be negative, rates can easily exceed 1.0…. The possibility that continuous-time hazard rate can exceed 1 has serious consequences because it requires that we revise the statistical models that incorporate the effects of predictors. We cannot posit a model in terms of *logit* hazard (as in discrete time) because that transformation is defined only for values of hazard between 0 and 1. As a result, when we specify continuous-time hazard models in chapter 14, our specification will focus on the *logarithm* of hazard, a transformation that is defines for all values of hazard greater than 0. (p. 475, *emphasis* in the original)
+
+## Grouped methods for estimating continuous-time survivor and hazard functions
+
+> In principle, in continuous time, we would like to estimate a value for the survivor and hazard functions at every possible instant when an event could occur. In practice, we can do so only if we are willing to adopt constraining parametric assumptions about the distribution of event times. To support this approach, statisticians have identified dozens of different distributions--Weibull, Gompertz, gamma, and log-logistic, to name a few--that event times might follow, and in some fields—industrial product testing, for example--parametric estimation is the dominant mode of analysis [see, e.g., @lawless1982StatisticalModels].
+>
+> In many other fields, including most of the social, behavioral, and medical sciences, nonparametric methods are more popular. The fundamental advantage of nonparametric methods is that we need not make constraining assumptions about the distribution of event times. This flexibility is important because: (1) few researchers have a sound basis for preferring one distribution over another; and (2) adopting an *incorrect* assumption can lead to erroneous conclusions. With a nonparametric approach, you essentially trade the *possibility* of a minor increase in efficiency if a particular assumption holds for the guarantee of doing nearly as well for most data sets, regardless of its tenability. 
+>
+> For decades, in a kind of mathematic irony, statisticians obtained nonparametric estimates of the continuous-time survivor and hazard functions by grouping event times into a small number of intervals, constructing a life table, and applying the discrete-time strategies of chapter 10 (with some minor revisions noted below). In this section we describe two of the most popular of these grouped strategies: the *discrete-time* method (section 13.2.1) and the *actuarial* method (section 13.2.2). (pp. 475--476, *emphasis* in the original)
+
+As we'll see, **brms** supports parametric and nonparametric continuous-time survival models. In the sections and chapters to come, we will make extensive use of the Cox model, which is nonparametric. However, if you look through the *Time-to-event models* section of Bürkner's [-@Bürkner2021Parameterization] vignette, [*Parameterization of response distributions in brms*](https://CRAN.R-project.org/package=brms/vignettes/brms_families.html), you'll see **brms** supports survival models with the exponential, inverse-Gaussian, gamma, log-normal, and Weibull likelihoods.
+
+### Constructing a grouped life table
+
+> Grouped estimation strategies begin with a life table that partitions continuous time into a manageable number of contiguous intervals. When choosing a partition, you should seek one that is: (1) substantively meaningful; (2) coarse enough to yield stable estimates; and (3) fine enough to reveal discernible patterns. (p. 476)
+
+For the first step in making the life table of Table 13.2, we'll make variables that partition the `seconds` column of the `honking` data into lower and upper bounds.
+
+```{r}
+honking <- honking %>% 
+  mutate(lb = case_when(
+    seconds < 2 ~ 1,
+    seconds < 3 ~ 2,
+    seconds < 4 ~ 3,
+    seconds < 5 ~ 4,
+    seconds < 6 ~ 5,
+    seconds < 7 ~ 6,
+    seconds < 8 ~ 7,
+    seconds >= 8 ~ 8
+  )) %>% 
+  mutate(ub = if_else(lb == 8, 18, lb + 1)) %>% 
+  mutate(time_interval = str_c("[", lb, ", ", ub, ")"))
+
+honking %>% head()
+```
+
+Now we'll transform the data into a life-table format, which we'll save as `honking_aggregated`.
+
+```{r}
+ honking_aggregated <- honking %>% 
+  mutate(event = ifelse(censor == 0, "n_events", "n_censored")) %>% 
+  count(lb, event) %>% 
+  pivot_wider(names_from = event,
+              values_from = n) %>% 
+  mutate(ub = if_else(lb == 8, 18, lb + 1)) %>% 
+  mutate(time_interval = str_c("[", lb, ", ", ub, ")")) %>% 
+  mutate(n_censored = ifelse(is.na(n_censored), 0, n_censored)) %>% 
+  mutate(total = n_censored + n_events) %>% 
+  mutate(n_at_risk = sum(total) - cumsum(lag(total, default = 0))) %>% 
+  select(lb, ub, time_interval, n_at_risk, n_events, n_censored) %>% 
+  mutate(`p(t)` = n_events / n_at_risk)
+
+honking_aggregated
+```
+
+### The discrete-time method
+
+Here we simply apply the discrete-time hazard model to our discretized continuous-time data. Before we fit the model, we'll define a new term, $\hat p(t_j)$. Recall back to Section 10.2 where we defined the hazard function $\hat h(t_{j})$ as
+
+$$\hat h(t_{j}) = \frac{n \text{ events}_j}{n \text{ at risk}_j}.$$
+
+Now we're working with continuous-time data (even if they're momentarily discretized), we focus instead on $\hat p(t_{j})$. In words, $\hat p(t_{j})$ is the conditional probability that a member of the risk set at the beginning of the interval $j$ will experience the target event during that interval. In discrete time we labeled this quantity "hazard," but now we use the term "*conditional probability*" to distinguish it from a continuous time *hazard rate*. Our conditional probability follows the formula
+
+$$\hat p(t_{j}) = \frac{n \text{ events}_j}{n \text{ at risk}_j},$$
+
+where $n \text{ events}_j$ is the number of individuals who experienced the event in the $j^{th}$ period and $n \text{ at risk}_j$ is the number of those at risk at the beginning of the interval $j$.
+
+Time to fire up **brms**.
+
+```{r, warning = F, message = F}
+library(brms)
+library(tidybayes)
+```
+
+For our first model, we will use the binomial likelihood with the aggregated version of the `honking` data, `honking_aggregated`. The main time variable in those data is `time_interval`, the lower and upper bounds for which are identified in the `lb` and `ub` columns, respectively. In anticipation of the upcoming plots, we'll use the `ub` variable for time. But to make fitting the model easier with the `brm()` function, we'll first save a factor version of the variable.
+
+```{r}
+honking_aggregated <- honking_aggregated %>% 
+  mutate(ub_f = factor(ub))
+```
+
+In the last chapter, we used the `normal(0, 4)` prior, which was permissive in the log-odds metric. Here we'll be more conservative and use `normal(0, 1.5)`, which is weakly-regularizing on the log-odds metric, but flat in the probability metric. A plot might help show this.
+
+```{r, fig.width = 6, fig.height = 2.5, cache = T}
+set.seed(13)
+
+tibble(`log odds` = rnorm(1e6, mean = 0, sd = 1.5)) %>% 
+  mutate(probability = plogis(`log odds`)) %>% 
+  pivot_longer(everything()) %>% 
+  
+  ggplot(aes(x = value)) +
+  stat_histinterval(normalize = "panels") +
+  scale_y_continuous(NULL, breaks = NULL) +
+  xlab("prior predictive distribution") +
+  theme(panel.grid = element_blank()) +
+  facet_wrap(~ name, scales = "free")
+```
+
+Otherwise, this model is just like any of the other unconditional discrete-time models we've fit with `brm()`.
+
+```{r fit13.1}
+fit13.1 <- brm(
+  data = honking_aggregated,
+  family = binomial,
+  n_events | trials(n_at_risk) ~ 0 + ub_f,
+  prior(normal(0, 1.5), class = b),
+  chains = 4, cores = 1, iter = 2000, warmup = 1000,
+  seed = 13,
+  file = "fits/fit13.01")
+```
+
+Check the parameter summary.
+
+```{r}
+print(fit13.1)
+```
+
+As will become apparent in a bit, our `normal(0, 1.5)` prior was not inconsequential. Our aggregated data were composed of the event/censoring information of 57 cases, spread across 8 time periods. This left little information in the likelihood, particularly for the later time periods. As a consequence, the prior left clear marks in the posterior.
+
+As with the discrete-time model, we can formally define the survivor function for the continuous-time model as
+
+$$\hat S(t_j) =  \big(1 - \hat p(t_1)\big) \big(1 - \hat p(t_2)\big)... \big(1 - \hat p(t_j)\big).$$
+
+It'll take a little wrangling effort to transform the output from `as_draws_df(fit13.1)` into a useful form for plotting and summarizing $\hat S(t_j)$. We'll save it as `s`.
+
+```{r, warning = F}
+s <- as_draws_df(fit13.1) %>% 
+  select(starts_with("b_")) %>% 
+  mutate_all(plogis) %>% 
+  mutate(b_ub_f0 = 0) %>% 
+  select(b_ub_f0, everything()) %>% 
+  set_names(c(1:8, 18)) %>% 
+  mutate(iter = 1:n()) %>% 
+  pivot_longer(-iter,
+               names_to = "time",
+               values_to = "p") %>% 
+  mutate(time = time %>% as.integer()) %>% 
+  group_by(iter) %>% 
+  mutate(survivor = cumprod(1 - p)) %>% 
+  ungroup()
+```
+
+Now we can make the first 6 columns of Table 13.2 by combining a subset of the `honking_aggregated` data with a summary of our `s`.
+
+```{r}
+bind_cols(
+  # select the first 5 columns for Table 13.2
+  honking_aggregated %>% 
+    select(time_interval:`p(t)`),
+  # add the 6th column
+  s %>% 
+    filter(time > 1) %>% 
+    group_by(time) %>% 
+    summarise(median = median(survivor),
+              sd     = sd(survivor)) %>% 
+    mutate_if(is.double, round, digits = 4) %>% 
+    transmute(`S(t)` = str_c(median, " (", sd, ")"))
+)
+```
+
+You'll note that our posterior summary values in `S(t)` differ a little from those in the text. Remember, the likelihood was weak and we used a regularizing prior. If we had more cases spread across fewer discretized time periods, the likelihood would have done a better job updating the prior.
+
+Now let's take a look at the posterior of our survivor function, $\hat S(t_j)$, in our version of the upper left panel of Figure 13.1.
+
+```{r, fig.width = 4, fig.height = 4}
+s %>% 
+  ggplot(aes(x = time, y = survivor)) +
+  geom_hline(yintercept = 0.5, color = "white") +
+  stat_lineribbon(alpha = 1/2) +
+  # add the ML-based survival estimates
+  geom_line(data = honking_aggregated %>% mutate(s = cumprod(1 - `p(t)`)),
+            aes(x = ub, y = s),
+            color = "red") +
+  scale_fill_grey("CI level", start = 0.7, end = 0.4) +
+  scale_x_continuous("seconds after light turns green", limits = c(0, 20)) +
+  ylab(expression(widehat(italic(S(t[j]))))) +
+  coord_cartesian(ylim = c(0, 1)) +
+  theme(panel.grid = element_blank())
+```
+
+For a little context, we superimposed the sample (ML) estimates of the survivor function in red. Based on the posterior median, our median lifetime appears to be between the time intervals of $[2, 3)$ and $[3, 4)$. Sticking with those medians, here's the exact number using Miller's [-@miller1981SurvivalAnalysis] interpolation approach from @sec-Median-lifetime.
+
+```{r}
+s_medians <- s %>% 
+  mutate(lb = time - 1,
+         ub = time) %>% 
+  mutate(time_interval = str_c("[", lb, ", ", ub, ")")) %>% 
+  filter(ub %in% c(3, 4)) %>% 
+  group_by(time_interval) %>% 
+  summarise(median = median(survivor)) %>% 
+  pull(median)
+
+3 + (s_medians[1] - .5) / (s_medians[1] - s_medians[2]) * (4 - 3)
+```
+
+Here's how we might convert the output of `as_draws_df(fit13.1)` into a useful format for our hazard function.
+
+```{r, warning = F}
+h <- as_draws_df(fit13.1) %>% 
+  select(starts_with("b_")) %>% 
+  mutate_all(plogis) %>% 
+  set_names(c(2:8, 18)) %>% 
+  mutate(iter = 1:n()) %>% 
+  pivot_longer(-iter,
+               names_to = "time",
+               values_to = "p") %>% 
+  mutate(time = time %>% as.integer())
+
+h
+```
+
+For continuous-time data, hazard is a rate, which is
+
+> the limit of the conditional probability of event occurrence in a (vanishingly small) interval divided by the interval's width. A logical estimator is thus the ratio of the conditional probability of event occurrence in an interval to the interval's width. (p. 479)
+
+Thus, our new definition of hazard is 
+
+$$\hat h(t_j) = \frac{\hat p(t_j)}{\text{width}_j},$$
+
+where $\text{width}_j$ denotes the width of the $j$th interval. The widths of most of our intervals were 1 (seconds). The final interval, $[8, 18)$, had a width of ten. Once we add that information to the `h` data, we can use the formula above to convert $\hat p(t_j)$ to $\hat h(t_j)$.
+
+```{r}
+h <- h %>% 
+  mutate(width = if_else(time <= 8, 1, 10)) %>% 
+  mutate(hazard = p / width)
+```
+
+Now we can make the first 7 columns of Table 13.2 by adding an cleaned-up version of our `h` object to what we had before.
+
+```{r}
+bind_cols(
+  # select the first 5 columns for Table 13.2
+  honking_aggregated %>% 
+    select(time_interval:`p(t)`),
+  # add the 6th column
+  s %>% 
+    filter(time > 1) %>% 
+    group_by(time) %>% 
+    summarise(median = median(survivor),
+              sd     = sd(survivor)) %>% 
+    mutate_if(is.double, round, digits = 4) %>% 
+    transmute(`S(t)` = str_c(median, " (", sd, ")")),
+  # add the 7th column
+  h %>% 
+    group_by(time) %>% 
+    summarise(median = median(hazard),
+              sd     = sd(hazard)) %>% 
+    mutate_if(is.double, round, digits = 4) %>% 
+    transmute(`h(t)` = str_c(median, " (", sd, ")"))
+)
+```
+
+Perhaps even more so than with our estimates for the survivor function, our hazard estimates show the influence of our prior on the posterior. For example, note how our posterior standard deviations tend to be a bit smaller than the standard errors reported in the text. To my mind, plotting the marginal posteriors for the intervals of our hazard function really helps hit this home.
+
+```{r, fig.width = 6, fig.height = 3}
+h %>% 
+  mutate(time = factor(time)) %>% 
+  
+  ggplot(aes(x = hazard, y = time)) +
+  geom_vline(xintercept = 0.5, color = "white") +
+  stat_halfeye(.width = c(0.5, 0.95), normalize = "xy") +
+  xlim(0, 1) +
+  theme(panel.grid = element_blank())
+```
+
+As wide and sloppy as those distributions look, they're more precise than the estimates returned by Maximum Likelihood (ML). To finish this section out with the lower left panel of Figure 13.1, here's what our hazard function looks like.
+
+```{r, fig.width = 4, fig.height = 4}
+h %>% 
+  ggplot(aes(x = time, y = hazard)) +
+  stat_lineribbon(alpha = 1/2) +
+  scale_fill_grey("CI level", start = 0.7, end = 0.4) +
+  scale_x_continuous("seconds after light turns green", limits = c(0, 20)) +
+  ylab(expression(widehat(italic(h(t[j]))))) +
+  coord_cartesian(ylim = c(0, 0.35)) +
+  theme(panel.grid = element_blank())
+```
+
+### The actuarial method
+
+I'm not going to dive into a full explanation of the actuarial method. For that, read the book. However, the actuarial method presents a challenge for our **brms** paradigm. To appreciate the challenge, we'll need a couple block quotes:
+
+> For the survivor function, we ask: What does it mean to be "at risk of surviving" past the end of an interval? Because a censored individual is no longer "at risk of surviving" once censoring occurs, we redefine each interval's risk set to account for the censoring we assume to occur equally throughout. This implies that half the censored individuals would no longer be at risk half-way through, so we redefine the number of individuals "at risk of surviving past interval $j$" to be:
+>
+> $$n' \; at \; risk_j = n \; at \; risk_j - \frac{n \; censored_j}{2}.$$
+>
+> The actuarial estimate of the survivor function is obtained by substituting $n' \; at \; risk_j$ for $n \; at \; risk_j$ in the discrete-time formulas just presented in section 13.2.2 (equations 13.3 and 13.4). (pp. 480--481, *emphasis* in the original)
+
+Further:
+
+> To estimate the hazard function using the actuarial approach, we again redefine what it means to be "at risk." Now, however, we ask about the "risk of event occurrence" *during* the interval, not the "risk of survival" *past* the interval. This change of definition suggests that each interval's risk set should be diminished not just by censoring but also by event occurrence, because either eliminates the possibility of subsequent event occurrence. Because categorization continues to prevent us from knowing precisely when people leave the risk set, we assume that exits are scattered at random throughout the interval. This implies that half these individuals are no longer at risk of event occurrence halfway through, so we redefine the number of individuals "at risk of event occurrence" in interval $j$ to be:
+>
+> $$n'' \; at \; risk_j = n \; at \; risk_j - \frac{n \; censored_j}{2} - \frac{n \; events_j}{2}.$$
+>
+> The actuarial estimator of the continuous-time hazard function is then obtained by substituting $n'' \; at \; risk_j$ for $n \; at \; risk_j$ in discrete-time formulas of section 13.2.2 (equations 13.3 and 13.5). (pp. 481--481, *emphasis* in the original)
+
+Here's how we might implement the equations for $n' \; at \; risk_j$ and $n'' \; at \; risk_j$ in our `honking_aggregated` data.
+
+```{r}
+honking_aggregated <- honking_aggregated %>% 
+  mutate(n_p_at_risk_a  = n_at_risk - (n_censored / 2),
+         n_pp_at_risk_a = n_at_risk - (n_censored / 2) - (n_events / 2))
+
+honking_aggregated
+```
+
+The essence of our problem is we've been using the binomial likelihood to fit discrete-time hazard functions with **brms**. In this paradigm, we feed in data composed of the number of *successes* and the corresponding number of trials to compute probability $p$ of a *success* within a given trial. Although $p$ is a continuous value ranging from 0 to 1, the binomial likelihood takes the numbers of successes and trials to be non-negative integers. If you try to feed our actuarial $n'' \; at \; risk_j$ variable, `n_at_risk_pp` into the `formula` argument for `brms::brm()` (e.g., `n_events | trials(n_at_risk_pp) ~ 0 + ub_f`), **brms** will return the warning:
+
+> Error: Number of trials must be positive integers.
+
+We can, however, follow along and compute the ML estimates by hand.
+
+```{r}
+honking_aggregated <- honking_aggregated %>% 
+  mutate(`S(t)_a` = cumprod(1 - n_events / n_p_at_risk_a),
+         `p(t)_a` = n_events / n_pp_at_risk_a,
+         width    = if_else(lb == 8, 10, 1)) %>% 
+  mutate(`h(t)_a` = `p(t)_a` / width)
+
+honking_aggregated
+```
+
+Before we make our version of the right-hand side of Figure 13.1, we'll need to augment the data a little. Then `geom_step()` will do most of the magic.
+
+```{r}
+# add `S(t)_a` values for `lb = c(0, 18)`
+p1 <- honking_aggregated %>% 
+  select(lb, `S(t)_a`) %>% 
+  bind_rows(tibble(lb       = c(0, 18),
+                   `S(t)_a` = c(1, honking_aggregated$`S(t)_a`[8]))) %>% 
+  # reorder
+  arrange(lb) %>% 
+  
+  # plot!
+  ggplot(aes(x = lb, y = `S(t)_a`)) +
+  geom_step() +
+  scale_x_continuous(NULL, breaks = NULL) +
+  scale_y_continuous(expression(widehat(italic(S(t[j])))), limits = c(0, 1))
+
+# add `h(t)_a` values for `lb = 18`
+p2 <- honking_aggregated %>% 
+  select(lb, `h(t)_a`) %>% 
+  bind_rows(tibble(lb       = 18, 
+                   `h(t)_a` = honking_aggregated$`h(t)_a`[8])) %>% 
+  arrange(lb) %>% 
+  
+  ggplot(aes(x = lb, y = `h(t)_a`)) +
+  geom_step() +
+  scale_x_continuous("seconds after light turns green", limits = c(0, 20)) +
+  scale_y_continuous(expression(widehat(italic(h(t[j])))), limits = c(0, 0.35))
+```
+
+Combine the subplots and make our version of the right-hand side of Figure 13.1.
+
+```{r, fig.width = 3, fig.height = 7}
+library(patchwork)
+
+(p1 / p2) &
+  theme(panel.grid = element_blank())
+```
+
+I'm not going to bother with computing the ML standard errors for the actuarial survivor and hazard estimates. You can reference page 482 in the text for more on those.
+
+## The Kaplan-Meier method of estimating the continuous-time survivor function
+
+> A fundamental problem with grouped estimation methods is that they artificially categorize what is now, by definition, a continuous variable.... Shouldn't it be possible to use the *observed* data--the actual event times--to describe the distribution of event occurrences? This compelling idea underlies the Kaplan-Meier method, named for the statisticians who demonstrated [in -@kaplan1958NonparametricEstimation] that the intuitive approach--also known as the *product-limit method*--has maximum likelihood properties as well. Below, we explain how this approach works and why it is preferable.
+>
+> The Kaplan-Meier method is a simple extension of the discrete-time method with a fundamental change: instead of rounding event times to construct the intervals, capitalize on the raw event times and construct intervals so that each contains just *one observed event time* (as shown in table 13.3). Each Kaplan-Meier interval begins at one observed event time and ends just before the next. (p. 483, *emphasis* in the original)
+
+As discussed in the prose in the middle of page 483, here are the first three event times.
+
+```{r}
+honking %>% 
+  filter(censor == 0) %>% 
+  top_n(-3, seconds)
+```
+
+> The Kaplan-Meier estimate of the survivor function is obtained by applying the discrete-time estimator of section 13.2.2 to the data of these intervals. [Most] statistical packages include a routine for computing and plotting the estimates. Numerically, the process is simple: first compute the conditional probability of event occurrence (column 7) and then successively multiply the complements of these probabilities together to obtain the Kaplan-Meier estimate of the survivor function (column 8). Because the Kaplan-Meier estimator of the survivor function is identical to the discrete-time estimator of chapter 10, its standard errors (column 9) are estimated using the same formula (pp. 483--485).
+
+To walk this out, we'll first use the frequentist **survival** package.
+
+```{r, warning = F, message = F}
+library(survival)
+```
+
+Use the `survival::survfit()` function to fit the unconditional model with the Kaplan-Meier estimator.
+
+```{r}
+ fit13.2 <- survfit(
+   data = honking,
+   Surv(seconds, censor_1) ~ 1)
+```
+
+The `summary()` returns a lot of output.
+
+```{r}
+summary(fit13.2)
+```
+
+Taking a cue from the good folks at [IDRE](https://stats.idre.ucla.edu/r/examples/alda/r-applied-longitudinal-data-analysis-ch-13/), saving the summary results as an object will make it easy to subset and augment that information into our version of Table 13.1.
+
+```{r}
+# save the summary as t
+t <- summary(fit13.2)
+
+# subset, augment, and save as honking_km
+honking_km <- tibble(seconds  = t$time,
+                     n_risk   = t$n.risk,
+                     n_events = t$n.event) %>% 
+  mutate(`p(t)`     = n_events / n_risk,
+         n_censored = n_risk - n_events - lead(n_risk, default = 0),
+         interval   = 1:n(),
+         interval_f = factor(1:n(), levels = 0:n()),
+         start      = seconds,
+         end        = lead(seconds, default = Inf)) %>% 
+  select(interval:interval_f, seconds, start:end, n_risk:n_events, n_censored, `p(t)`)
+
+honking_km
+```
+
+We haven't bothered adding the top `interval == 0` row, but one could add that information with a little `bind_rows()` labor. Note how we slipped in a few extra columns (e.g., `interval_f`) because they'll come in handy, later. We compute the Kaplan-Meier estimates for the survivor function by serially multiplying the compliments for the estimates of the conditional probability values, $\hat p(t)$. As in other examples, that's just a little `cumprod()` code.
+
+```{r}
+honking_km <- honking_km %>% 
+  mutate(`S(t)` = cumprod(1 - `p(t)`))
+```
+
+Instead of doing that by hand, we could have just subset the `surv` vector within `t`.
+
+```{r}
+t$surv
+```
+
+Here we subset the standard errors for $\hat S(t)$.
+
+```{r}
+honking_km <- honking_km %>% 
+  mutate(`se[S(t)]` = t$std.err)
+
+head(honking_km)
+```
+
+We can plot the fitted $\hat S(t)$ values with `geom_step() to make our version of the top half of Figure 13.2.
+
+```{r, warning = F}
+p1 <- honking_km %>% 
+  select(seconds, `S(t)`) %>% 
+  bind_rows(tibble(seconds = 17.15, 
+                   `S(t)`  = 0.04252557)) %>% 
+  
+  ggplot(aes(x = seconds, y = `S(t)`)) +
+  geom_step() +
+  scale_x_continuous(NULL, breaks = NULL, limits = c(0, 20))
+```
+
+Now add the actuarial and discrete-time estimates to make our version of the lower panel of Figure 13.2.
+
+```{r}
+arrow <- tibble(
+  x    = c(5, 8.7, 2.7),
+  y    = c(0.8, 0.4, 0.23),
+  xend = c(2.6, 7, 3.9),
+  yend = c(0.875, 0.25, 0.33))
+
+text <- tibble(
+  x     = c(5, 8.7, 2.7),
+  y     = c(0.77, 0.43, 0.2),
+  label = c("Kaplan Meier", "Discrete-time", "Actuarial"))
+
+p2 <- honking_km %>% 
+  select(seconds, `S(t)`) %>% 
+  bind_rows(tibble(seconds = 17.15, 
+                   `S(t)`  = 0.04252557)) %>% 
+  
+  ggplot(aes(x = seconds, y = `S(t)`)) +
+  geom_step() +
+  geom_step(data = honking_aggregated,
+            aes(x = ub, y = `S(t)_a`), 
+            linetype = 3, direction = "vh") +
+  geom_line(data = honking_aggregated %>% mutate(s = cumprod(1 - `p(t)`)),
+            aes(x = ub, y = s),
+            linetype = 2) +
+  geom_segment(data = arrow,
+               aes(x = x, xend = xend,
+                   y = y, yend = yend),
+               linewidth = 1/3, arrow = arrow(length = unit(0.15,"cm"), type = "closed")) +
+  geom_text(data = text,
+            aes(x = x, y = y, label = label)) +
+  scale_x_continuous("seconds after light turns green", limits = c(0, 20))
+```
+
+Combine and plot.
+
+```{r, fig.width = 7, fig.height = 7}
+(p1 / p2) &
+  scale_y_continuous(expression(widehat(italic(S(t[j])))), limits = c(0, 1)) &
+  theme(panel.grid = element_blank())
+```
+
+Did you notice how in both subplots we used `bind_rows()` to add in an `S(t)` value for `seconds = 17.15`? In the text, we read:
+
+> As for actuarial estimates, we plot Kaplan-Meier estimates as a step function that associates the estimated probability with the entire interval. If the largest event time is censored, as it is here (17.15), we extend the step for the last estimate out to that largest censored value. (pp. 485--486)
+
+Those `bind_rows()` lines are what extended "the step for the last estimate." Since that last estimate for $\hat S(t_j)  = 0.04252557$, we set `S(t) = 0.04252557` in the plot data.
+
+We can get the median lifetime by executing `print(fit13.2)`.
+
+```{r}
+print(fit13.2)
+```
+
+Like in the text, it's 3.58.
+
+Even though there is no Kaplan-Meier estimate for hazard, we can compute a Kaplan-Meier type hazard with the formula 
+
+$$\hat h_\text{KM} (t_j) = \frac{\hat p_\text{KM} (t_j)}{\text{width}_j}.$$
+
+Here we compute both the $\text{width}_j$ and $\hat h_\text{KM} (t_j)$ values by hand.
+
+```{r}
+honking_km <- honking_km %>% 
+  mutate(width = end - start) %>% 
+  mutate(width = if_else(end == Inf, 17.15 - start, width)) %>%  # this might be wrong
+  mutate(`h[km](t)` = `p(t)` / width)
+
+honking_km
+```
+
+Singer and Willett remarked that "because the interval width varies widely (and is itself a function of the distribution of event times), the resulting estimates vary from one interval to the next. Their values are usually so erratic that pattern identification is nearly impossible" (p. 487). That sounds fun. Let's explore them in a plot!
+
+```{r, fig.width = 7, fig.height = 2.5}
+honking_km %>% 
+  ggplot(aes(x = start, y = `h[km](t)`)) +
+  geom_path() +
+  geom_point() +
+  scale_x_continuous("seconds after light turns green", limits = c(0, 15)) +
+  scale_y_continuous(expression(hat(italic(h))[KM](italic(t[j])))) +
+  theme(panel.grid = element_blank())
+```
+
+Erratic, indeed.
+
+### Fitting a Bayesian Kaplan-Meier model
+
+It's worth repeating one of the quotes from earlier:
+
+> The Kaplan-Meier method is a simple extension of the discrete-time method with a fundamental change: instead of rounding event times to construct the intervals, capitalize on the raw event times and construct intervals so that each contains just *one observed event time* (as shown in table 13.3). Each Kaplan-Meier interval begins at one observed event time and ends just before the next. (p. 483, *emphasis* in the original)
+
+Whether we're working with one event occurrence at a time or binning them in intervals, the basic product of the model is a conditional probability. The binomial likelihood served us well when we binned the event occurrences into largish time intervals, and it will work just the same when we work them in serial fashion. The biggest obstacle is properly setting up the data. After some experimentation, the easiest way to format the data properly is to just use the summary results from `survfit(data = honking, Surv(seconds, censor_1) ~ 1)`, which we saved as `honking_km`. Take another look.
+
+```{r}
+glimpse(honking_km)
+```
+
+In the `n_events` column we have the number of cases that experienced the event in a given moment in continuous time. In the `n_risk` column we have the number of possible cases that could have experienced the event at that moment. In the `interval_f` column we've saved each moment as a factor, conveniently named $1, 2,..., 42$. Thus we can fit a simple Bayesian Kaplan-Meier model with `brms::brm()` by specifying `formula = n_events | trials(n_risk) ~ 0 + interval_f`.
+
+Consider the implications for our priors. Because we're treating each instance in time as a factor, that means the number of cases experiencing the event in one of those factors will always be 1 or some other small number in the unusual case of a tie. But the number in the denominator, `n_risk`, will tend to be relatively large, which means the probabilities will tend to be small. The weakly regularizing prior approach centered on zero might not make sense in this context.
+
+In earlier models, we used `normal(0, 4)` and `normal(0, 1.5)`. Here's what those look like when we convert them to the probability metric.
+
+```{r, fig.width = 5, fig.height = 2.75}
+set.seed(13)
+
+tibble(sd = c(4, 1.5)) %>% 
+  mutate(prior    = factor(str_c("normal(0, ", sd, ")"),
+                           levels = str_c("normal(0, ", c(1, 1.5, 4), ")")),
+         log_odds = map(sd, rnorm, n = 1e5, mean = 0)) %>% 
+  unnest(log_odds) %>% 
+  mutate(p  = plogis(log_odds)) %>% 
+  
+  ggplot(aes(x = p, y = prior)) +
+  stat_histinterval(.width = c(0.5, 0.95), normalize = "xy") +
+  labs(x = expression(italic(p)),
+       y = "prior (log-odds scale)") +
+  coord_cartesian(ylim = c(1.5, 2.5)) +
+  theme(panel.grid = element_blank())
+```
+
+The `normal(0, 4)` prior does not reflect our expectation that the probabilities will tend to be small. Interestingly, `normal(0, 4)` pushes a lot of the prior mass to the edges. What we want is a prior that pushed the mass to the left. Here are some options:
+
+```{r, fig.width = 8, fig.height = 5}
+crossing(mean = -4:-1,
+         sd   = 1:4) %>% 
+  mutate(log_odds = map2(mean, sd, rnorm, n = 1e5)) %>% 
+  unnest(log_odds) %>% 
+  mutate(p    = plogis(log_odds),
+         mean = factor(str_c("mean = ", mean),
+                       levels = str_c("mean = ", -4:-1)),
+         sd   = str_c("sd = ", sd)) %>% 
+  
+  ggplot(aes(x = p)) +
+  stat_histinterval(.width = c(0.5, 0.95), normalize = "panels") +
+  scale_y_continuous(NULL, breaks = NULL) +
+  xlab(expression(italic(p))) +
+  theme(panel.grid = element_blank()) +
+  facet_grid(sd ~ mean)
+```
+
+As you decrease the prior mean, the mass in the probability metric heads to zero. Increasing or shrinking the prior standard deviation accelerates or attenuates that leftward concentration. To my way of thinking, we want a prior that, while concentrating the mass toward zero, still offers a good spread toward the middle. Let's try `normal(-4, 3)`. 
+
+```{r fit13.3}
+fit13.3 <- brm(
+  data = honking_km,
+  family = binomial,
+  n_events | trials(n_risk) ~ 0 + interval_f,
+  prior(normal(-4, 3), class = b),
+  chains = 4, cores = 1, iter = 2000, warmup = 1000,
+  seed = 13,
+  file = "fits/fit13.03")
+```
+
+Check the summary.
+
+```{r}
+print(fit13.3)
+```
+
+Our parameter diagnostics look excellent. It might be helpful to inspect their posteriors in a plot. Here we show them in both the log-odds and probability metrics.
+
+```{r, fig.width = 6, fig.height = 4, warning = F}
+draws <- as_draws_df(fit13.3) %>% 
+  select(starts_with("b_")) %>% 
+  set_names(1:42) 
+
+draws %>% 
+  pivot_longer(everything(),
+               names_to = "parameter",
+               values_to = "log_odds") %>% 
+  mutate(parameter   = factor(parameter, levels = 1:42),
+         probability = plogis(log_odds)) %>% 
+  pivot_longer(probability:log_odds) %>% 
+  
+  ggplot(aes(x = value, y = parameter)) +
+  stat_halfeye(.width = 0.95, normalize = "xy", size = 1/2) +
+  labs(x = expression(hat(italic(p))[Bayes](italic(t[j]))),
+       y = expression(italic(j))) +
+  theme(panel.grid = element_blank()) +
+  facet_wrap(~ name, scales = "free_x")
+```
+
+Let's wrangle our `draws` object a little to put it in a more useful format.
+
+```{r}
+draws <- draws %>% 
+  mutate_all(plogis) %>% 
+  mutate(`0` = 0) %>% 
+  mutate(iter = 1:n()) %>% 
+  pivot_longer(-iter,
+               names_to = "interval",
+               values_to = "p") %>% 
+  mutate(interval = interval %>% as.double()) %>% 
+  arrange(interval) %>% 
+  group_by(iter) %>% 
+  mutate(survivor = cumprod(1 - p)) %>% 
+  ungroup() 
+
+glimpse(draws)
+```
+
+We might want to compare our Bayesian $\hat p(t_j)$ estimates with their Maximum Likelihood counterparts. Since the Bayesian marginal posteriors are rather asymmetrical, we'll summarize $\hat p_\text{Bayes} (t_j)$ with means, medians, and modes.
+
+```{r, fig.width = 6, fig.height = 3.5}
+draws %>% 
+  mutate(interval = factor(interval, levels = 0:42)) %>% 
+  group_by(interval) %>% 
+  summarise(mean   = mean(survivor),
+            median = median(survivor),
+            mode   = Mode(survivor)) %>% 
+  pivot_longer(-interval,
+               names_to = "posterior estimate") %>% 
+  
+  ggplot(aes(x = interval, y = value)) +
+  geom_point(aes(color = `posterior estimate`),
+             size = 3, shape = 1) +
+  geom_point(data = honking_km %>% 
+               mutate(interval = factor(interval, levels = 0:42)),
+             aes(y = `S(t)`)) +
+  scale_color_viridis_d(option = "D", begin = 0.1, end = 0.8) +
+  ylab(expression(hat(italic(p))(italic(t[j])))) +
+  theme(legend.background = element_blank(),
+        legend.key = element_rect(fill = "grey92"),
+        legend.position = c(0.85, 0.8),
+        panel.grid = element_blank())
+```
+
+The black dots were the ML estimates and the colored circles were the Bayesian counterparts. Overall, it looks like they matched up pretty well! Building on those sensibilities, here's an alternative version of the top panel from Figure 13.2, this time comparing the frequentist $\hat S (t_j)$ with our Bayesian counterpart.
+
+```{r, fig.width = 6, fig.height = 3.5}
+draws %>% 
+  group_by(interval) %>% 
+  summarise(mean   = mean(survivor),
+            median = median(survivor),
+            mode   = Mode(survivor)) %>% 
+  pivot_longer(-interval,
+               names_to = "posterior estimate") %>% 
+  left_join(honking_km %>% 
+              distinct(interval, seconds),
+            by = "interval") %>% 
+  mutate(seconds = if_else(is.na(seconds), 0, seconds)) %>% 
+  
+  ggplot(aes(x = seconds, y = value)) +
+  geom_step(aes(color = `posterior estimate`),
+            linewidth = 1) +
+  geom_step(data = honking_km,
+            aes(y = `S(t)`)) +
+  scale_color_viridis_d(option = "D", begin = 0.1, end = 0.8) +
+  scale_x_continuous("time", limits = c(0, 20)) +
+  ylab(expression(widehat(italic(S(t[j]))))) +
+  theme(legend.background = element_blank(),
+        legend.key = element_rect(fill = "grey92"),
+        legend.position = c(0.85, 0.8),
+        panel.grid = element_blank())
+```
+
+Again, we showed the ML $\hat S (t_j)$ in black and the Bayesian counterpart as summarized by three alternative measures of central tendency in color. Overall, the results were very similar across methods. What this plot makes clear is that it's the last few estimates for that where our Bayesian estimates diverge from ML. If you compare this plot with the previous one, it appears that the nature of the divergence is our Bayesian estimates are shrunk a bit toward $p = .5$, though the modes shrank less than the medians and means. Also recall how uncertain our posteriors were for the last few intervals. This is because the likelihoods for those intervals were incredibly weak. Take a glance at the last few rows in the data.
+
+```{r}
+tail(honking_km)
+```
+
+Based on the `n_risk` column, the number of trials ranged from $n = 9$ at `interval == 37` to $n = 2$ for `interval == 42`. With so little information informing the likelihood, you largely get back the prior. Moving forward, here's another version of the survivor function of Figure 13.2, but this time using posterior intervals to highlight uncertainty in the estimates.
+
+```{r, fig.width = 6, fig.height = 3.5}
+# augment draws
+draws <- draws %>% 
+  bind_rows(
+    draws %>% 
+      filter(interval == 42) %>% 
+      mutate(interval = 43)
+    )
+
+draws %>% 
+  left_join(
+    bind_rows(
+      distinct(honking_km, interval, seconds),
+      tibble(interval = 43, seconds = 17.15)),
+    by = "interval") %>% 
+  mutate(seconds = if_else(is.na(seconds), 0, seconds)) %>% 
+  
+  ggplot(aes(x = seconds, y = survivor)) + 
+  stat_lineribbon(step = "hv", .width = c(0.5, 0.95), linewidth = 3/4) +
+  annotate(geom = "text",
+           x = 5.3, y = 0.54, hjust = 0, size = 3.5,
+           label = "This time the black line is the Bayesian posterior median,\nwhich is the `stat_lineribbon()` default.") +
+  geom_segment(x = 5.3, xend = 4.2,
+               y = 0.55, yend = 0.475,
+               arrow = arrow(length = unit(0.15,"cm"), type = "closed"),
+               linewidth = 1/5) +
+  scale_fill_grey("CI", start = 0.8, end = 0.6,
+                  labels = c("95%", "50%")) +
+  scale_x_continuous("time", limits = c(0, 20)) +
+  ylab(expression(widehat(italic(S(t[j]))))) +
+  theme(legend.background = element_blank(),
+        legend.key = element_rect(fill = "grey92"),
+        legend.position = c(0.925, 0.85),
+        panel.grid = element_blank())
+```
+
+Just for giggles, here's how you might depict our $\hat S_\text{Bayes} (t_j)$ with more of a 3D approach.
+
+```{r, fig.width = 6, fig.height = 3.5}
+draws %>% 
+  left_join(
+    bind_rows(
+      distinct(honking_km, interval, seconds),
+      tibble(interval = 43, seconds = 17.15)),
+    by = "interval") %>% 
+  mutate(seconds = if_else(is.na(seconds), 0, seconds)) %>% 
+  
+  ggplot(aes(x = seconds, y = survivor)) + 
+  stat_lineribbon(.width = seq(from = 0.01, to = 0.99, by = 0.01),
+                  step = "hv", linewidth = 0, show.legend = F) +
+  scale_fill_grey(start = 0.89, end = 0) +
+  scale_x_continuous("time", limits = c(0, 20)) +
+  ylab(expression(widehat(italic(S(t[j]))))) +
+  theme(panel.grid = element_blank())
+```
+
+## The cumulative hazard function
+
+> Kaplan-Meier type estimates of hazard are simply too erratic to be meaningful.
+>
+> This is where the *cumulative hazard function* comes in. Denoted $H (t_{ij})$, the cumulative hazard function assesses, at each point in time, the *total amount of accumulated risk* that individual $i$ has faced from the beginning of time until the present. (p. 488, *emphasis* in the original)
+
+The cumulative hazard function follows the equation
+
+$$H (t_{ij}) = \underset{\text{between } t_0 \text{ and } t_j}{\text{cumulation}} [h(t_{ij})],$$
+
+"where the phrase 'cumulation between $t_0$ and $t_j$' indicates that cumulative hazard totals the infinite number of specific values of $h(t_{ij})$ that exist between $t_0$ and $t_j$" (p. 488).
+
+### Understanding the meaning of cumulative hazard
+
+Although the absolute values of the cumulative hazard function aren't particularly illuminating, the overall shape is. Figure 13.3 gives several examples. We don't have the data or the exact specifications for the functions expressed in Figure 13.3. But if you're okay with a little imprecision, we can make a few good guesses. Before diving in, it'll help simplify our subplot code if we make two custom geoms. We'll call them `geom_h()` and `geom_H()`.
+
+```{r}
+geom_h <- function(subtitle, ...) {
+  list(
+    geom_line(...),
+    scale_x_continuous(NULL, breaks = NULL),
+    scale_y_continuous(expression(italic(h)(italic(t[ij]))),
+                       breaks = 0:5 * 0.02),
+    labs(subtitle = subtitle),
+    coord_cartesian(ylim = c(0, 0.1))
+  )
+}
+
+geom_H <- function(y_ul, ...) {
+  list(
+    geom_line(...),
+    ylab(expression(italic(H)(italic(t[ij])))),
+    coord_cartesian(ylim = c(0, y_ul))
+  )
+}
+```
+
+Now we have our custom geoms, here's the code to make Figure 13.3.
+
+```{r, fig.width = 9, fig.height = 3.5}
+# a: constant hazard
+d <- tibble(time = seq(from = 0, to = 100, by = 1)) %>% 
+  mutate(h = 0.05) %>%  
+  mutate(H = cumsum(h))
+
+p1 <- d %>% 
+  ggplot(aes(x = time, y = h)) +
+  geom_h(subtitle = "A: Constant hazard")
+
+p2 <- d %>% 
+  ggplot(aes(x = time, y = H)) +
+  geom_H(y_ul = 6)
+
+# b: increasing hazard
+d <- tibble(time = seq(from = 0, to = 100, by = 1)) %>% 
+  mutate(h = 0.001 * time) %>%  
+  mutate(H = cumsum(h))
+
+p3 <- d %>% 
+  ggplot(aes(x = time, y = h)) + 
+  geom_h(subtitle = "B: Increasing hazard")
+  
+p4 <- d %>% 
+  ggplot(aes(x = time, y = H)) +
+  geom_H(y_ul = 5)
+
+# decreasing hazard
+d <- tibble(time = seq(from = 0.2, to = 100, by = 0.1)) %>% 
+  # note out use of the gamma distribution (see )
+  mutate(h = dgamma(time, shape = 0.02, rate = 0.001)) %>%  
+  mutate(H = cumsum(h))
+
+p5 <- d %>% 
+  ggplot(aes(x = time, y = h)) +
+  geom_h(subtitle = "C: Decreasing hazard")
+
+p6 <- d %>% 
+  ggplot(aes(x = time, y = H)) +
+  geom_H(y_ul = 1.2)
+
+# increasing & decreasing hazard
+d <- tibble(time = seq(from = 1, to = 100, by = 1)) %>% 
+  # note our use of the Fréchet distribution
+  mutate(h = dfrechet(time, loc = 0, scale = 250, shape = 0.5) * 25) %>%  
+  mutate(H = cumsum(h))
+
+p7 <- d %>% 
+  ggplot(aes(x = time, y = h)) +
+  geom_h(subtitle = "D: Increasing &\n decreasing hazard")
+
+p8 <- d %>% 
+  ggplot(aes(x = time, y = H)) +
+  geom_H(y_ul = 5)
+
+# combine with patchwork and plot!
+((p1 / p2) | (p3 / p4) | (p5 / p6) | (p7 / p8)) &
+  theme(panel.grid = element_blank())
+```
+
+Did you notice our use of the gamma and Fréchet distributions? Both are supported for continuous-time survival models in **brms** (see Bürkner's vignette, [*Parameterization of response distributions in brms*](https://CRAN.R-project.org/package=brms/vignettes/brms_families.html#time-to-event-models)).
+
+### Estimating the cumulative hazard function
+
+The two methods to estimate the cumulative hazard function are the Nelson-Aalen method and the negative log survivor function method. The Nelson-Aalen method used Kaplan-Meier-type hazard estimates as follows:
+
+$$\hat H_\text{NA} (t_j) = \hat h_\text{KM} (t_1) \text{width}_1 + \hat h_\text{KM} (t_2) \text{width}_2 + \dots + \hat h_\text{KM} (t_j) \text{width}_j,$$
+
+where $\hat h_\text{KM} (t_j) \text{width}_j$ is the total hazard during the $j$th interval. The negative log survivor function method makes use of the estimates of the Kaplan-Meier survivor function with the formula
+
+$$\hat H_{- \text{LS}} (t_j) = - \log \hat S_\text{KM} (t_{ij}),$$
+
+where $\hat S_\text{KM} (t_{ij})$, recall, is the cumulative survivor function for the Kaplan-Meier estimator. Here we put both formulas to use and make our version of Figure 13.4.
+
+```{r, fig.width = 7, fig.height = 7, message = F}
+# for annotation
+text <- tibble(
+  seconds = c(13.15, 13.4),
+  y       = c(3.275, 2.65),
+  label   = c(
+    "Negative~log~survivor*','*~hat(italic(H))[-LS](italic(t[j]))", 
+    "Nelson-Aalen*','*~hat(italic(H))[N][A](italic(t[j]))"))
+
+# top plot
+p1 <- honking_km %>% 
+  mutate(width = if_else(width == Inf, 17.15 - start, width)) %>% 
+  mutate(`H[na](t)` = cumsum(`h[km](t)` * width),
+         `H[ls](t)` = - log(`S(t)`)) %>% 
+  select(seconds, `H[na](t)`, `H[ls](t)`) %>% 
+  bind_rows(tibble(seconds    = 17.15, 
+                   `H[na](t)` = 2.78499694, 
+                   `H[ls](t)` = 3.15764982)) %>% 
+  # add a line index
+  mutate(line = rep(letters[1:4], times = c(12, 21, 7, 3))) %>% 
+  
+  
+  ggplot(aes(x = seconds)) +
+  geom_step(aes(y = `H[ls](t)`),
+            color = "grey50") +
+  geom_step(aes(y = `H[na](t)`),
+            linetype = 2) +
+  geom_text(data = text,
+            aes(y = y, label = label),
+            hjust = 0, size = 3, parse = T) +
+  scale_x_continuous("time", limits = c(0, 20)) +
+  scale_y_continuous(expression(widehat(italic(H)(italic(t[j])))), 
+                     breaks = seq(from = 0, to = 3.5, by = 0.5), limits = c(0, 3.5)) +
+  theme(panel.grid = element_blank())
+
+# bottom plot
+p2 <- p1 +
+  stat_smooth(data = . %>% filter(line != "d"),
+              aes(y = (`H[ls](t)` + `H[na](t)`) / 2, color = line, fill = line),
+              method = "lm", show.legend = F) +
+  scale_fill_viridis_d(option = "A", begin = 0.2, end = 0.8) +
+  scale_color_viridis_d(option = "A", begin = 0.2, end = 0.8)
+
+# combine
+(p1 + scale_x_continuous(NULL, breaks = NULL, limits = c(0, 20))) / p2
+```
+
+Visualizing the cumulative hazard function from our Bayesian `fit13.3` is a minor extension to the approach we used for the survivor function, above. As an example, here's our plot for $\hat H_{- \text{LS}} (t_j)$. The biggest change in the code is the last line in the second `mutate()` statement, `hazard = -log(survivor)`.
+
+```{r, fig.width = 7, fig.height = 4, message = F}
+draws %>% 
+  left_join(
+    bind_rows(
+      distinct(honking_km, interval, seconds),
+      tibble(interval = 43, seconds = 17.15)),
+    by = "interval") %>% 
+  mutate(seconds = if_else(is.na(seconds), 0, seconds),
+         # convert S to H
+         hazard = -log(survivor)) %>% 
+  
+  ggplot(aes(x = seconds, y = hazard)) + 
+  stat_lineribbon(step = "hv", .width = c(0.5, 0.8, 0.95), linewidth = 3/4) +
+  scale_fill_grey("CI", start = 0.85, end = 0.6,
+                  labels = c("95%", "80%", "50%")) +
+  scale_x_continuous("time", limits = c(0, 20)) +
+  ylab(expression(widehat(italic(H)[-LS](italic(t[j]))))) +
+  theme(legend.background = element_blank(),
+        legend.key = element_rect(fill = "grey92"),
+        legend.position = c(0.925, 0.73),
+        panel.grid = element_blank())
+```
+
+## Kernel-smoothed estimates of the hazard function
+
+> The idea behind kernel smoothing is simple. At each of many distinct points in time, estimate a function's average value by aggregating together all the point estimates available within the focal time's temporal vicinity. Conceptually, kernel-smoothed estimates are a type of moving average. They do not identify precise values of hazard at each point in time but rather approximate values based on the estimates nearby. Even though each smoothed value only approximates the underlying true value, a plot over time can help reveal the underlying function's shape.
+>
+> Kernel smoothing requires a set of point estimates to smooth. For the hazard function, one way of obtaining these point estimates is by computing successive differences in the estimated cumulative hazard function from each observed even time until the next. Each difference acts as a pseudo-slope, a measure of the local rate of change in cumulative hazard during that period. Either Nelson-Aalen estimates or negative log survivor function estimates of cumulative hazard can be used. (pp. 495--496)
+
+Singer and Willett showed examples of this smoothing in Figure 13.5, in which they applied a smoothing algorithm to the $H_{- \text{LS}} (t_j)$ estimates. The good folks at [IDRE](https://stats.idre.ucla.edu/r/examples/alda/r-applied-longitudinal-data-analysis-ch-13/) have already worked out the code to reproduce Singer and Willette's smoothing algorithm. The IDRE folks called their custom function `smooth()`.
+
+```{r}
+my_smooth <- function(width, time, survive) { 
+  n   <- length(time)
+  lo  <- time[1] + width
+  hi  <- time[n] - width
+  npt <- 50
+  inc <- (hi - lo) / npt
+  
+  s <- t(lo + t(c(1:npt)) * inc)
+  
+  slag <- c(1, survive[1:n - 1])
+  h    <- 1 - survive / slag
+  x1   <- as.vector(rep(1, npt)) %*% (t(time))
+  x2   <- s %*% as.vector(rep(1, n))
+  x    <- (x1 - x2) / width
+  k    <- .75 * (1 - x * x) * (abs(x) <= 1)
+  
+  lambda <- (k %*% h) / width
+  
+  data.frame(x = s, y = lambda)
+}
+```
+
+
+We've renamed the function `my_smooth()` to avoid overwriting the already existing `smooth()` function. The code for `my_smooth()` is a mild update from the one in the link above in that it returns its results in a data frame. Let's give it a quick whirl.
+
+```{r}
+my_smooth(width = 1, 
+          time = honking_km$seconds,
+          survive = honking_km$`S(t)`) %>% 
+  glimpse()
+```
+
+The `time` and `survive` arguments take `seconds` and `S(t)` values, respectively. The `width` argument determines over how many values we would like to smooth over on a given point. For example, `width = 1` would, for a given point on the `time` axis, aggregate over all values $\pm1$ that point. Larger `width` values result in more aggressive smoothing. Also notice `my_smooth()` returned a data frame containing 50 rows for two columns, `x` and `y`. Those columns are the coordinates for the *TIME* and smoothed hazard, respectively. Here we put `my_smooth()` to work and make our version of Figure 13.5.
+
+```{r, fig.width = 5, fig.height = 5.5}
+tibble(width = 1:3) %>% 
+  mutate(xy = map(width, ~my_smooth(width = ., 
+                                    time = honking_km$seconds, 
+                                    survive = honking_km$`S(t)`)),
+         width = str_c("width = ", width)) %>% 
+  unnest(xy) %>% 
+  
+  ggplot(aes(x = x, y = y)) +
+  geom_line() +
+  scale_x_continuous("seconds after light turns green", limits = c(0, 20)) +
+  ylab("smoothed hazard") +
+  theme(panel.grid = element_blank()) +
+  facet_wrap(~ width, nrow = 3)
+```
+
+## Developing an intuition about continuous-time survivor, cumulative hazard, and kernel-smoothed hazard functions
+
+Buckle up and load the relapse data from Cooney and colleagues [-@cooney1991MatchingAlcoholics]; the US Supreme Court tenure data from Zorn and van Winkle [-@zorn2000CompetingRisks]; the first depressive episode data from Sorenson, Rutter, and Aneshensel [-@sorenson1991DepressionInTheComunity]; and the health-workers employment data from Singer and colleagues [-@singer1998PhysicianRetention].
+
+```{r, warning = F, message = F}
+alcohol_relapse  <- read_csv("data/alcohol_relapse.csv") %>% rename_all(str_to_lower)
+judges           <- read_csv("data/judges.csv")
+first_depression <- read_csv("data/firstdepression.csv")
+health_workers   <- read_csv("data/healthworkers.csv")
+
+glimpse(alcohol_relapse)
+glimpse(judges)
+glimpse(first_depression)
+glimpse(health_workers)
+```
+
+For our first go, just fit the models with `survfit()`.
+
+```{r}
+fit13.4 <- survfit(
+  data = alcohol_relapse,
+  Surv(weeks, abs(censor - 1)) ~ 1)
+
+fit13.5 <- survfit(
+  data = judges,
+  Surv(tenure, leave) ~ 1)
+
+fit13.6 <- survfit(
+  data = first_depression,
+  Surv(age, abs(censor - 1)) ~ 1)
+
+fit13.7 <- survfit(
+  data = health_workers,
+  Surv(weeks, abs(censor - 1)) ~ 1)
+```
+
+With the model from Section 13.3, we organized the Kaplan-Meier output in a tibble following the outline of Table 13.3 (p. 484). That layout was useful for plotting the frequentist results and for fitting the Bayesian version of the model with **brms**. Since we're juggling four models, let's make a convenience function to do that with a single line of code. Call it `km_tibble()`.
+
+```{r}
+km_tibble <- function(surv_fit) {
+  t <- summary(surv_fit)
+  
+  length <- length(t$time)
+  
+  d <- tibble(time     = c(0, t$time),
+              n_risk   = c(t$n.risk[1], t$n.risk),
+              n_events = c(0, t$n.event)) %>% 
+    mutate(p        = n_events / n_risk,
+           n_censored = n_risk - n_events - lead(n_risk, default = 0),
+           interval   = 0:length,
+           interval_f = factor(0:length, levels = 0:c(length + 1))) %>% 
+    select(interval:interval_f, time, n_risk:n_events, n_censored, p) %>% 
+    mutate(S = cumprod(1 - p)) %>% 
+    mutate(H = ifelse(interval == 0, NA, 
+                      ifelse(S == 0, NA,
+                             -log(S))),
+           p = ifelse(interval == 0, NA, p))
+  
+  bind_rows(
+    d, 
+    d %>% 
+      slice(n()) %>%
+      mutate(interval   = length + 1,
+             interval_f = factor(length + 1,
+                                 levels = 0:c(length + 1)),
+             time       = surv_fit$time %>% max()))
+}
+```
+
+Here's an example of our custom `km_tibble()` function works based on our earlier model of the `honking` data, `fit13.2`.
+
+```{r}
+km_tibble(fit13.2)
+```
+
+Now apply `km_tibble()` to our four new fits.
+
+```{r}
+km <- tibble(ml_fit = str_c("fit13.", 4:7)) %>% 
+  mutate(d = map(ml_fit, ~ get(.) %>% km_tibble())) %>% 
+  unnest(d)
+```
+
+If we want the settings in our $x$- and $y$-axes to differ across subplots, good old `facet_wrap()` and `facet_grid()` aren't going to cut it for our version of Figure 13.6. To avoid needless repetition in the settings across subplot code, we’ll make a few custom geoms.
+
+```{r}
+geom_S <- function(x_ul, y_lab = NULL, ...) {
+  list(
+    geom_hline(yintercept = 0.5, color = "white"),
+    geom_step(...),
+    scale_x_continuous(NULL, breaks = NULL, limits = c(0, x_ul)),
+    scale_y_continuous(y_lab, breaks = c(0, 0.5, 1), labels = c("0", ".5", "1"), limits = c(0, 1))
+  )
+}
+
+geom_H <- function(x_ul, y_lab = NULL, ...) {
+  list(
+    geom_step(...),
+    scale_x_continuous(NULL, breaks = NULL, limits = c(0, x_ul)),
+    scale_y_continuous(y_lab, limits = c(0, NA))
+  )
+}
+
+geom_h <- function(x_lab, x_ul, y_lab = NULL, ...) {
+  list(
+    geom_line(...),
+    scale_x_continuous(x_lab, limits = c(0, x_ul)),
+    scale_y_continuous(y_lab, limits = c(0, NA))
+  )
+}
+```
+
+Use `geom_S()` to make and save the top row, the $\widehat{S (t_j)}$ plots.
+
+```{r}
+p1 <- km %>% 
+  filter(ml_fit == "fit13.4") %>% 
+  ggplot(aes(x = time, y = S)) +
+  geom_S(x_ul = 110, y_lab = expression(widehat(italic(S(t[j]))))) +
+  labs(subtitle = "Cooney et al (1991)")
+
+p2 <- km %>% 
+  filter(ml_fit == "fit13.5") %>% 
+  ggplot(aes(x = time, y = S)) +
+  geom_S(x_ul = 36, y_lab = NULL) +
+  labs(subtitle = "Zorn &  Van Winkle (2000)")
+
+p3 <- km %>% 
+  filter(ml_fit == "fit13.6") %>% 
+  ggplot(aes(x = time, y = S)) +
+  geom_S(x_ul = 102, y_lab = NULL) +
+  labs(subtitle = "Sorenson et al (1991)")
+
+p4 <- km %>% 
+  filter(ml_fit == "fit13.7") %>% 
+  ggplot(aes(x = time, y = S)) +
+  geom_S(x_ul = 150, y_lab = NULL) +
+  labs(subtitle = "Singer et al (1998)")
+```
+
+Use `geom_H()` to make and save the middle row, the $\widehat{H (t_j)}$ plots.
+
+```{r}
+p5 <- km %>% 
+  filter(ml_fit == "fit13.4") %>% 
+  ggplot(aes(x = time, y = H)) +
+  geom_H(x_ul = 110, y_lab = expression(widehat(italic(H(t[j])))))
+
+p6 <- km %>% 
+  filter(ml_fit == "fit13.5") %>% 
+  ggplot(aes(x = time, y = H)) +
+  geom_H(x_ul = 36, y_lab = NULL)
+
+p7 <- km %>% 
+  filter(ml_fit == "fit13.6") %>% 
+  ggplot(aes(x = time, y = H)) +
+  geom_H(x_ul = 102, y_lab = NULL)
+
+p8 <- km %>% 
+  filter(ml_fit == "fit13.7") %>% 
+  ggplot(aes(x = time, y = H)) +
+  geom_H(x_ul = 150, y_lab = NULL)
+```
+
+Use `geom_h()` to make and save the bottom row, the $\widehat{h (t_j)}$ plots.
+
+```{r}
+p9 <- my_smooth(width = 12, time = fit13.4$time, survive = fit13.4$surv) %>% 
+  ggplot(aes(x = x, y = y)) +
+  geom_h(x_lab = "weeks after discharge", x_ul = 110, y_lab = expression(widehat(italic(h(t[j])))))
+
+p10 <- my_smooth(width = 5, time = fit13.5$time, survive = fit13.5$surv) %>% 
+  ggplot(aes(x = x, y = y)) +
+  geom_h(x_lab = "years on court", x_ul = 36, y_lab = NULL)
+
+p11 <- my_smooth(width = 7, time = fit13.6$time, survive = fit13.6$surv) %>% 
+  ggplot(aes(x = x, y = y)) +
+  geom_h(x_lab = "age (in years)", x_ul = 102, y_lab = NULL)
+
+p12 <- my_smooth(width = 12, time = fit13.7$time, survive = fit13.7$surv) %>% 
+  ggplot(aes(x = x, y = y)) +
+  geom_h(x_lab = "weeks since hired", x_ul = 150, y_lab = NULL)
+```
+
+Finally, combine the subplots and behold our version of Figure 13.6!
+
+```{r, fig.width = 10, fig.height = 6, warning = F}
+((p1 / p5 / p9) | (p2 / p6 / p10) | (p3 / p7 / p11) | (p4 / p8 / p12)) &
+  theme(panel.grid = element_blank())
+```
+
+### Bonus: Bayesians can compare continuous-time survivor, cumulative hazard, and kernel-smoothed hazard functions, too
+
+Now let's repeat that process as Bayesians. Here we fit those last four models with `brm()`. Note the `data` statements. Filtering by `ml_fit` allowed us to select the correct subset of data saved in `km`. The two filtering statements by `interval` allowed us to focus on the actual data instead of including the two rows we added for plotting conveniences. Otherwise the `brm()` code is just like what we used before.
+
+```{r fit13.8}
+fit13.8 <- brm(
+  data = filter(km, ml_fit == "fit13.4" & interval > 0 & interval < 61),
+  family = binomial,
+  n_events | trials(n_risk) ~ 0 + interval_f,
+  prior(normal(-4, 3), class = b),
+  chains = 4, cores = 4, iter = 2000, warmup = 1000,
+  seed = 13,
+  file = "fits/fit13.08")
+
+fit13.9 <- brm(
+  data = filter(km, ml_fit == "fit13.5" & interval > 0 & interval < 34),
+  family = binomial,
+  n_events | trials(n_risk) ~ 0 + interval_f,
+  prior(normal(-4, 3), class = b),
+  chains = 4, cores = 4, iter = 2000, warmup = 1000,
+  seed = 13,
+  file = "fits/fit13.09")
+
+fit13.10 <- brm(
+  data = filter(km, ml_fit == "fit13.6" & interval > 0 & interval < 44),
+  family = binomial,
+  n_events | trials(n_risk) ~ 0 + interval_f,
+  prior(normal(-4, 3), class = b),
+  chains = 4, cores = 4, iter = 2000, warmup = 1000,
+  seed = 13,
+  file = "fits/fit13.10")
+
+fit13.11 <- brm(
+  data = filter(km, ml_fit == "fit13.7" & interval > 0 & interval < 306),
+  family = binomial,
+  n_events | trials(n_risk) ~ 0 + interval_f,
+  prior(normal(-4, 3), class = b),
+  chains = 4, cores = 4, iter = 2000, warmup = 1000,
+  seed = 13,
+  file = "fits/fit13.11")
+```
+
+For the sake of space, I'm not going to show all the summary output. If you're following along, I still recommend you give them a look. Spoiler alert: the parameter diagnostics look great.
+
+```{r, eval = F}
+print(fit13.8)
+print(fit13.9)
+print(fit13.10)
+print(fit13.11)
+```
+
+Since we're working with four `brm()` fits, it might make sense to bundle the steps and keep the results in one place. Here we make something of a super function. With `wrangle_draws()`, we'll extract the posterior draws from each model; add a couple interval columns; convert the results to the $\widehat{p (t_j)}$, $\widehat{S (t_j)}$, and $\widehat{H (t_j)}$ metrics; and join the results to the data stored in `km`. If the steps seem overwhelming, just flip back to the ends of Sections 13.3 and 13.4. This is a small extension of the data wrangling steps we took to make the $\widehat{S (t_j)}$ and $\widehat{H (t_j)}$ plots for our **brms** model `fit13.3`.
+
+```{r}
+wrangle_draws <- function(brms, survfit) {
+  
+  # extract the draws
+  draws <- get(brms) %>% 
+    as_draws_df() %>% 
+    select(starts_with("b_"))
+  
+  # how many columns?
+  n_col <- ncol(draws)  
+  
+  # transform to the p metric, add a 0 interval, make it long, and add S
+  draws <- draws %>% 
+    set_names(1:n_col) %>% 
+    mutate_all(plogis) %>% 
+    mutate(`0` = 0) %>% 
+    mutate(draw = 1:n()) %>% 
+    pivot_longer(-draw,
+                 names_to = "interval",
+                 values_to = "p") %>% 
+    mutate(interval = interval %>% as.double()) %>% 
+    arrange(interval) %>% 
+    group_by(draw) %>% 
+    mutate(S = cumprod(1 - p)) %>% 
+    ungroup() %>% 
+    mutate(H = -log(S))
+  
+  # add the final interval, join the data, and return()
+  bind_rows(draws,
+            draws %>% filter(interval == n_col) %>% mutate(interval = n_col + 1)) %>% 
+    left_join(km %>% filter(ml_fit == survfit) %>% select(interval:n_censored),
+              by = "interval")
+}
+```
+
+Our `wrangle_draws()` function takes two arguments, `brms` and `survfit`, which indicate the desired **brms** model and the corresponding index within `km` that contains the associated survival data. Let's put it to work.
+
+```{r, warning = F}
+draws <- tibble(
+  brms    = str_c("fit13.", 8:11),
+  survfit = str_c("fit13.", 4:7)) %>% 
+  mutate(draw = map2(brms, survfit, wrangle_draws)) %>% 
+  unnest(draw)
+
+draws
+```
+
+Like before, we have 12 subplots to make and we can reduce redundancies in the code by working with custom geoms. To accommodate our Bayesian fits, we'll redefine `geom_S()` and `geom_H()` to depict the step functions with `tidybayes::stat_lineribbon()`. Happily, our `geom_h()` is good to go as is.
+
+```{r}
+geom_S <- function(x_ul, y_lab = NULL, ...) {
+  list(
+    geom_hline(yintercept = 0.5, color = "white"),
+    stat_lineribbon(step = "hv", .width = c(0.5, 0.95), 
+                    linewidth = 1/2, show.legend = F, ...),
+    scale_fill_grey(start = 0.8, end = 0.6),
+    scale_x_continuous(NULL, breaks = NULL, limits = c(0, x_ul)),
+    scale_y_continuous(y_lab, breaks = c(0, 0.5, 1), labels = c("0", ".5", "1"), limits = c(0, 1))
+  )
+}
+
+geom_H <- function(x_ul, y_lab = NULL, ...) {
+  list(
+    stat_lineribbon(step = "hv", .width = c(0.5, 0.95), 
+                    linewidth = 1/2, show.legend = F, ...),
+    scale_fill_grey(start = 0.8, end = 0.6),
+    scale_x_continuous(NULL, breaks = NULL, limits = c(0, x_ul)),
+    scale_y_continuous(y_lab, limits = c(0, NA))
+  )
+}
+```
+
+Make and save the subplots.
+
+```{r, warning = F, message = F}
+# use `geom_S()` to make and save the top row
+p1 <- draws %>% 
+  filter(brms == "fit13.8") %>% 
+  ggplot(aes(x = time, y = S)) +
+  geom_S(x_ul = 110, y_lab = expression(widehat(italic(S(t[j]))))) +
+  labs(subtitle = "Cooney et al (1991)")
+
+p2 <- draws %>% 
+  filter(brms == "fit13.9") %>% 
+  ggplot(aes(x = time, y = S)) +
+  geom_S(x_ul = 36, y_lab = NULL) +
+  labs(subtitle = "Zorn &  Van Winkle (2000)")
+
+p3 <- draws %>% 
+  filter(brms == "fit13.10") %>% 
+  ggplot(aes(x = time, y = S)) +
+  geom_S(x_ul = 102, y_lab = NULL) +
+  labs(subtitle = "Sorenson et al (1991)")
+
+p4 <- draws %>% 
+  filter(brms == "fit13.11") %>% 
+  ggplot(aes(x = time, y = S)) +
+  geom_S(x_ul = 150, y_lab = NULL) +
+  labs(subtitle = "Singer et al (1998)")
+  
+# use `geom_H()` to make and save the middle row
+p5 <- draws %>% 
+  filter(brms == "fit13.8") %>% 
+  ggplot(aes(x = time, y = H)) +
+  geom_H(x_ul = 110, y_lab = expression(widehat(italic(H(t[j])))))
+
+p6 <- draws %>% 
+  filter(brms == "fit13.9") %>% 
+  ggplot(aes(x = time, y = H)) +
+  geom_H(x_ul = 36, y_lab = NULL)
+
+p7 <- draws %>% 
+  filter(brms == "fit13.10") %>% 
+  ggplot(aes(x = time, y = H)) +
+  geom_H(x_ul = 102, y_lab = NULL)
+
+p8 <- draws %>% 
+  filter(brms == "fit13.11") %>% 
+  ggplot(aes(x = time, y = H)) +
+  geom_H(x_ul = 150, y_lab = NULL)
+  
+# use `geom_h()` to make and save the bottom row
+p9 <- draws %>% 
+  filter(brms == "fit13.8") %>% 
+  group_by(interval, time) %>% 
+  summarize(median = median(S)) %>% 
+  nest(data = everything()) %>% 
+  mutate(smooth = map(data, ~ my_smooth(width = 12, time = .$time, survive = .$median))) %>% 
+  unnest(smooth) %>%
+  ggplot(aes(x = x, y = y)) +
+  geom_h(x_lab = "weeks after discharge", x_ul = 110, y_lab = expression(widehat(italic(h(t[j])))))
+
+p10 <- draws %>% 
+  filter(brms == "fit13.9") %>% 
+  group_by(interval, time) %>% 
+  summarize(median = median(S)) %>% 
+  nest(data = everything()) %>% 
+  mutate(smooth = map(data, ~ my_smooth(width = 12, time = .$time, survive = .$median))) %>% 
+  unnest(smooth) %>%
+  ggplot(aes(x = x, y = y)) +
+  geom_h(x_lab = "years on court", x_ul = 36, y_lab = NULL)
+
+p11 <- draws %>% 
+  filter(brms == "fit13.10") %>% 
+  group_by(interval, time) %>% 
+  summarize(median = median(S)) %>% 
+  nest(data = everything()) %>% 
+  mutate(smooth = map(data, ~ my_smooth(width = 12, time = .$time, survive = .$median))) %>% 
+  unnest(smooth) %>%
+  ggplot(aes(x = x, y = y)) +
+  geom_h(x_lab = "age (in years)", x_ul = 102, y_lab = NULL)
+
+p12 <- draws %>% 
+  filter(brms == "fit13.11") %>% 
+  group_by(interval, time) %>% 
+  summarize(median = median(S)) %>% 
+  nest(data = everything()) %>% 
+  mutate(smooth = map(data, ~ my_smooth(width = 12, time = .$time, survive = .$median))) %>% 
+  unnest(smooth) %>%
+  ggplot(aes(x = x, y = y)) +
+  geom_h(x_lab = "weeks since hired", x_ul = 150, y_lab = NULL)
+```
+
+Finally, combine the subplots and behold our Bayesian alternative version of Figure 13.6!
+
+```{r, fig.width = 10, fig.height = 6, warning = F}
+((p1 / p5 / p9) | (p2 / p6 / p10) | (p3 / p7 / p11) | (p4 / p8 / p12)) &
+  theme(panel.grid = element_blank())
+```
+
+## Session info {-}
+
+```{r}
+sessionInfo()
+```
+
+## Comments {-}
+
+```{r, echo = F, eval = F}
+# here we'll remove our objects
+rm()
+
+theme_set(theme_grey())
+```
+
+```{r, echo = F, eval = F}
+# We can use the `broom::tidy()` function to convert that to a tidy tibble.
+kap1 %>% str()
+
+
+k <- tidy(kap1)
+
+
+# Unlike in the text, this output does not contain the 0 interval, $[0, 1.41)$. The `time` column is the same as the "[Start" column of Table 13.3. The `n.risk` column is a direct analogue to the "n at risk" column. The `n.event` column is similar to the "n events" column in the text, but whereas the latter is cumulative, the former is not. We do not get a "$\hat p (t)$" column like in the text, but that's just a straight algebraic transform of the `estimate` column subtracted from 1. Speaking of which, our `estimate` column is an analogue of the "$\hat S(t)$" column in the text. It appears the values in our `std.error` column are a bit different from those in the text. Our last two columns mark off the 95% intervals. 
+# 
+# We can get a quick base **R** plot of the Kaplan-Meier survivor function with `plot()`.
+
+plot(kap1,
+     xlab = "seconds after light turns green",
+     ylab = "Kaplan-Meier survivor function")
+
+
+# With the **ggplot2** paradigm, one can make a Kaplan-Meier survivor function with the `ggsurvplot()` function from the [**survminer** package](https://CRAN.R-project.org/package=survminer).
+
+library(survminer)
+
+ggsurvplot(kap1, data = honking,
+           color = "grey25",
+           size = 1/2,
+           xlim = c(0, 20),
+           break.time.by = 5,
+           legend = "none",
+           ggtheme = theme_gray() + 
+             theme(panel.grid = element_blank())) +
+  labs(x = "seconds after light turns green",
+       y = "Kaplan-Meier survivor function")
+```
+
