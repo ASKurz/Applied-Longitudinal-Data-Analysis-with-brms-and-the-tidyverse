@@ -1,7 +1,9 @@
 .Rproj.user
+.Rapp.history
 .Rhistory
 .RData
 .Ruserdata
+.DS_Store
 Singer & Willett (2003 TEXT) Applied longitudinal data analysis_ Modeling change and event occurrence.pdf
 fits/
 notes.R
