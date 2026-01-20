@@ -2,17 +2,7 @@
 .Rhistory
 .RData
 .Ruserdata
-
 Singer & Willett (2003 TEXT) Applied longitudinal data analysis_ Modeling change and event occurrence.pdf
+fits/
+notes.R
 
-# fit files too large for GitHub
-fits/fit05.16.rds
-fits/fit06.01.rds
-fits/fit06.02.rds
-fits/fit06.03.rds
-fits/fit06.04.rds
-fits/fit06.05.rds
-fits/fit06.06.rds
-fits/fit06.07.rds
-fits/fit06.08.rds
-fits/fit06.09.rds
