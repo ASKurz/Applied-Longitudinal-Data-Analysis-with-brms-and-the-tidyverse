@@ -661,6 +661,7 @@ fit6.5 <- brm(
             prior(lkj(4), class = cor)),
   iter = 2500, warmup = 1000, chains = 3, cores = 3,
   seed = 6,
+  control = list(adapt_delta = 0.9),
   file = "fits/fit06.05")
 
 # model g
