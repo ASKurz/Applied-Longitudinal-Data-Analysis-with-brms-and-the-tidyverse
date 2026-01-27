@@ -1450,7 +1450,7 @@ In [Chapter 6 of my ebook](https://bookdown.org/content/3890/overfitting-regular
 waic(fit4.1)
 ```
 
-We'll come back to that warning message, later. For now, notice the main output is a $3 \times 2$ data frame with named rows. For the statistic in each row, you get a point estimate and a standard error. The WAIC is on the bottom. The effective number of parameters, the $p_\text{WAIC}$, is in the middle. Notice the `elpd_waic` on the top. That's what you get without the $-2 \times \dots$ in the formula. Remember how that part is just to put things in a metric amenable to $\chi^2$-difference testing? Well, not all Bayesians like that and within the Stan ecosystem you'll also see the WAIC expressed instead as the $\text{elpd}_\text{WAIC}$.
+We'll come back to that warning, later. For now, notice the main output is a $3 \times 2$ data frame with named rows. For the statistic in each row, you get a point estimate and a standard error. The WAIC is on the bottom. The effective number of parameters, the $p_\text{WAIC}$, is in the middle. Notice the `elpd_waic` on the top. That's what you get without the $-2 \times \dots$ in the formula. Remember how that part is just to put things in a metric amenable to $\chi^2$-difference testing? Well, not all Bayesians like that and within the Stan ecosystem you'll also see the WAIC expressed instead as the $\text{elpd}_\text{WAIC}$.
 
 The current recommended workflow within **brms** is to attach the WAIC information to the model fit. You do it with the `add_criterion()` function.
 
@@ -1507,7 +1507,7 @@ l_fit4.1 <- loo(fit4.1)
 print(l_fit4.1)
 ```
 
-Remember that warning message we got from the `waic()` a while back? We get more information along those lines from the `loo()`. As it turns out, a few of the cases in the data were unduly influential in the model fit. Within the `loo()` paradigm, those are indexed by the `pareto_k` values. As it turns out, the Pareto $k$ [can be used as a diagnostic tool](https://cran.r-project.org/web/packages/loo/vignettes/loo2-example.html#plotting-pareto-k-diagnostics). Each case in the data gets its own $k$ value and we like it when those $k$'s are low. We typically get worried when those $k$'s exceed 0.7 and the `loo()` function spits out a warning message when they do.
+Remember that warning we got from the `waic()` a while back? We get more information along those lines from the `loo()`. As it turns out, a few of the cases in the data were unduly influential in the model fit. Within the `loo()` paradigm, those are indexed by the `pareto_k` values. As it turns out, the Pareto $k$ [can be used as a diagnostic tool](https://cran.r-project.org/web/packages/loo/vignettes/loo2-example.html#plotting-pareto-k-diagnostics). Each case in the data gets its own $k$ value and we like it when those $k$'s are low. We typically get worried when those $k$'s exceed 0.7 and the `loo()` function spits out a warning when they do.
 
 If you didn't know, the **brms** functions like the `waic()` and `loo()` actually come from the [**loo** package](https://CRAN.R-project.org/package=loo) [@R-loo; @vehtariPracticalBayesianModel2017; @yaoUsingStackingAverage2018]. Explicitly loading **loo** will buy us some handy convenience functions.
 

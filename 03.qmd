@@ -542,7 +542,7 @@ draws[, 1:10] %>%
   glimpse()
 ```
 
-Note the warning message. The `as_draws_df()` function returns a special kind of data frame, which includes 3 metadata columns, which are typically hidden from view. Sometimes we want those metadata columns, sometimes we don't. You'll see. Anyway, here are the dimensions of our `draws` data frame.
+Note the warning. The `as_draws_df()` function returns a special kind of data frame, which includes 3 metadata columns, which are typically hidden from view. Sometimes we want those metadata columns, sometimes we don't. You'll see. Anyway, here are the dimensions of our `draws` data frame.
 
 ```{r}
 draws %>% 
