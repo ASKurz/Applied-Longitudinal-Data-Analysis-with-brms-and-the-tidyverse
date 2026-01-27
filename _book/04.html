@@ -2434,7 +2434,7 @@ waic         625.4 24.4
 39 (15.9%) p_waic estimates greater than 0.4. We recommend trying loo instead. </code></pre>
 </div>
 </div>
-<p>We’ll come back to that warning message, later. For now, notice the main output is a <span class="math inline">\(3 \times 2\)</span> data frame with named rows. For the statistic in each row, you get a point estimate and a standard error. The WAIC is on the bottom. The effective number of parameters, the <span class="math inline">\(p_\text{WAIC}\)</span>, is in the middle. Notice the <code>elpd_waic</code> on the top. That’s what you get without the <span class="math inline">\(-2 \times \dots\)</span> in the formula. Remember how that part is just to put things in a metric amenable to <span class="math inline">\(\chi^2\)</span>-difference testing? Well, not all Bayesians like that and within the Stan ecosystem you’ll also see the WAIC expressed instead as the <span class="math inline">\(\text{elpd}_\text{WAIC}\)</span>.</p>
+<p>We’ll come back to that warning, later. For now, notice the main output is a <span class="math inline">\(3 \times 2\)</span> data frame with named rows. For the statistic in each row, you get a point estimate and a standard error. The WAIC is on the bottom. The effective number of parameters, the <span class="math inline">\(p_\text{WAIC}\)</span>, is in the middle. Notice the <code>elpd_waic</code> on the top. That’s what you get without the <span class="math inline">\(-2 \times \dots\)</span> in the formula. Remember how that part is just to put things in a metric amenable to <span class="math inline">\(\chi^2\)</span>-difference testing? Well, not all Bayesians like that and within the Stan ecosystem you’ll also see the WAIC expressed instead as the <span class="math inline">\(\text{elpd}_\text{WAIC}\)</span>.</p>
 <p>The current recommended workflow within <strong>brms</strong> is to attach the WAIC information to the model fit. You do it with the <code>add_criterion()</code> function.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb157"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb157-1"><a href="#cb157-1" aria-hidden="true" tabindex="-1"></a>fit4<span class="fl">.1</span> <span class="ot">&lt;-</span> <span class="fu">add_criterion</span>(fit4<span class="fl">.1</span>, <span class="at">criterion =</span> <span class="st">"waic"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -2502,7 +2502,7 @@ Pareto k diagnostic values:
 See help('pareto-k-diagnostic') for details.</code></pre>
 </div>
 </div>
-<p>Remember that warning message we got from the <code>waic()</code> a while back? We get more information along those lines from the <code>loo()</code>. As it turns out, a few of the cases in the data were unduly influential in the model fit. Within the <code>loo()</code> paradigm, those are indexed by the <code>pareto_k</code> values. As it turns out, the Pareto <span class="math inline">\(k\)</span> <a href="https://cran.r-project.org/web/packages/loo/vignettes/loo2-example.html#plotting-pareto-k-diagnostics">can be used as a diagnostic tool</a>. Each case in the data gets its own <span class="math inline">\(k\)</span> value and we like it when those <span class="math inline">\(k\)</span>’s are low. We typically get worried when those <span class="math inline">\(k\)</span>’s exceed 0.7 and the <code>loo()</code> function spits out a warning message when they do.</p>
+<p>Remember that warning we got from the <code>waic()</code> a while back? We get more information along those lines from the <code>loo()</code>. As it turns out, a few of the cases in the data were unduly influential in the model fit. Within the <code>loo()</code> paradigm, those are indexed by the <code>pareto_k</code> values. As it turns out, the Pareto <span class="math inline">\(k\)</span> <a href="https://cran.r-project.org/web/packages/loo/vignettes/loo2-example.html#plotting-pareto-k-diagnostics">can be used as a diagnostic tool</a>. Each case in the data gets its own <span class="math inline">\(k\)</span> value and we like it when those <span class="math inline">\(k\)</span>’s are low. We typically get worried when those <span class="math inline">\(k\)</span>’s exceed 0.7 and the <code>loo()</code> function spits out a warning when they do.</p>
 <p>If you didn’t know, the <strong>brms</strong> functions like the <code>waic()</code> and <code>loo()</code> actually come from the <a href="https://CRAN.R-project.org/package=loo"><strong>loo</strong> package</a> <span class="citation" data-cites="R-loo vehtariPracticalBayesianModel2017 yaoUsingStackingAverage2018">(<a href="references.html#ref-vehtariPracticalBayesianModel2017" role="doc-biblioref">Vehtari et al., 2017</a>; <a href="references.html#ref-R-loo" role="doc-biblioref">Vehtari et al., 2022</a>; <a href="references.html#ref-yaoUsingStackingAverage2018" role="doc-biblioref">Yao et al., 2018</a>)</span>. Explicitly loading <strong>loo</strong> will buy us some handy convenience functions.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb162"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb162-1"><a href="#cb162-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(loo)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -3601,7 +3601,7 @@ loaded via a namespace (and not attached):
 [36] scales_1.4.0            MASS_7.3-65             cli_3.6.5               mvtnorm_1.3-3           rmarkdown_2.30         
 [41] crayon_1.5.3            generics_0.1.4          RcppParallel_5.1.11-1   rstudioapi_0.17.1       reshape2_1.4.5         
 [46] tzdb_0.5.0              rstan_2.36.0.9000       splines_4.5.1           bayesplot_1.15.0.9000   parallel_4.5.1         
-[51] matrixStats_1.5.0       vctrs_0.6.5             V8_8.0.1                Matrix_1.7-3            sandwich_3.1-1         
+[51] matrixStats_1.5.0       vctrs_0.7.0             V8_8.0.1                Matrix_1.7-3            sandwich_3.1-1         
 [56] jsonlite_2.0.0          hms_1.1.4               bit64_4.6.0-1           glue_1.8.0              codetools_0.2-20       
 [61] distributional_0.5.0    stringi_1.8.7           gtable_0.3.6            QuickJSR_1.8.1          pillar_1.11.1          
 [66] htmltools_0.5.9         Brobdingnag_1.2-9       R6_2.6.1                vroom_1.6.6             evaluate_1.0.5         
@@ -4099,9 +4099,9 @@ Yao, Y., Vehtari, A., Simpson, D., &amp; Gelman, A. (2018). Using stacking to av
     script.src = "https://giscus.app/client.js";
     script.async = true;
     script.dataset.repo = "ASKurz/Applied-Longitudinal-Data-Analysis-with-brms-and-the-tidyverse";
-    script.dataset.repoId = "";
+    script.dataset.repoId = "MDEwOlJlcG9zaXRvcnkxODg5MTU1MTM=";
     script.dataset.category = "General";
-    script.dataset.categoryId = "";
+    script.dataset.categoryId = "DIC_kwDOC0KfOc4C1eQu";
     script.dataset.mapping = "title";
     script.dataset.reactionsEnabled = "1";
     script.dataset.emitMetadata = "0";
