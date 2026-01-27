@@ -725,7 +725,7 @@ print(fit5.6)
 
 Let's walk through this slow.
 
-You may have noticed that warning message about *divergent transitions*. We'll get to that in a bit. First focus on the parameter estimates for `sd(exper)`. Unlike in the text, our posterior mean is not 0.000. But do remember that our posterior is parameterized in the $\sigma$ metric. Let's do a little converting and look at it in a plot.
+You may have noticed that warning about *divergent transitions*. We'll get to that in a bit. First focus on the parameter estimates for `sd(exper)`. Unlike in the text, our posterior mean is not 0.000. But do remember that our posterior is parameterized in the $\sigma$ metric. Let's do a little converting and look at it in a plot.
 
 ```{r, warning = F}
 draws <- as_draws_df(fit5.6)
@@ -771,7 +771,7 @@ v %>%
   mutate_if(is.double, round, digits = 4)
 ```
 
-Backing up to that warning message, we were informed that "Increasing adapt_delta above 0.8 may help." The `adapt_delta` parameter ranges from 0 to 1. The `brm()` default is 0.8. In my experience, increasing to 0.9 or 0.99 is often a good place to start. For this model, 0.9 wasn't quite enough, but 0.99 worked. Here's how to do it.
+Backing up to that warning, we were informed that "Increasing adapt_delta above 0.8 may help." The `adapt_delta` parameter ranges from 0 to 1. The `brm()` default is 0.8. In my experience, increasing to 0.9 or 0.99 is often a good place to start. For this model, 0.9 wasn't quite enough, but 0.99 worked. Here's how to do it.
 
 ```{r fit5.7}
 fit5.7 <- brm(
@@ -823,7 +823,7 @@ Here is the basic model summary.
 print(fit5.8)
 ```
 
-No warning messages and our effective samples for $\sigma_0$ improved a bit. Compute the WAIC for both models.
+No warnings, and our effective samples for $\sigma_0$ improved a bit. Compute the WAIC for both models.
 
 ```{r}
 fit5.7 <- add_criterion(fit5.7, criterion = "waic")
@@ -1457,7 +1457,7 @@ For reference, the dashed gray line is the value we centered our prior for initi
 We might specify Model B, our first model with a time-varying covariate, like this:
 
 \begin{align}
-\text{cesd}_{ij} & = \big [ \gamma_{00} + \gamma_{10} \text{months}_{ij} + \gamma_{20} \text{unemp}_{ij} \big ] + \big [  \zeta_{0i} + \zeta_{1i} \text{months}_{ij} + \epsilon_{ij} \big ]\\
+\text{cesd}_{ij} & = \big [ \gamma_{00} + \gamma_{10} \text{months}_{ij} + \gamma_{20} \text{unemp}_{ij} \big ] + \big [  \zeta_{0i} + \zeta_{1i} \text{months}_{ij} + \epsilon_{ij} \big ] \\
 \epsilon_{ij}    & \sim \operatorname{Normal}(0, \sigma_\epsilon) \\
 \begin{bmatrix}
   \zeta_{0i} \\ \zeta_{1i} 
@@ -1490,7 +1490,7 @@ fit5.12 <- brm(
             prior(lkj(4), class = cor)),
   iter = 2000, warmup = 1000, chains = 4, cores = 4,
   seed = 5,
-  control = list(adapt_delta = 0.9),
+  control = list(adapt_delta = 0.95),
   file = "fits/fit05.12")
 ```
 
@@ -1986,7 +1986,7 @@ fit5.14 <- brm(
             prior(lkj(4), class = cor)),
   iter = 2000, warmup = 1000, chains = 4, cores = 4,
   seed = 5,
-  control = list(adapt_delta = 0.95),
+  control = list(adapt_delta = 0.99),
   file = "fits/fit05.14")
 ```
 
