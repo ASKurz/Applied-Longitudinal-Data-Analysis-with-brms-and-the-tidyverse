@@ -1,6 +1,6 @@
 # *Applied Longitudinal Data Analysis* in brms and the tidyverse
 
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.3790329.svg)](https://doi.org/10.5281/zenodo.3790329)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.18391502.svg)](https://doi.org/10.5281/zenodo.18391502)
 
 
 This project is based on Singer and Willett's classic (2003) text, [*Applied longitudinal data analysis: Modeling change and event occurrence*](https://www.oxfordscholarship.com/view/10.1093/acprof:oso/9780195152968.001.0001/acprof-9780195152968). You can download the data used in the text at [http://www.bristol.ac.uk/cmm/learning/support/singer-willett.html](https://www.bristol.ac.uk/cmm/learning/support/singer-willett.html) and find a wealth of ideas on how to fit the models in the text at [https://stats.idre.ucla.edu/other/examples/alda/](https://stats.idre.ucla.edu/other/examples/alda/). My contributions show how to fit these models and others like them within a Bayesian framework. I make extensive use of Paul Bürkner's [**brms** package](https://github.com/paul-buerkner/brms), which makes it easy to fit Bayesian regression models in **R** using Hamiltonian Monte Carlo (HMC) via the [Stan](https://mc-stan.org) probabilistic programming language. Much of the data wrangling and plotting code is done with packages connected to the [**tidyverse**](https://www.tidyverse.org).
